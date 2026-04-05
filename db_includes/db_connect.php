@@ -5,10 +5,10 @@
  */
 
 // Database configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'thesis_db');
+define('DB_HOST', 'srv2092.hstgr.io');
+define('DB_USER', 'u965322812_CITAS_Smart');
+define('DB_PASS', 'ErLv@g1e*');
+define('DB_NAME', 'u965322812_thesis_db');
 
 // Create connection
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
