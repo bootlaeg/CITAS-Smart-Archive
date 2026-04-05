@@ -1,0 +1,381 @@
+/* Custom Variables - UPDATED FOR AUTUMN PALETTE */
+:root {
+    --header-height: 50px;
+    --sidebar-width-full: 250px;
+    --sidebar-width-mini: 60px; 
+    --autumn-yellow: #ffc107;      /* Bright Yellow/Gold for accents */
+    --autumn-brown-dark: #7c4d00;  /* Dark Brown for main sidebar/header-left */
+    --autumn-orange-deep: #ff8c00; /* Deep Orange for buttons/cards */
+    --autumn-orange-light: #ffac79; /* Peach/Light Orange for highlights */
+    
+    /* Mapping existing variables to new autumn theme */
+    --green-dark: var(--autumn-brown-dark);
+    --green-light: #9d6e2e; /* Slightly lighter shade of the brown for link hover */
+    --orange-highlight: var(--autumn-orange-deep);
+}
+
+body {
+    overflow-x: hidden; 
+    background-color: #f8f9fa;
+    padding-top: var(--header-height); 
+}
+
+/* --- Top Header --- */
+.top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    background-color: white; 
+    border-bottom: 1px solid #ddd;
+    z-index: 1030; 
+    display: flex;
+}
+
+.top-header-left {
+    width: var(--sidebar-width-full); 
+    background-color: var(--green-dark); /* Dark Brown */
+    display: flex;
+    align-items: center; 
+    padding: 0 15px;
+    transition: width 0.3s ease;
+}
+
+/* Logo and Text Container */
+.logo-container {
+    display: flex;
+    align-items: center;
+    overflow: hidden; 
+}
+
+/* Logo Image Styling */
+.logo-img {
+    height: 40px; 
+    width: auto; 
+    display: block;
+    margin-right: 10px; 
+}
+
+/* Logo Text Styling */
+.logo-text-full {
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    white-space: nowrap; 
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.top-header-right {
+    flex-grow: 1; 
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+}
+
+/* --- 1. Sidebar Styling --- */
+#sidebar-wrapper {
+    height: calc(100vh - var(--header-height)); 
+    top: var(--header-height); 
+    margin-left: 0; 
+    width: var(--sidebar-width-full); 
+    background-color: var(--green-dark); /* Dark Brown */
+    transition: width 0.3s ease;
+    z-index: 1020; 
+    position: fixed;
+}
+
+.sidebar-user-info {
+    background-color: #613e00; /* Slightly darker shade of the brown for separation */
+    padding: 10px !important;
+    height: 40px; 
+}
+.sidebar-user-info .sidebar-name {
+    font-size: 0.9rem; 
+}
+
+.sidebar-nav-list {
+    padding-top: 10px; 
+}
+
+/* Standard Link Styles */
+.sidebar .nav-link {
+    color: white;
+    padding: 15px 15px;
+    border-left: 5px solid transparent; 
+    white-space: nowrap; 
+}
+.sidebar .nav-link:hover {
+    background-color: var(--green-light); /* Lighter Brown */
+}
+.sidebar .nav-link.active {
+    background-color: var(--green-light); /* Lighter Brown */
+    border-left: 5px solid var(--autumn-yellow); /* Bright Yellow Accent */
+}
+.sidebar .nav-text {
+    display: inline-block;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* --- 2. Main Content Wrapper --- */
+#page-content-wrapper {
+    width: 100%;
+    padding-left: var(--sidebar-width-full); 
+    transition: padding-left 0.3s ease;
+    min-height: calc(100vh - var(--header-height)); 
+}
+
+/* --- TOGGLE STATE: SIDEBAR COLLAPSED (Mini View) --- */
+#wrapper.toggled #sidebar-wrapper {
+    width: var(--sidebar-width-mini);
+}
+
+#wrapper.toggled #page-content-wrapper {
+    padding-left: var(--sidebar-width-mini);
+}
+
+.top-header.toggled .top-header-left {
+    width: var(--sidebar-width-mini);
+    justify-content: center; 
+}
+
+.top-header.toggled .logo-text-full {
+    opacity: 0;
+    max-width: 0; 
+    transition: opacity 0.2s ease, max-width 0.2s ease;
+}
+
+.top-header.toggled .logo-img {
+    margin-right: 0;
+}
+
+#wrapper.toggled .sidebar-user-info {
+    height: 0;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+#wrapper.toggled .nav-text {
+    display: none; 
+    opacity: 0;
+}
+
+#wrapper.toggled .sidebar .nav-link {
+    padding: 15px 0; 
+    text-align: center;
+}
+
+/* --- Main Content Body --- */
+.main-content-body {
+    background-color: #ffffff;
+    min-height: calc(100vh - var(--header-height)); 
+}
+
+
+/* --- Homepage Main Content --- */
+#searchButton {
+    background-color: var(--autumn-orange-deep) !important; 
+    border-color: var(--autumn-orange-deep) !important;
+    color: white !important;
+}
+#searchButton:hover {
+    background-color: #e67e00 !important; 
+    border-color: #e67e00 !important;
+}
+
+/* --- Thesis Card Styling (Carousel & List View) --- */
+.thesis-card-container {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+    border-radius: 4px;
+}
+
+/* Thesis Card Header (For Carousel) */
+.thesis-card {
+    background-color: var(--autumn-orange-deep); 
+    color: white;
+    padding: 15px;
+    margin-bottom: 0; 
+}
+
+.thesis-card-body {
+    background-color: white;
+    color: #333;
+    padding: 20px;
+}
+
+/* Thesis List Card Style (Used in the Browse page) */
+.thesis-list-card {
+    border-left: 5px solid var(--autumn-orange-deep);
+    transition: all 0.2s;
+}
+.thesis-list-card:hover {
+    background-color: #fffaf0; /* Light hover background */
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important;
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+/* View Thesis Button (Consistent autumn brown-dark) */
+.thesis-card-body .btn-primary, .thesis-list-card .btn-primary {
+    background-color: var(--autumn-brown-dark) !important;
+    border-color: var(--autumn-brown-dark) !important;
+}
+.thesis-card-body .btn-primary:hover, .thesis-list-card .btn-primary:hover {
+    background-color: #613e00 !important;
+    border-color: #613e00 !important;
+}
+
+/* Carousel Control Visibility */
+#thesisCarousel .carousel-control-prev-icon,
+#thesisCarousel .carousel-control-next-icon {
+    background-color: var(--autumn-brown-dark); 
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    background-size: 15px 15px; 
+    opacity: 0.6;
+}
+#thesisCarousel .carousel-control-prev-icon:hover,
+#thesisCarousel .carousel-control-next-icon:hover {
+    opacity: 0.9;
+}
+
+
+/* --- Admin Panel Styling --- */
+.admin-stat-card {
+    transition: transform 0.2s;
+    cursor: pointer;
+    border: none;
+    background-image: linear-gradient(to right, var(--green-dark), var(--green-light));
+}
+.admin-stat-card:hover {
+    transform: translateY(-5px);
+}
+.admin-card-link {
+    text-decoration: none;
+    opacity: 0.8;
+}
+
+.admin-tabs .nav-link {
+    color: var(--green-dark);
+}
+
+.admin-tabs .nav-link.active {
+    color: white;
+    background-color: var(--green-dark);
+    border-color: var(--green-dark);
+}
+
+.admin-table-header {
+    background-color: #f1f1f1;
+}
+
+/* Badge for Graduated Student (Orange) */
+.badge.bg-warning.text-white {
+    background-color: #ff9900 !important;
+    color: white !important;
+}
+
+
+/* --- Thesis PDF Viewer Styling --- */
+.thesis-pdf-viewer {
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    background-color: white;
+    margin-bottom: 20px;
+}
+
+.thesis-pdf-header {
+    background-color: #f1f1f1;
+    color: #333;
+    padding: 10px 20px;
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+}
+
+.thesis-pdf-body {
+    padding: 40px;
+    min-height: 700px; /* Simulate a long PDF page */
+}
+
+.abstract-text {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    line-height: 1.8;
+    text-align: justify;
+}
+
+/* --- Modal/Form Styling --- */
+
+/* Tabs in the Modal Header */
+.login-signup-tab {
+    border-radius: 20px !important;
+    border: 1px solid #ccc;
+    background-color: white !important;
+    color: #333 !important;
+    padding: 8px 25px;
+    transition: all 0.2s;
+}
+.login-signup-tab.active {
+    background-color: var(--autumn-yellow) !important; 
+    border-color: var(--autumn-yellow) !important;
+    color: var(--autumn-brown-dark) !important; 
+    font-weight: bold;
+}
+
+/* Login/Sign Up Buttons */
+.login-btn, .signup-btn {
+    background-color: var(--autumn-orange-deep); 
+    color: white;
+    border-color: var(--autumn-orange-deep);
+}
+.login-btn:hover, .signup-btn:hover {
+    background-color: #e67e00;
+    border-color: #e67e00;
+    color: white;
+}
+
+.create-account-title {
+    color: var(--autumn-orange-deep); 
+    font-weight: bold;
+}
+
+.already-account-link {
+    color: var(--autumn-orange-deep); 
+    text-decoration: none;
+}
+.already-account-link:hover {
+    text-decoration: underline;
+}
+
+.modal-body {
+    max-height: 80vh; 
+    overflow-y: auto; 
+}
+
+/* NEW: Custom style for modal headers using the deep orange color */
+.bg-modal-header-orange {
+    background-color: #FF8C00 !important;
+}
+
+/* Animation utilities used by login/logout across pages */
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.fa-spinner { animation: spin 1s linear infinite; }
+
+@keyframes successPulse { 0% { transform: scale(1); } 50% { transform: scale(1.04);} 100% { transform: scale(1);} }
+.login-success { animation: successPulse 0.6s ease !important; }
+
+@keyframes shake { 0%,100% { transform: translateX(0);} 25% { transform: translateX(-10px);} 75% { transform: translateX(10px);} }
+.shake { animation: shake 0.45s ease !important; }
+
+@keyframes logoutFade { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.98); } }
+body.logout-animation { animation: logoutFade 0.38s ease forwards; }
+
+/* Modal closing animation */
+.auth-modal-overlay.closing { animation: fadeOut 0.3s ease forwards; }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+.auth-modal-overlay.closing .auth-modal-content { animation: slideDownOut 0.3s ease forwards; }
+@keyframes slideDownOut { from { transform: translateY(0); opacity: 1; } to { transform: translateY(60px); opacity: 0; } }
+
+
+

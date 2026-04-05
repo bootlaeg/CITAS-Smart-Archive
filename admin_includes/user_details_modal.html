@@ -1,0 +1,97 @@
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user me-2"></i>User Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Full Name:</strong></p>
+                        <p id="userFullName" class="form-control-plaintext"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Student ID:</strong></p>
+                        <p id="userStudentID" class="form-control-plaintext"></p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Contact Number:</strong></p>
+                        <p id="userContactNumber" class="form-control-plaintext"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Address:</strong></p>
+                        <p id="userAddress" class="form-control-plaintext"></p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Year Level:</strong></p>
+                        <p id="userYearLevel" class="form-control-plaintext"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Password:</strong></p>
+                        <p id="userPassword" class="form-control-plaintext"></p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <p><strong>Loadsheet File:</strong></p>
+                        <p id="userLoadsheet" class="form-control-plaintext"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// View user details function
+function viewUserDetails(userId) {
+    fetch('admin_includes/admin_view_user.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'user_id=' + userId
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const user = data.user;
+            
+            // Populate modal fields
+            document.getElementById('userFullName').textContent = user.full_name || 'N/A';
+            document.getElementById('userStudentID').textContent = user.student_id || 'N/A';
+            document.getElementById('userContactNumber').textContent = user.contact_number || 'N/A';
+            document.getElementById('userAddress').textContent = user.address || 'N/A';
+            document.getElementById('userYearLevel').textContent = user.year_level || 'N/A';
+            document.getElementById('userPassword').textContent = user.password || 'N/A';
+            
+            // Handle loadsheet file
+            if (user.loadsheet_file) {
+                document.getElementById('userLoadsheet').innerHTML = '<a href="' + user.loadsheet_file + '" target="_blank" class="btn btn-sm btn-primary"><i class="fas fa-download me-1"></i>Download Loadsheet</a>';
+            } else {
+                document.getElementById('userLoadsheet').textContent = 'No file uploaded';
+            }
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('userDetailsModal'));
+            modal.show();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error loading user details');
+    });
+}
+</script>

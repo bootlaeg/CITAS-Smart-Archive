@@ -1,0 +1,182 @@
+<?php
+/**
+ * Save Thesis & Classification
+ * Saves both thesis metadata and classification data to database
+ */
+
+require_once '../db_includes/db_connect.php';
+
+header('Content-Type: application/json; charset=utf-8');
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+
+try {
+    // Get JSON input
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    if (!$input) {
+        throw new Exception('No input data provided');
+    }
+
+    error_log("=== Save Thesis & Classification Request ===");
+    error_log("Input data received");
+
+    // Validate required fields
+    $requiredFields = ['title', 'author', 'course', 'year', 'abstract'];
+    foreach ($requiredFields as $field) {
+        if (empty($input[$field])) {
+            throw new Exception("Missing required field: $field");
+        }
+    }
+
+    // Extract thesis data
+    $title = trim($input['title']);
+    $author = trim($input['author']);
+    $course = trim($input['course']);
+    $year = intval($input['year']);
+    $abstract = trim($input['abstract']);
+    $status = $input['status'] ?? 'pending';
+
+    // Extract classification data
+    $subjectCategory = $input['subject_category'] ?? '';
+    $researchMethod = $input['research_method'] ?? '';
+    $complexityLevel = $input['complexity_level'] ?? 'intermediate';
+    $keywords = $input['keywords'] ?? [];
+    $citations = $input['citations'] ?? [];
+
+    error_log("Thesis title: $title");
+    error_log("Subject category: $subjectCategory");
+    error_log("Research method: $researchMethod");
+    error_log("Complexity level: $complexityLevel");
+    error_log("Keywords count: " . count($keywords));
+    error_log("Citations count: " . count($citations));
+
+    // Start transaction
+    $conn->begin_transaction();
+
+    // Check if this is an existing thesis (has thesis_id in file_path or from input)
+    $thesisId = $input['thesis_id'] ?? null;
+    
+    if ($thesisId && $thesisId !== 'new') {
+        // Update existing thesis
+        error_log("Updating existing thesis ID: $thesisId");
+        
+        $updateStmt = $conn->prepare("
+            UPDATE thesis 
+            SET title = ?, author = ?, course = ?, year = ?, abstract = ?, status = ?
+            WHERE id = ?
+        ");
+        
+        $updateStmt->bind_param("sssisis", $title, $author, $course, $year, $abstract, $status, $thesisId);
+        
+        if (!$updateStmt->execute()) {
+            throw new Exception("Failed to update thesis: " . $updateStmt->error);
+        }
+        
+        $updateStmt->close();
+    } else {
+        // Insert new thesis
+        error_log("Inserting new thesis");
+        
+        // Generate unique file path
+        $uniqueId = uniqid();
+        $filePath = "uploads/thesis_files/thesis_" . $uniqueId . ".pdf";
+        
+        $insertStmt = $conn->prepare("
+            INSERT INTO thesis (title, author, course, year, abstract, file_path, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
+        
+        $insertStmt->bind_param("sssisss", $title, $author, $course, $year, $abstract, $filePath, $status);
+        
+        if (!$insertStmt->execute()) {
+            throw new Exception("Failed to insert thesis: " . $insertStmt->error);
+        }
+        
+        $thesisId = $conn->insert_id;
+        $insertStmt->close();
+        
+        error_log("New thesis inserted with ID: $thesisId");
+    }
+
+    // Prepare keywords JSON
+    $keywordsJson = json_encode($keywords);
+    $citationsJson = json_encode($citations);
+
+    // Save or update classification
+    // First check if classification already exists
+    $checkStmt = $conn->prepare("SELECT id FROM thesis_classification WHERE thesis_id = ?");
+    $checkStmt->bind_param("i", $thesisId);
+    $checkStmt->execute();
+    $result = $checkStmt->get_result();
+    $classificationExists = $result->num_rows > 0;
+    $checkStmt->close();
+
+    if ($classificationExists) {
+        // Update existing classification
+        error_log("Updating existing classification for thesis ID: $thesisId");
+        
+        $classStmt = $conn->prepare("
+            UPDATE thesis_classification 
+            SET subject_category = ?, research_method = ?, complexity_level = ?, 
+                keywords = ?, citations = ?
+            WHERE thesis_id = ?
+        ");
+        
+        $classStmt->bind_param("sssssi", $subjectCategory, $researchMethod, $complexityLevel, 
+                              $keywordsJson, $citationsJson, $thesisId);
+        
+        if (!$classStmt->execute()) {
+            throw new Exception("Failed to update classification: " . $classStmt->error);
+        }
+        
+        $classStmt->close();
+    } else {
+        // Insert new classification
+        error_log("Inserting new classification for thesis ID: $thesisId");
+        
+        $classStmt = $conn->prepare("
+            INSERT INTO thesis_classification (thesis_id, subject_category, subject_confidence, 
+                                             research_method, method_confidence, complexity_level, 
+                                             complexity_confidence, keywords, citations)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        
+        $confidence = 85.00;
+        $classStmt->bind_param("isdsdsdss", $thesisId, $subjectCategory, $confidence,
+                              $researchMethod, $confidence, $complexityLevel, $confidence,
+                              $keywordsJson, $citationsJson);
+        
+        if (!$classStmt->execute()) {
+            throw new Exception("Failed to insert classification: " . $classStmt->error);
+        }
+        
+        $classStmt->close();
+    }
+
+    // Commit transaction
+    $conn->commit();
+    
+    error_log("✅ Thesis and classification saved successfully. ID: $thesisId");
+    
+    echo json_encode([
+        'success' => true,
+        'thesis_id' => $thesisId,
+        'message' => 'Thesis and classification saved successfully'
+    ]);
+    
+} catch (Exception $e) {
+    // Rollback on error
+    if (isset($conn)) {
+        $conn->rollback();
+    }
+    
+    error_log("Error: " . $e->getMessage());
+    
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+}
+?>
