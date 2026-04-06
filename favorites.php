@@ -653,8 +653,14 @@ $result = $stmt->get_result();
                     </div>
                 </div>
             </div>
-            <a href="my_profile.php" class="nav-link">
-                <i class="fas fa-user-circle"></i>
+            <a href="my_profile.php" class="nav-link" style="gap: 0.75rem;">
+                <div style="width: 35px; height: 35px; border-radius: 50%; background: var(--primary-orange); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid white; flex-shrink: 0;">
+                    <?php if (!empty($user['profile_picture'])): ?>
+                        <img src="<?php echo htmlspecialchars($user['profile_picture']); ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                    <?php else: ?>
+                        <i class="fas fa-user-circle" style="font-size: 1.5rem;"></i>
+                    <?php endif; ?>
+                </div>
                 <?php echo htmlspecialchars($_SESSION['full_name']); ?>
             </a>
             <a href="#" class="nav-link logout" onclick="handleLogout(event)"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -687,8 +693,14 @@ $result = $stmt->get_result();
     <?php if (is_logged_in()): ?>
     <div class="mobile-user-menu">
         <a href="my_profile.php" style="text-decoration: none; color: inherit;">
-            <div class="profile-info">
-                <i class="fas fa-user-circle"></i>
+            <div class="profile-info" style="gap: 1rem;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                    <?php if (!empty($user['profile_picture'])): ?>
+                        <img src="<?php echo htmlspecialchars($user['profile_picture']); ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                    <?php else: ?>
+                        <i class="fas fa-user-circle" style="font-size: 2rem; color: var(--primary-orange);"></i>
+                    <?php endif; ?>
+                </div>
                 <span><?php echo htmlspecialchars($_SESSION['full_name']); ?></span>
             </div>
         </a>
