@@ -600,31 +600,6 @@ $result = $stmt->get_result();
         <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
         <?php endif; ?>
     </ul>
-</nav</nav>
-
-        <!-- Mobile Hamburger Menu Button -->
-        <button class="hamburger-menu" id="hamburgerMenu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-    </div>
-</header>
-
-<!-- Mobile Navigation Overlay -->
-<div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
-
-<!-- Mobile Navigation Menu -->
-<nav class="mobile-nav-menu" id="mobileNavMenu">
-    <ul class="sidebar-menu">
-        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
-        <li><a href="about.php"><i class="fas fa-info-circle"></i> About</a></li>
-        <li><a href="browse.php"><i class="fas fa-compass"></i> Browse Thesis</a></li>
-        <li><a href="favorites.php" class="active"><i class="fas fa-heart"></i> Favorites</a></li>
-        <?php if (is_admin()): ?>
-        <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
-        <?php endif; ?>
-    </ul>
 </nav>
 
 <!-- Main Container -->
