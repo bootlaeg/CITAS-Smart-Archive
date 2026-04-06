@@ -130,6 +130,100 @@ require_once 'db_includes/db_connect.php';
             border: 1px solid white;
         }
 
+        /* Hamburger Menu Button - Only on Mobile */
+        .hamburger-menu {
+            display: none;
+            flex-direction: column;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+
+        .hamburger-menu span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-menu.active span:nth-child(1) {
+            transform: rotate(45deg) translate(10px, 10px);
+        }
+
+        .hamburger-menu.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-menu.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        /* Mobile Navigation Overlay */
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .mobile-nav-overlay.active {
+            display: block;
+        }
+
+        /* Mobile Sidebar Navigation */
+        .mobile-nav-menu {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: var(--primary-orange);
+            z-index: 1002;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            padding-top: 60px;
+        }
+
+        .mobile-nav-menu.active {
+            transform: translateX(0);
+        }
+
+        .mobile-nav-menu .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+
+        .mobile-nav-menu .sidebar-menu li {
+            margin: 0;
+        }
+
+        .mobile-nav-menu .sidebar-menu a {
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-nav-menu .sidebar-menu a:hover,
+        .mobile-nav-menu .sidebar-menu a.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left-color: white;
+        }
+
         /* Main Container */
         .container-main {
             max-width: 1400px;
@@ -805,12 +899,32 @@ require_once 'db_includes/db_connect.php';
 
         @media (max-width: 768px) {
             .header-container {
-                flex-direction: column;
+                justify-content: space-between;
+                align-items: center;
+                flex-direction: row;
                 gap: 1rem;
             }
 
+            .logo {
+                flex-shrink: 0;
+            }
+
             .search-bar {
+                flex: 1;
                 max-width: 100%;
+                order: 3;
+                width: 100%;
+            }
+
+            /* Hide desktop navigation on mobile */
+            .nav-links {
+                display: none;
+            }
+
+            /* Show hamburger menu on mobile */
+            .hamburger-menu {
+                display: flex;
+                order: 2;
             }
 
             .container-main {
@@ -819,17 +933,24 @@ require_once 'db_includes/db_connect.php';
             }
 
             .sidebar {
-                position: relative;
-                top: 0;
+                display: none;
+            }
+
+            .featured-banner {
+                padding: 1.5rem;
+            }
+
+            .featured-banner h2 {
+                font-size: 1.5rem;
+            }
+
+            .page-header h1 {
+                font-size: 1.5rem;
             }
 
             .vision-mission-container,
             .developers-container {
                 grid-template-columns: 1fr;
-            }
-
-            .page-header h1 {
-                font-size: 1.5rem;
             }
 
             .developer-modal-header {
@@ -891,10 +1012,31 @@ require_once 'db_includes/db_connect.php';
         <div class="logo">
             <i class="fas fa-book-open"></i>
             <span>Citas Smart Archive</span>
-        </div>  
+        </div>
+        
+        <!-- Desktop Navigation -->
         <nav class="nav-links">
             <?php if (is_logged_in()): ?>
             <a href="index.php" class="nav-link"><i class="fas fa-home"></i> Home</a>
+            <div class="notification-center" id="notificationCenter" style="position: relative;">
+                <a href="#" class="nav-link" onclick="event.preventDefault(); toggleNotificationPanel()" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge" style="display: none; position: absolute; top: 5px; right: 5px; background: #E74C3C; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold;">0</span>
+                </a>
+                <div class="notification-dropdown" id="notificationDropdown" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid #ECF0F1; border-radius: 8px; width: 350px; max-height: 400px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000;">
+                    <div style="padding: 1rem; border-bottom: 1px solid #ECF0F1; display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0; font-size: 1rem;">Notifications</h4>
+                        <button style="background: none; border: none; cursor: pointer; color: #7F8C8D;" onclick="toggleNotificationPanel()">&times;</button>
+                    </div>
+                    <div id="notificationList" style="max-height: 300px; overflow-y: auto;">
+                        <p style="padding: 1rem; text-align: center; color: #7F8C8D;">Loading notifications...</p>
+                    </div>
+                    <div style="padding: 0.75rem; border-top: 1px solid #ECF0F1; display: flex; gap: 0.5rem;">
+                        <button onclick="markAllAsRead()" style="flex: 1; padding: 0.5rem; background: #F8F9F9; border: 1px solid #ECF0F1; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Mark as Read</button>
+                        <button onclick="clearAllNotifications()" style="flex: 1; padding: 0.5rem; background: #F8F9F9; border: 1px solid #ECF0F1; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Clear All</button>
+                    </div>
+                </div>
+            </div>
             <a href="my_profile.php" class="nav-link">
                 <i class="fas fa-user-circle"></i>
                 <?php echo htmlspecialchars($_SESSION['full_name']); ?>
@@ -904,8 +1046,33 @@ require_once 'db_includes/db_connect.php';
             <a href="#" class="nav-link" onclick="openAuthModal(event)"><i class="fas fa-sign-in-alt"></i> Login</a>
             <?php endif; ?>
         </nav>
+
+        <!-- Mobile Hamburger Menu Button -->
+        <button class="hamburger-menu" id="hamburgerMenu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </div>
 </header>
+
+<!-- Mobile Navigation Overlay -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+<!-- Mobile Navigation Menu -->
+<nav class="mobile-nav-menu" id="mobileNavMenu">
+    <ul class="sidebar-menu">
+        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="about.php" class="active"><i class="fas fa-info-circle"></i> About</a></li>
+        <?php if (is_logged_in()): ?>
+        <li><a href="browse.php"><i class="fas fa-compass"></i> Browse Thesis</a></li>
+        <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
+        <?php if (is_admin()): ?>
+        <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
+        <?php endif; ?>
+        <?php endif; ?>
+    </ul>
+</nav>
 
 <!-- Main Container -->
 <div class="container-main">
@@ -1192,6 +1359,36 @@ require_once 'db_includes/db_connect.php';
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="script.js"></script>
 <script>
+// Mobile Menu Toggle
+const hamburgerMenu = document.getElementById('hamburgerMenu');
+const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+const mobileNavMenu = document.getElementById('mobileNavMenu');
+
+if (hamburgerMenu) {
+    hamburgerMenu.addEventListener('click', () => {
+        hamburgerMenu.classList.toggle('active');
+        mobileNavOverlay.classList.toggle('active');
+        mobileNavMenu.classList.toggle('active');
+    });
+
+    // Close menu when clicking overlay
+    mobileNavOverlay.addEventListener('click', () => {
+        hamburgerMenu.classList.remove('active');
+        mobileNavOverlay.classList.remove('active');
+        mobileNavMenu.classList.remove('active');
+    });
+
+    // Close menu when clicking a link
+    const mobileNavLinks = mobileNavMenu.querySelectorAll('a');
+    mobileNavLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            hamburgerMenu.classList.remove('active');
+            mobileNavOverlay.classList.remove('active');
+            mobileNavMenu.classList.remove('active');
+        });
+    });
+}
+
 // Search Function
 function performHeaderSearch() {
     const searchTerm = document.getElementById('headerSearchInput').value;
