@@ -1549,7 +1549,7 @@ document.getElementById('headerSearchInput')?.addEventListener('keypress', funct
                 name: 'Glenn Guarte',
                 role: 'System Developer',
                 photo: 'img/1glenn.jpg',
-                description: 'Responsible for UI/UX testing, backend functionality validation, and implementing advanced document processing capabilities. Led the integration of Tesseract OCR for intelligent document reading and text extraction, with specialized support for IMRaD format (Introduction, Methods, Results, and Discussion) parsing in journal-type documents. Provides critical feedback and quality assurance throughout the development lifecycle.',
+                description: 'Responsible for UI/UX testing, backend functionality validation, document processing implementation using Tesseract OCR, and quality assurance throughout the development lifecycle.',
                 contributions: [
                     'UI/UX Testing & Feedback',
                     'Backend Functionality Testing & Validation',
