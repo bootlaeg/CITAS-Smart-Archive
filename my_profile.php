@@ -716,10 +716,6 @@ $notifications = $conn->query("SELECT * FROM notifications WHERE user_id = {$_SE
             <i class="fas fa-book-open"></i>
             <span>Citas Smart Archive</span>
         </div>
-        <div class="search-bar">
-            <input type="text" placeholder="Search theses, authors, topics..." id="headerSearchInput">
-            <button type="button" onclick="performHeaderSearch()"><i class="fas fa-search"></i></button>
-        </div>
         <nav class="nav-links">
             <a href="index.php" class="nav-link"><i class="fas fa-home"></i> Home</a>
             <div class="notification-center" id="notificationCenter" style="position: relative;">
