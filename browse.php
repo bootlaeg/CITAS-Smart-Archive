@@ -761,6 +761,12 @@ $result = $stmt->get_result();
             <i class="fas fa-sign-out-alt"></i> Logout
         </button>
     </div>
+    <?php else: ?>
+    <div class="mobile-login-menu">
+        <button class="mobile-login-btn" onclick="openAuthModal(event)">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+    </div>
     <?php endif; ?>
 </nav>
 
