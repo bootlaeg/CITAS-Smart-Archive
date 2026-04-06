@@ -579,6 +579,54 @@ $access_result = $conn->query("
             border-left-color: white;
         }
 
+        /* Mobile User Menu Section */
+        .mobile-user-menu {
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+
+        .mobile-user-menu .profile-info {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-user-menu .profile-info i {
+            font-size: 1.5rem;
+        }
+
+        .mobile-user-menu .profile-info span {
+            flex: 1;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-all;
+        }
+
+        .mobile-user-menu .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: white;
+            width: 100%;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .mobile-user-menu .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         @media (max-width: 768px) {
             .header-container {
                 justify-content: space-between;
@@ -695,6 +743,18 @@ $access_result = $conn->query("
         <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
         <li><a href="admin.php" class="active"><i class="fas fa-lock"></i> Admin Panel</a></li>
     </ul>
+
+    <?php if (is_logged_in()): ?>
+    <div class="mobile-user-menu">
+        <div class="profile-info">
+            <i class="fas fa-user-circle"></i>
+            <span><?php echo htmlspecialchars($_SESSION['full_name']); ?></span>
+        </div>
+        <button class="logout-btn" onclick="handleLogout(event)">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+    <?php endif; ?>
 </nav>
 
 <!-- Main Container -->
