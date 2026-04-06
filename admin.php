@@ -484,14 +484,129 @@ $access_result = $conn->query("
             border: 1px solid #E74C3C !important;
         }
 
+        /* Hamburger Menu Button - Only on Mobile */
+        .hamburger-menu {
+            display: none;
+            flex-direction: column;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+
+        .hamburger-menu span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-menu.active span:nth-child(1) {
+            transform: rotate(45deg) translate(10px, 10px);
+        }
+
+        .hamburger-menu.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-menu.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        /* Mobile Navigation Overlay */
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+        }
+
+        .mobile-nav-overlay.active {
+            display: block;
+        }
+
+        /* Mobile Sidebar Navigation */
+        .mobile-nav-menu {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: var(--primary-orange);
+            z-index: 1002;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            padding-top: 60px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.25);
+        }
+
+        .mobile-nav-menu.active {
+            transform: translateX(0);
+        }
+
+        .mobile-nav-menu .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+
+        .mobile-nav-menu .sidebar-menu li {
+            margin: 0;
+        }
+
+        .mobile-nav-menu .sidebar-menu a {
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-nav-menu .sidebar-menu a:hover,
+        .mobile-nav-menu .sidebar-menu a.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left-color: white;
+        }
+
         @media (max-width: 768px) {
             .header-container {
-                flex-direction: column;
+                justify-content: space-between;
+                align-items: center;
+                flex-direction: row;
                 gap: 1rem;
             }
 
+            .logo {
+                flex-shrink: 0;
+            }
+
             .search-bar {
+                flex: 1;
                 max-width: 100%;
+                order: 3;
+                width: 100%;
+            }
+
+            /* Hide desktop navigation on mobile */
+            .nav-links {
+                display: none;
+            }
+
+            /* Show hamburger menu on mobile */
+            .hamburger-menu {
+                display: flex;
+                order: 2;
             }
 
             .container-main {
@@ -500,8 +615,7 @@ $access_result = $conn->query("
             }
 
             .sidebar {
-                position: relative;
-                top: 0;
+                display: none;
             }
 
             .stats-grid {
@@ -530,6 +644,8 @@ $access_result = $conn->query("
             <i class="fas fa-book-open"></i>
             <span>Citas Smart Archive</span>
         </div>
+        
+        <!-- Desktop Navigation -->
         <nav class="nav-links">
             <a href="index.php" class="nav-link"><i class="fas fa-home"></i> Home</a>
             <div class="notification-center" id="notificationCenter" style="position: relative;">
@@ -557,8 +673,29 @@ $access_result = $conn->query("
             </a>
             <a href="#" class="nav-link logout" onclick="handleLogout(event)"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </nav>
+
+        <!-- Mobile Hamburger Menu Button -->
+        <button class="hamburger-menu" id="hamburgerMenu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </div>
 </header>
+
+<!-- Mobile Navigation Overlay -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+<!-- Mobile Navigation Menu -->
+<nav class="mobile-nav-menu" id="mobileNavMenu">
+    <ul class="sidebar-menu">
+        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="about.php"><i class="fas fa-info-circle"></i> About</a></li>
+        <li><a href="browse.php"><i class="fas fa-compass"></i> Browse Thesis</a></li>
+        <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
+        <li><a href="admin.php" class="active"><i class="fas fa-lock"></i> Admin Panel</a></li>
+    </ul>
+</nav>
 
 <!-- Main Container -->
 <div class="container-main">
@@ -981,6 +1118,36 @@ $access_result = $conn->query("
 // Ensure all functions are available when page is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Admin panel JavaScript loaded');
+    
+    // Mobile Menu Toggle
+    const hamburgerMenu = document.getElementById('hamburgerMenu');
+    const mobileNavMenu = document.getElementById('mobileNavMenu');
+    const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+    const mobileNavLinks = document.querySelectorAll('.mobile-nav-menu a');
+
+    if (hamburgerMenu) {
+        hamburgerMenu.addEventListener('click', function() {
+            hamburgerMenu.classList.toggle('active');
+            mobileNavMenu.classList.toggle('active');
+            mobileNavOverlay.classList.toggle('active');
+        });
+    }
+
+    if (mobileNavOverlay) {
+        mobileNavOverlay.addEventListener('click', function() {
+            hamburgerMenu.classList.remove('active');
+            mobileNavMenu.classList.remove('active');
+            mobileNavOverlay.classList.remove('active');
+        });
+    }
+
+    mobileNavLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            hamburgerMenu.classList.remove('active');
+            mobileNavMenu.classList.remove('active');
+            mobileNavOverlay.classList.remove('active');
+        });
+    });
 });
 
 // Switch Tabs - Define in global scope
