@@ -182,7 +182,7 @@ $result = $stmt->get_result();
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.8);
             z-index: 999;
         }
 
@@ -203,6 +203,7 @@ $result = $stmt->get_result();
             transform: translateX(-100%);
             transition: transform 0.3s ease;
             padding-top: 60px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.25);
         }
 
         .mobile-nav-menu.active {
