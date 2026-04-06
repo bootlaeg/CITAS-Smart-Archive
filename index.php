@@ -5,6 +5,16 @@
  */
 
 require_once 'db_includes/db_connect.php';
+
+// Get user data if logged in
+$user = null;
+if (is_logged_in()) {
+    $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

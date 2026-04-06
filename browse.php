@@ -7,6 +7,13 @@
 require_once 'db_includes/db_connect.php';
 require_login();
 
+// Get user data from database
+$stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$user = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
 // Pagination settings
 $items_per_page = 5;
 $current_page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
