@@ -615,9 +615,9 @@ $notifications = $conn->query("SELECT * FROM notifications WHERE user_id = {$_SE
 
         /* Mobile User Menu Section */
         .mobile-user-menu {
-            border-top: 1px solid rgba(255, 255, 255, 0.3);
-            margin-top: 1rem;
-            padding-top: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
 
         .mobile-user-menu .profile-info {
@@ -626,7 +626,7 @@ $notifications = $conn->query("SELECT * FROM notifications WHERE user_id = {$_SE
             align-items: center;
             gap: 0.75rem;
             color: white;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: none;
             cursor: pointer;
         }
 
