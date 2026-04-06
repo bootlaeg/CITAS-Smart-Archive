@@ -45,16 +45,89 @@ try {
     }
     $check_stmt->close();
 
-    // SKIP PROFILE PICTURE UPLOAD ON HOSTINGER
-    // Profile picture upload is intentionally disabled for shared hosting compatibility
-    
-    // Update profile (without picture upload)
-    $stmt = $conn->prepare("UPDATE users SET full_name = ?, email = ?, address = ?, contact_number = ?, course = ?, year_level = ? WHERE id = ?");
-    if (!$stmt) {
-        throw new Exception('Database error: ' . $conn->error);
+    // HANDLE PROFILE PICTURE UPLOAD
+    if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] !== UPLOAD_ERR_NO_FILE) {
+        try {
+            $file = $_FILES['profile_picture'];
+            
+            // Check for file upload errors
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception('File upload error code: ' . $file['error']);
+            }
+            
+            // Validate file size (5MB max)
+            if ($file['size'] > 5 * 1024 * 1024) {
+                throw new Exception('File size exceeds 5MB limit');
+            }
+            
+            // Validate file extension
+            $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            
+            if (!in_array($file_ext, $allowed_ext)) {
+                throw new Exception('Invalid file type');
+            }
+            
+            // Prepare upload directory
+            $upload_dir = __DIR__ . '/../uploads/profile_pictures/';
+            
+            // Create directory if needed
+            if (!is_dir($upload_dir)) {
+                @mkdir(__DIR__ . '/../uploads/', 0755, true);
+                @mkdir($upload_dir, 0755, true);
+                @chmod($upload_dir, 0777);
+            }
+            
+            // Generate unique filename
+            $filename = 'profile_' . $user_id . '_' . time() . '.' . $file_ext;
+            $filepath = $upload_dir . $filename;
+            
+            // Move uploaded file
+            if (@move_uploaded_file($file['tmp_name'], $filepath)) {
+                @chmod($filepath, 0644);
+                
+                // Delete old picture if exists
+                $check = $conn->prepare("SELECT profile_picture FROM users WHERE id = ?");
+                if ($check) {
+                    $check->bind_param("i", $user_id);
+                    $check->execute();
+                    $result = $check->get_result()->fetch_assoc();
+                    $check->close();
+                    
+                    if ($result && !empty($result['profile_picture'])) {
+                        $old_path = __DIR__ . '/../' . $result['profile_picture'];
+                        if (file_exists($old_path)) {
+                            @unlink($old_path);
+                        }
+                    }
+                }
+                
+                $profile_picture = 'uploads/profile_pictures/' . $filename;
+            } else {
+                throw new Exception('Could not move uploaded file to storage');
+            }
+        } catch (Exception $e) {
+            // Log error but don't stop profile update
+            error_log('Profile picture upload failed: ' . $e->getMessage());
+        }
     }
-    
-    $stmt->bind_param("ssssssi", $full_name, $email, $address, $contact_number, $course, $year_level, $user_id);
+
+    // Update profile
+    if ($profile_picture) {
+        // Update with profile picture
+        $stmt = $conn->prepare("UPDATE users SET full_name = ?, email = ?, address = ?, contact_number = ?, course = ?, year_level = ?, profile_picture = ? WHERE id = ?");
+        if (!$stmt) {
+            throw new Exception('Database error: ' . $conn->error);
+        }
+        $stmt->bind_param("sssssssi", $full_name, $email, $address, $contact_number, $course, $year_level, $profile_picture, $user_id);
+    } else {
+        // Update without profile picture
+        $stmt = $conn->prepare("UPDATE users SET full_name = ?, email = ?, address = ?, contact_number = ?, course = ?, year_level = ? WHERE id = ?");
+        if (!$stmt) {
+            throw new Exception('Database error: ' . $conn->error);
+        }
+        $stmt->bind_param("ssssssi", $full_name, $email, $address, $contact_number, $course, $year_level, $user_id);
+    }
 
     if (!$stmt->execute()) {
         throw new Exception('Failed to update profile');
