@@ -282,6 +282,43 @@ $result = $stmt->get_result();
         .mobile-user-menu .logout-btn:hover {
             background: rgba(255, 255, 255, 0.2);
         }
+
+        /* Mobile Login Menu Section */
+        .mobile-login-menu {
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            margin-top: 1rem;
+            padding-top: 1rem;
+        }
+
+        .mobile-login-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: white;
+            width: 100%;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-family: inherit;
+            margin: 0;
+        }
+
+        .mobile-login-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-user-menu .profile-info {
+            cursor: pointer;
+        }
+
+        .mobile-user-menu .profile-info:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         .container-main {
             max-width: 1400px;
             margin: 2rem auto;
@@ -649,10 +686,12 @@ $result = $stmt->get_result();
 
     <?php if (is_logged_in()): ?>
     <div class="mobile-user-menu">
-        <div class="profile-info">
-            <i class="fas fa-user-circle"></i>
-            <span><?php echo htmlspecialchars($_SESSION['full_name']); ?></span>
-        </div>
+        <a href="my_profile.php" style="text-decoration: none; color: inherit;">
+            <div class="profile-info">
+                <i class="fas fa-user-circle"></i>
+                <span><?php echo htmlspecialchars($_SESSION['full_name']); ?></span>
+            </div>
+        </a>
         <button class="logout-btn" onclick="handleLogout(event)">
             <i class="fas fa-sign-out-alt"></i> Logout
         </button>
