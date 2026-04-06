@@ -1162,18 +1162,6 @@ if (is_logged_in()) {
 
 <!-- Mobile Navigation Menu -->
 <nav class="mobile-nav-menu" id="mobileNavMenu">
-    <ul class="sidebar-menu">
-        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
-        <li><a href="about.php" class="active"><i class="fas fa-info-circle"></i> About</a></li>
-        <?php if (is_logged_in()): ?>
-        <li><a href="browse.php"><i class="fas fa-compass"></i> Browse Thesis</a></li>
-        <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
-        <?php if (is_admin()): ?>
-        <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
-        <?php endif; ?>
-        <?php endif; ?>
-    </ul>
-
     <?php if (is_logged_in()): ?>
     <div class="mobile-user-menu">
         <a href="my_profile.php" style="text-decoration: none; color: inherit;">
@@ -1193,6 +1181,18 @@ if (is_logged_in()) {
         </button>
     </div>
     <?php endif; ?>
+    
+    <ul class="sidebar-menu">
+        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="about.php" class="active"><i class="fas fa-info-circle"></i> About</a></li>
+        <?php if (is_logged_in()): ?>
+        <li><a href="browse.php"><i class="fas fa-compass"></i> Browse Thesis</a></li>
+        <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
+        <?php if (is_admin()): ?>
+        <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
+        <?php endif; ?>
+        <?php endif; ?>
+    </ul>
 </nav>
 
 <!-- Main Container -->

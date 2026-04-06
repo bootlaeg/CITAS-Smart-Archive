@@ -764,16 +764,6 @@ $notifications = $conn->query("SELECT * FROM notifications WHERE user_id = {$_SE
 
 <!-- Mobile Navigation Menu -->
 <nav class="mobile-nav-menu" id="mobileNavMenu">
-    <ul class="sidebar-menu">
-        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
-        <li><a href="about.php"><i class="fas fa-info-circle"></i> About</a></li>
-        <li><a href="browse.php"><i class="fas fa-compass"></i> Browse Thesis</a></li>
-        <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
-        <?php if (is_admin()): ?>
-        <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
-        <?php endif; ?>
-    </ul>
-
     <?php if (is_logged_in()): ?>
     <div class="mobile-user-menu">
         <a href="my_profile.php" style="text-decoration: none; color: inherit;">
@@ -793,6 +783,16 @@ $notifications = $conn->query("SELECT * FROM notifications WHERE user_id = {$_SE
         </button>
     </div>
     <?php endif; ?>
+    
+    <ul class="sidebar-menu">
+        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="about.php"><i class="fas fa-info-circle"></i> About</a></li>
+        <li><a href="browse.php"><i class="fas fa-compass"></i> Browse Thesis</a></li>
+        <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
+        <?php if (is_admin()): ?>
+        <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
+        <?php endif; ?>
+    </ul>
 </nav>
 
 <!-- Main Container -->

@@ -790,16 +790,6 @@ $result = $stmt->get_result();
 
 <!-- Mobile Navigation Menu -->
 <nav class="mobile-nav-menu" id="mobileNavMenu">
-    <ul class="sidebar-menu">
-        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
-        <li><a href="about.php"><i class="fas fa-info-circle"></i> About</a></li>
-        <li><a href="browse.php" class="active"><i class="fas fa-compass"></i> Browse Thesis</a></li>
-        <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
-        <?php if (is_admin()): ?>
-        <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
-        <?php endif; ?>
-    </ul>
-
     <?php if (is_logged_in()): ?>
     <div class="mobile-user-menu">
         <a href="my_profile.php" style="text-decoration: none; color: inherit;">
@@ -818,7 +808,19 @@ $result = $stmt->get_result();
             <i class="fas fa-sign-out-alt"></i> Logout
         </button>
     </div>
-    <?php else: ?>
+    <?php endif; ?>
+    
+    <ul class="sidebar-menu">
+        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="about.php"><i class="fas fa-info-circle"></i> About</a></li>
+        <li><a href="browse.php" class="active"><i class="fas fa-compass"></i> Browse Thesis</a></li>
+        <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
+        <?php if (is_admin()): ?>
+        <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
+        <?php endif; ?>
+    </ul>
+
+    <?php if (!is_logged_in()): ?>
     <div class="mobile-login-menu">
         <button class="mobile-login-btn" onclick="openAuthModal(event)">
             <i class="fas fa-sign-in-alt"></i> Login
