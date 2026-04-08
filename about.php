@@ -1096,6 +1096,220 @@ if (is_logged_in()) {
                 width: 100px;
                 height: 100px;
             }
+
+            /* Authentication Modal on Mobile */
+            .auth-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.6);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+            }
+
+            .auth-modal-overlay.active {
+                display: flex;
+            }
+
+            .auth-modal-content {
+                background: white;
+                border-radius: 12px;
+                width: 90%;
+                max-width: 600px;
+                padding: 2rem;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+                animation: slideUp 0.3s ease;
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            @keyframes slideUp {
+                from {
+                    transform: translateY(50px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            .auth-modal-header {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                position: relative;
+                margin-bottom: 1.5rem;
+                flex-shrink: 0;
+            }
+
+            .auth-modal-header h2 {
+                font-size: 1.5rem;
+                color: var(--text-dark);
+                margin: 0;
+                flex: 1;
+                text-align: center;
+            }
+
+            .auth-modal-close {
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                color: var(--text-gray);
+                cursor: pointer;
+                transition: color 0.3s ease;
+                position: absolute;
+                right: 0;
+                top: 0;
+            }
+
+            .auth-modal-close:hover {
+                color: var(--primary-orange);
+            }
+
+            .auth-tabs {
+                display: flex;
+                gap: 1rem;
+                margin-bottom: 2rem;
+                border-bottom: 2px solid var(--border-light);
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            .auth-tab {
+                background: none;
+                border: none;
+                padding: 0.75rem 1rem;
+                cursor: pointer;
+                font-weight: 600;
+                color: var(--text-gray);
+                transition: all 0.3s ease;
+                border-bottom: 3px solid transparent;
+                margin-bottom: -2px;
+            }
+
+            .auth-tab.active {
+                color: var(--primary-orange);
+                border-bottom-color: var(--primary-orange);
+            }
+
+            .auth-tab-content {
+                overflow-y: auto;
+                padding-right: 0.5rem;
+                flex: 1;
+            }
+
+            .auth-tab-content::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .auth-tab-content::-webkit-scrollbar-track {
+                background: var(--border-light);
+                border-radius: 10px;
+            }
+
+            .auth-tab-content::-webkit-scrollbar-thumb {
+                background: var(--primary-orange);
+                border-radius: 10px;
+            }
+
+            .auth-tab-content::-webkit-scrollbar-thumb:hover {
+                background: var(--hover-orange);
+            }
+
+            .auth-form-group {
+                margin-bottom: 1rem;
+            }
+
+            .auth-form-group label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 600;
+                color: var(--primary-orange);
+                text-align: left;
+            }
+
+            .auth-form-group input,
+            .auth-form-group select {
+                width: 100%;
+                padding: 0.75rem;
+                border: 1px solid var(--border-light);
+                border-radius: 8px;
+                font-size: 1rem;
+                transition: border-color 0.3s ease;
+            }
+
+            .auth-form-group input:focus,
+            .auth-form-group select:focus {
+                outline: none;
+                border-color: var(--primary-orange);
+                box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+            }
+
+            .auth-submit-btn {
+                width: 100%;
+                padding: 0.75rem;
+                background: var(--primary-orange);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-top: 1rem;
+            }
+
+            .auth-submit-btn:hover {
+                background: var(--hover-orange);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+            }
+
+            .auth-footer-text {
+                text-align: center;
+                color: var(--text-gray);
+                font-size: 0.9rem;
+                margin-top: 1rem;
+            }
+
+            .auth-footer-text a {
+                color: var(--primary-orange);
+                text-decoration: none;
+                cursor: pointer;
+                font-weight: 600;
+            }
+
+            .auth-footer-text a:hover {
+                text-decoration: underline;
+            }
+
+            .alert-message {
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 1rem;
+                display: none;
+                text-align: center;
+            }
+
+            .alert-success {
+                background: #D5F4E6;
+                color: #27AE60;
+                border: 1px solid #27AE60;
+            }
+
+            .alert-danger {
+                background: #F8D7DA;
+                color: #E74C3C;
+                border: 1px solid #E74C3C;
+            }
         }
     </style>
 </head>
@@ -1202,6 +1416,145 @@ if (is_logged_in()) {
     </div>
     <?php endif; ?>
 </nav>
+
+<!-- Authentication Modal Overlay -->
+<div class="auth-modal-overlay" id="authModalOverlay">
+    <div class="auth-modal-content">
+        <div class="auth-modal-header">
+            <h2>Welcome to Citas Smart Archive</h2>
+            <button type="button" class="auth-modal-close" onclick="closeAuthModal()">&times;</button>
+        </div>
+
+        <p style="text-align: center; color: var(--text-gray); margin-bottom: 1.5rem; font-size: 0.95rem;">
+            To access the Thesis, please log in or create an account first.
+        </p>
+
+        <div class="auth-tabs">
+            <button type="button" class="auth-tab active" onclick="switchAuthTab(event, 'login')">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </button>
+            <button type="button" class="auth-tab" onclick="switchAuthTab(event, 'signup')">
+                <i class="fas fa-user-plus me-2"></i>Sign Up
+            </button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="login-tab" class="auth-tab-content" style="display: block;">
+            <div id="loginMessage" class="alert-message"></div>
+            <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+                <div class="auth-form-group">
+                    <label for="loginStudentID">Account ID / Credential</label>
+                    <input type="text" id="loginStudentID" name="student_id" placeholder="Enter Your ID or Credential" required>
+                </div>
+                <div class="auth-form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="auth-submit-btn">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </button>
+            </form>
+            <p class="auth-footer-text">
+                <a href="#" onclick="switchAuthTab(event, 'signup')">Don't have an account? Sign Up</a>
+            </p>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signup-tab" class="auth-tab-content" style="display: none;">
+            <div id="signupMessage" class="alert-message"></div>
+            <form id="signupForm" onsubmit="handleSignupSubmit(event)" enctype="multipart/form-data">
+                <div class="row g-2">
+                    <div class="col-md-12">
+                        <div class="auth-form-group">
+                            <label for="signupRole">Account Type</label>
+                            <select id="signupRole" name="user_role" required>
+                                <option value="student" selected>Student</option>
+                                <option value="instructor">Instructor</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="auth-form-group">
+                            <label for="signupName">Full Name</label>
+                            <input type="text" id="signupName" name="full_name" placeholder="Enter Full Name" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="auth-form-group">
+                            <label for="signupEmail">Email</label>
+                            <input type="email" id="signupEmail" name="email" placeholder="Enter Email" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="auth-form-group">
+                            <label for="signupStudentID" id="signupCredentialLabel">Student ID</label>
+                            <input type="text" id="signupStudentID" name="student_id" placeholder="Enter Student ID" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6" id="signupAddressGroup">
+                        <div class="auth-form-group">
+                            <label for="signupAddress">Address</label>
+                            <input type="text" id="signupAddress" name="address" placeholder="Enter Full Address" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6" id="signupContactGroup">
+                        <div class="auth-form-group">
+                            <label for="signupContact">Contact Number</label>
+                            <input type="tel" id="signupContact" name="contact_number" placeholder="Enter Contact Number" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6" id="signupCourseGroup">
+                        <div class="auth-form-group">
+                            <label for="signupCourse">Course</label>
+                            <select id="signupCourse" name="course" required>
+                                <option value="">Select Course</option>
+                                <option value="BSIT">Bachelor of Science in Information Technology</option>
+                                <option value="BMA">Bachelor of Multimedia Arts</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6" id="signupYearGroup">
+                        <div class="auth-form-group">
+                            <label for="signupYear">Year Level</label>
+                            <select id="signupYear" name="year_level" required>
+                                <option value="">Select Year Level</option>
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="auth-form-group">
+                            <label for="signupPassword">Password</label>
+                            <input type="password" id="signupPassword" name="password" placeholder="Create Password" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="auth-form-group">
+                            <label for="signupConfirmPassword">Confirm Password</label>
+                            <input type="password" id="signupConfirmPassword" name="confirm_password" placeholder="Confirm Password" required>
+                        </div>
+                    </div>
+                    <div class="col-md-12" id="signupLoadsheetGroup">
+                        <div class="auth-form-group">
+                            <label for="signupLoadsheet" id="signupLoadsheetLabel">Upload Student Loadsheet (Verification)</label>
+                            <input type="file" id="signupLoadsheet" name="loadsheet_file" accept=".pdf,.jpg,.jpeg,.png">
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="auth-submit-btn">
+                    <i class="fas fa-user-plus me-2"></i>Create Account
+                </button>
+            </form>
+            <p class="auth-footer-text">
+                <a href="#" onclick="switchAuthTab(event, 'login')">Already have an account? Login</a>
+            </p>
+        </div>
+    </div>
+</div>
 
 <!-- Main Container -->
 <div class="container-main">
