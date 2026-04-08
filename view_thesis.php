@@ -108,6 +108,7 @@ if (is_logged_in()) {
             background-color: #FAFAFA;
             color: var(--text-dark);
             line-height: 1.6;
+            overflow-x: hidden;
         }
 
         /* Header */
