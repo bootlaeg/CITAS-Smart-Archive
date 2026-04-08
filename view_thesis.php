@@ -165,6 +165,101 @@ if (is_logged_in()) {
             color: white;
         }
 
+        /* Hamburger Menu Button - Only on Mobile */
+        .hamburger-menu {
+            display: none;
+            flex-direction: column;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            z-index: 1001;
+        }
+
+        .hamburger-menu span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-menu.active span:nth-child(1) {
+            transform: rotate(45deg) translate(10px, 10px);
+        }
+
+        .hamburger-menu.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-menu.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        /* Mobile Navigation Overlay */
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+        }
+
+        .mobile-nav-overlay.active {
+            display: block;
+        }
+
+        /* Mobile Sidebar Navigation */
+        .mobile-nav-menu {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: var(--primary-orange);
+            z-index: 1002;
+            overflow-y: auto;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            padding-top: 60px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.25);
+        }
+
+        .mobile-nav-menu.active {
+            transform: translateX(0);
+        }
+
+        .mobile-nav-menu .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+
+        .mobile-nav-menu .sidebar-menu li {
+            margin: 0;
+        }
+
+        .mobile-nav-menu .sidebar-menu a {
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-nav-menu .sidebar-menu a:hover,
+        .mobile-nav-menu .sidebar-menu a.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left-color: white;
+        }
+
         /* Container with Sidebar Layout */
         .container-wrapper {
             max-width: 1400px;
@@ -777,6 +872,17 @@ if (is_logged_in()) {
         }
 
         @media (max-width: 768px) {
+            /* Hide desktop navigation on mobile */
+            .nav-links {
+                display: none;
+            }
+
+            /* Show hamburger menu on mobile */
+            .hamburger-menu {
+                display: flex;
+                order: 2;
+            }
+
             .thesis-title {
                 font-size: 1.5rem;
             }
@@ -852,8 +958,33 @@ if (is_logged_in()) {
             <a href="#" class="nav-link" onclick="alert('Please login to view full details')"><i class="fas fa-sign-in-alt"></i> Login</a>
             <?php endif; ?>
         </nav>
+        
+        <!-- Mobile Hamburger Menu Button -->
+        <button class="hamburger-menu" id="hamburgerMenu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </div>
 </header>
+
+<!-- Mobile Navigation Overlay -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+<!-- Mobile Navigation Menu -->
+<nav class="mobile-nav-menu" id="mobileNavMenu">
+    <ul class="sidebar-menu">
+        <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="about.php"><i class="fas fa-info-circle"></i> About</a></li>
+        <?php if (is_logged_in()): ?>
+        <li><a href="browse.php"><i class="fas fa-compass"></i> Browse Thesis</a></li>
+        <li><a href="favorites.php"><i class="fas fa-heart"></i> Favorites</a></li>
+        <?php if (is_admin()): ?>
+        <li><a href="admin.php"><i class="fas fa-lock"></i> Admin Panel</a></li>
+        <?php endif; ?>
+        <?php endif; ?>
+    </ul>
+</nav>
 
 <!-- Main Container with Sidebar -->
 <div class="container-wrapper">
@@ -1373,6 +1504,36 @@ document.addEventListener('keydown', (e) => {
         closeThesisViewer();
     }
 });
+
+// Hamburger Menu Handler
+const hamburgerMenu = document.getElementById('hamburgerMenu');
+const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+const mobileNavMenu = document.getElementById('mobileNavMenu');
+
+if (hamburgerMenu) {
+    hamburgerMenu.addEventListener('click', () => {
+        hamburgerMenu.classList.toggle('active');
+        mobileNavOverlay.classList.toggle('active');
+        mobileNavMenu.classList.toggle('active');
+    });
+
+    // Close menu when clicking overlay
+    mobileNavOverlay.addEventListener('click', () => {
+        hamburgerMenu.classList.remove('active');
+        mobileNavOverlay.classList.remove('active');
+        mobileNavMenu.classList.remove('active');
+    });
+
+    // Close menu when clicking a link
+    const mobileNavLinks = mobileNavMenu.querySelectorAll('a');
+    mobileNavLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            hamburgerMenu.classList.remove('active');
+            mobileNavOverlay.classList.remove('active');
+            mobileNavMenu.classList.remove('active');
+        });
+    });
+}
 </script>
 
 </body>
