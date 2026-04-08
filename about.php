@@ -1193,6 +1193,14 @@ if (is_logged_in()) {
         <?php endif; ?>
         <?php endif; ?>
     </ul>
+
+    <?php if (!is_logged_in()): ?>
+    <div class="mobile-login-menu">
+        <button class="mobile-login-btn" onclick="openAuthModal(event)">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+    </div>
+    <?php endif; ?>
 </nav>
 
 <!-- Main Container -->
