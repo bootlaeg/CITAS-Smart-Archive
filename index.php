@@ -1083,7 +1083,7 @@ if (is_logged_in()) {
     <main class="main-content">
         <!-- Featured Section -->
         <section class="featured-banner">
-            <h2>Welcome to Citas Smart Archive</h2>
+            <h2>1Welcome to Citas Smart Archive</h2>
             <p>Discover, share, and collaborate on academic research</p>
         </section>
 
