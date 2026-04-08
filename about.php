@@ -2039,6 +2039,113 @@ function closeAuthModal() {
     }
 }
 
+// Login Form Handler
+function handleLoginSubmit(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(document.getElementById('loginForm'));
+    const messageDiv = document.getElementById('loginMessage');
+    
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Logging in...';
+    
+    fetch('client_includes/login.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        
+        if (data.success) {
+            messageDiv.className = 'alert-message alert-success';
+            messageDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + data.message;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                closeAuthModal();
+                window.location.href = data.redirect || 'index.php';
+            }, 900);
+        } else {
+            messageDiv.className = 'alert-message alert-danger';
+            messageDiv.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + data.message;
+            messageDiv.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        
+        messageDiv.className = 'alert-message alert-danger';
+        messageDiv.textContent = 'An error occurred. Please try again.';
+        messageDiv.style.display = 'block';
+    });
+}
+
+// Signup Form Handler
+function handleSignupSubmit(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(document.getElementById('signupForm'));
+    const messageDiv = document.getElementById('signupMessage');
+    
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Account...';
+    
+    fetch('client_includes/register.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('HTTP Error: ' + response.status + ' ' + response.statusText);
+        }
+        return response.text();
+    })
+    .then(text => {
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            throw new Error('Invalid server response: ' + text.substring(0, 100));
+        }
+        
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        
+        if (data.success) {
+            messageDiv.className = 'alert-message alert-success';
+            messageDiv.textContent = data.message;
+            messageDiv.style.display = 'block';
+            
+            document.getElementById('signupForm').reset();
+            
+            setTimeout(() => {
+                switchAuthTab(new Event('click'), 'login');
+                messageDiv.style.display = 'none';
+            }, 3000);
+        } else {
+            messageDiv.className = 'alert-message alert-danger';
+            messageDiv.textContent = data.message || 'Registration failed. Please try again.';
+            messageDiv.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        
+        messageDiv.className = 'alert-message alert-danger';
+        messageDiv.textContent = 'Error: ' + error.message;
+        messageDiv.style.display = 'block';
+    });
+}
+
 // Allow closing modal when clicking overlay
 document.addEventListener('DOMContentLoaded', function() {
     const authModalOverlay = document.getElementById('authModalOverlay');
@@ -2050,6 +2157,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
 </script>
 
 </body>
