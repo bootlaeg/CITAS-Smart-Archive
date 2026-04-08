@@ -260,6 +260,62 @@ if (is_logged_in()) {
             border-left-color: white;
         }
 
+        /* Mobile User Menu Section */
+        .mobile-user-menu {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .mobile-user-menu .profile-info {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            border-bottom: none;
+        }
+
+        .mobile-user-menu .profile-info i {
+            font-size: 1.5rem;
+        }
+
+        .mobile-user-menu .profile-info span {
+            flex: 1;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-all;
+        }
+
+        .mobile-user-menu .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: white;
+            width: 100%;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .mobile-user-menu .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-user-menu .profile-info {
+            cursor: pointer;
+        }
+
+        .mobile-user-menu .profile-info:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         /* Container with Sidebar Layout */
         .container-wrapper {
             max-width: 1400px;
@@ -973,6 +1029,37 @@ if (is_logged_in()) {
 
 <!-- Mobile Navigation Menu -->
 <nav class="mobile-nav-menu" id="mobileNavMenu">
+    <?php if (is_logged_in()): ?>
+    <div class="mobile-user-menu">
+        <a href="my_profile.php" style="text-decoration: none; color: inherit;">
+            <div class="profile-info" style="gap: 1rem;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                    <?php 
+                    // Get user profile picture if logged in
+                    $user_pic_stmt = $conn->prepare("SELECT profile_picture FROM users WHERE id = ?");
+                    if ($user_pic_stmt) {
+                        $user_pic_stmt->bind_param("i", $_SESSION['user_id']);
+                        $user_pic_stmt->execute();
+                        $user_pic_result = $user_pic_stmt->get_result();
+                        $user_pic_data = $user_pic_result->fetch_assoc();
+                        if (!empty($user_pic_data['profile_picture'])): ?>
+                            <img src="<?php echo htmlspecialchars($user_pic_data['profile_picture']); ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                        <?php else: ?>
+                            <i class="fas fa-user-circle" style="font-size: 2rem; color: var(--primary-orange);"></i>
+                        <?php endif;
+                        $user_pic_stmt->close();
+                    }
+                    ?>
+                </div>
+                <span><?php echo htmlspecialchars($_SESSION['full_name']); ?></span>
+            </div>
+        </a>
+        <button class="logout-btn" onclick="handleLogout(event)">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+    <?php endif; ?>
+    
     <ul class="sidebar-menu">
         <li><a href="index.php"><i class="fas fa-home"></i> Home</a></li>
         <li><a href="about.php"><i class="fas fa-info-circle"></i> About</a></li>
