@@ -1390,10 +1390,6 @@ if (is_logged_in()) {
                                     <img src="img/ventillo.jpg" alt="Edman Tido Bacsal" class="contributor-photo">
                                     <div class="contributor-name">Edman Tido Bacsal</div>
                                 </div>
-                                <div class="contributor-photo-card">
-                                    <img src="img/Erilla.jpg" alt="Jhon Rey Erilla" class="contributor-photo">
-                                    <div class="contributor-name">Jhon Rey Erilla</div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1571,7 +1567,6 @@ document.getElementById('headerSearchInput')?.addEventListener('keypress', funct
                 contributions: [
                     'Joshua Lomentigar - Manuscript Preparation & Documentation',
                     'Edman Tido Bacsal - Manuscript Preparation & Documentation'
-                    'Jhon Rey Erilla - Manuscript Preparation & Documentation',
                 ],
                 skills: ['Content Organization', 'Quality Assurance', 'Documentation', 'Research Support', 'Data Management', 'Database Indexing', 'Content Verification', 'Team Collaboration'],
                 badge: 'Research & Content Team'
