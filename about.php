@@ -1573,11 +1573,11 @@ document.getElementById('headerSearchInput')?.addEventListener('keypress', funct
                     'Edman Tido Bacsal - Manuscript Preparation & Documentation'
                     'Jhon Rey Erilla - Manuscript Preparation & Documentation',
                 ],
-                skills: ['Content Organization', 'Quality Assurance', 'Documentation', 'Research Support', 'Data Management', 'Content Verification', 'Team Collaboration'],
+                skills: ['Content Organization', 'Quality Assurance', 'Documentation', 'Research Support', 'Data Management', 'Database Indexing', 'Content Verification', 'Team Collaboration'],
                 badge: 'Research & Content Team'
             }
         };
-                    
+        
         function switchDeveloper(developerId) {
             currentDeveloper = developerId;
             const data = developerData[developerId];
