@@ -2000,6 +2000,56 @@ document.getElementById('headerSearchInput')?.addEventListener('keypress', funct
                 closeDeveloperModal();
             }
         });
+
+// Auth Modal Functions
+function switchAuthTab(event, tab) {
+    event.preventDefault();
+    
+    // Hide all tabs
+    document.querySelectorAll('.auth-tab-content').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.auth-tab').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // Show selected tab
+    const tabElement = document.getElementById(tab + '-tab');
+    if (tabElement) {
+        tabElement.style.display = 'block';
+        
+        // Scroll into view for signup form
+        if (tab === 'signup') {
+            setTimeout(() => {
+                tabElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+    }
+    
+    // Add active class to clicked button
+    event.target.closest('.auth-tab').classList.add('active');
+}
+
+function closeAuthModal() {
+    const authModalOverlay = document.getElementById('authModalOverlay');
+    if (authModalOverlay) {
+        authModalOverlay.classList.remove('active');
+    }
+}
+
+// Allow closing modal when clicking overlay
+document.addEventListener('DOMContentLoaded', function() {
+    const authModalOverlay = document.getElementById('authModalOverlay');
+    if (authModalOverlay) {
+        authModalOverlay.addEventListener('click', function(event) {
+            if (event.target === authModalOverlay) {
+                closeAuthModal();
+            }
+        });
+    }
+});
 </script>
 
 </body>
