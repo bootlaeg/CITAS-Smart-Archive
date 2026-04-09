@@ -711,7 +711,7 @@ $access_result = $conn->query("
             .container-main {
                 grid-template-columns: 1fr;
                 padding: 0 1rem;
-                margin: 1rem auto;
+                margin: 0;
                 gap: 1rem;
             }
 
@@ -725,7 +725,7 @@ $access_result = $conn->query("
 
             .page-header {
                 padding: 1.5rem 1rem;
-                margin-bottom: 1rem;
+                margin: 1rem 0 1rem 0;
                 border-radius: 8px;
             }
 
@@ -741,7 +741,7 @@ $access_result = $conn->query("
             .stats-grid {
                 grid-template-columns: 1fr;
                 gap: 1rem;
-                margin-bottom: 1rem;
+                margin: 0 0 1rem 0;
             }
 
             .stat-card {
