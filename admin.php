@@ -723,35 +723,40 @@ $access_result = $conn->query("
                 gap: 1rem;
             }
 
-            .admin-header {
+            .page-header {
                 padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+                border-radius: 8px;
             }
 
-            .admin-header h1 {
+            .page-header h1 {
                 font-size: 1.3rem;
                 margin-bottom: 0.5rem;
             }
 
-            .admin-header p {
+            .page-header p {
                 font-size: 0.9rem;
             }
 
             .stats-grid {
                 grid-template-columns: 1fr;
                 gap: 1rem;
+                margin-bottom: 1rem;
             }
 
             .stat-card {
-                padding: 1.5rem 1rem;
+                padding: 1.25rem 1rem;
+                border-radius: 8px;
+                border-left: 4px solid var(--primary-orange);
             }
 
-            .stat-card .stat-number {
+            .stat-value {
                 font-size: 2rem;
                 margin-bottom: 0.5rem;
             }
 
-            .stat-card .stat-label {
-                font-size: 0.85rem;
+            .stat-label {
+                font-size: 0.8rem;
             }
 
             .admin-tabs {

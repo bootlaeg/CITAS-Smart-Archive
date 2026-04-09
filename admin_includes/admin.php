@@ -532,22 +532,44 @@ $access_result = $conn->query("
                 display: none;
             }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
+            .main-content {
                 gap: 1rem;
             }
 
-            .stat-card {
+            .page-header {
                 padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
+                border-radius: 8px;
             }
 
-            .stat-number {
+            .page-header h1 {
+                font-size: 1.3rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .page-header p {
+                font-size: 0.9rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.25rem 1rem;
+                border-radius: 8px;
+                border-left: 4px solid var(--primary-orange);
+            }
+
+            .stat-value {
                 font-size: 2rem;
                 margin-bottom: 0.5rem;
             }
 
             .stat-label {
-                font-size: 0.85rem;
+                font-size: 0.8rem;
             }
 
             .admin-tabs {
