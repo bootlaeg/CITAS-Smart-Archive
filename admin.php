@@ -43,7 +43,7 @@ $access_result = $conn->query("
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin Panel - Citas Smart Archive</title>
     <link rel="icon" type="image/png" href="img/CITAS_logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -672,15 +672,21 @@ $access_result = $conn->query("
         }
 
         @media (max-width: 768px) {
+            .header {
+                padding: 0.5rem 1rem;
+            }
+
             .header-container {
                 justify-content: space-between;
                 align-items: center;
                 flex-direction: row;
-                gap: 1rem;
+                gap: 0.5rem;
+                max-width: 100%;
             }
 
             .logo {
                 flex-shrink: 0;
+                font-size: 1rem;
             }
 
             .search-bar {
@@ -688,6 +694,7 @@ $access_result = $conn->query("
                 max-width: 100%;
                 order: 3;
                 width: 100%;
+                display: none;
             }
 
             /* Hide desktop navigation on mobile */
@@ -704,18 +711,66 @@ $access_result = $conn->query("
             .container-main {
                 grid-template-columns: 1fr;
                 padding: 0 1rem;
+                margin: 1rem auto;
+                gap: 1rem;
             }
 
             .sidebar {
                 display: none;
             }
 
+            .main-content {
+                gap: 1rem;
+            }
+
+            .admin-header {
+                padding: 1.5rem 1rem;
+            }
+
+            .admin-header h1 {
+                font-size: 1.3rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .admin-header p {
+                font-size: 0.9rem;
+            }
+
             .stats-grid {
                 grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.5rem 1rem;
+            }
+
+            .stat-card .stat-number {
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .stat-card .stat-label {
+                font-size: 0.85rem;
+            }
+
+            .admin-tabs {
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .admin-tab {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
             }
 
             .admin-table {
                 overflow-x: auto;
+                padding: 1rem;
+            }
+
+            .admin-table table {
+                font-size: 0.85rem;
             }
 
             .action-btn {
@@ -723,6 +778,16 @@ $access_result = $conn->query("
                 margin-bottom: 0.5rem;
                 width: 100%;
                 text-align: center;
+                padding: 0.6rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .form-section {
+                padding: 1.5rem 1rem;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
             }
         }
     </style>
