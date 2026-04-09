@@ -522,7 +522,9 @@ $access_result = $conn->query("
             .container-main {
                 grid-template-columns: 1fr;
                 padding: 0 1rem;
-                margin: 0;
+                margin: 0 auto;
+                width: 100%;
+                box-sizing: border-box;
                 gap: 1rem;
             }
 
