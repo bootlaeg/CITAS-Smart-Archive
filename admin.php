@@ -743,7 +743,7 @@ $access_result = $conn->query("
             .stats-grid {
                 grid-template-columns: 1fr;
                 gap: 1rem;
-                margin: 0 0 1rem ;
+                margin: 0 0 1rem 0;
             }
 
             .stat-card {
