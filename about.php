@@ -1744,11 +1744,11 @@ if (is_logged_in()) {
                         <div id="contributorsPhotosSection" style="width: 100%; display: none;">
                             <div style="display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
                                 <div class="contributor-photo-card">
-                                    <img src="img/Erilla.jpg" alt="Joshua Lomentigar" class="contributor-photo">
+                                    <img src="img/lomentigar.jpg" alt="Joshua Lomentigar" class="contributor-photo">
                                     <div class="contributor-name">Joshua Lomentigar</div>
                                 </div>
                                 <div class="contributor-photo-card">
-                                    <img src="img/ventillo.jpg" alt="Edman Tido Bacsal" class="contributor-photo">
+                                    <img src="img/bascal.jpg" alt="Edman Tido Bacsal" class="contributor-photo">
                                     <div class="contributor-name">Edman Tido Bacsal</div>
                                 </div>
                                 <div class="contributor-photo-card">
