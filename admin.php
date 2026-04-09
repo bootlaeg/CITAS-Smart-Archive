@@ -726,7 +726,7 @@ $access_result = $conn->query("
             }
 
             .page-header {
-                padding: 0rem;
+                padding: 1.5rem 1rem;
                 margin: 0;
                 border-radius: 8px;
             }
