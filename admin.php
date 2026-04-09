@@ -261,7 +261,7 @@ $access_result = $conn->query("
         .stat-card {
             background: white;
             padding: 1.5rem;
-            border-radius: 5px;
+            border-radius: 12px;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border-light);
             border-left: 5px solid var(--primary-orange);
@@ -746,7 +746,7 @@ $access_result = $conn->query("
 
             .stat-card {
                 padding: 1.25rem 1rem;
-                border-radius: 8px;
+                border-radius: 1px;
                 border-left: 4px solid var(--primary-orange);
             }
 
