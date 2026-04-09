@@ -672,68 +672,408 @@ $access_result = $conn->query("
         }
 
         @media (max-width: 768px) {
+            * {
+                -webkit-box-sizing: border-box;
+                -moz-box-sizing: border-box;
+                box-sizing: border-box;
+            }
+
+            html {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            body {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: #FAFAFA !important;
+            }
+
             .header {
-                padding: 0.5rem 1rem;
+                padding: 0.75rem 1rem !important;
+                margin: 0 !important;
+                width: 100vw !important;
+                position: relative !important;
+                left: 50% !important;
+                right: 50% !important;
+                margin-left: -50vw !important;
+                margin-right: -50vw !important;
             }
 
             .header-container {
-                justify-content: space-between;
-                align-items: center;
-                flex-direction: row;
-                gap: 0.5rem;
-                max-width: 100%;
+                justify-content: space-between !important;
+                align-items: center !important;
+                flex-direction: row !important;
+                gap: 1rem !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             .logo {
-                flex-shrink: 0;
-                font-size: 1rem;
+                flex-shrink: 0 !important;
+                font-size: 0.95rem !important;
+                gap: 0.5rem !important;
+                white-space: nowrap !important;
+            }
+
+            .logo span {
+                display: inline !important;
             }
 
             .search-bar {
-                flex: 1;
-                max-width: 100%;
-                order: 3;
-                width: 100%;
-                display: none;
+                display: none !important;
             }
 
-            /* Hide desktop navigation on mobile */
             .nav-links {
-                display: none;
+                display: none !important;
             }
 
-            /* Show hamburger menu on mobile */
             .hamburger-menu {
-                display: flex;
-                order: 2;
+                display: flex !important;
+                order: 2 !important;
             }
 
             .container-main {
-                grid-template-columns: 1fr;
-                padding: 0 1rem;
-                margin: 0 auto;
-                width: 100%;
-                box-sizing: border-box;
-                gap: 1rem;
+                grid-template-columns: 1fr !important;
+                padding: 1rem !important;
+                margin: 0 !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                gap: 1.5rem !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
             }
 
             .sidebar {
-                display: none;
+                display: none !important;
             }
 
             .main-content {
-                gap: 1rem;
+                gap: 1.5rem !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                overflow-x: hidden !important;
             }
 
             .page-header {
-                padding: 0rem;
-                margin: 0;
-                border-radius: 8px;
+                padding: 1.25rem !important;
+                margin: 0 !important;
+                border-radius: 8px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
             }
 
             .page-header h1 {
-                font-size: 1.3rem;
-                margin-bottom: 0.5rem;
+                font-size: 1.5rem !important;
+                margin-bottom: 0.5rem !important;
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+                line-height: 1.3 !important;
+                white-space: normal !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .page-header p {
+                font-size: 0.95rem !important;
+                line-height: 1.4 !important;
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
+                color: var(--text-gray) !important;
+                white-space: normal !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .stats-grid {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+                margin: 0 0 1.5rem 0 !important;
+                width: 100% !important;
+            }
+
+            .stat-card {
+                padding: 1.5rem !important;
+                border-radius: 8px !important;
+                border-left: 5px solid var(--primary-orange) !important;
+                margin: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                min-height: 100px !important;
+                background: white !important;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+                border: 1px solid var(--border-light) !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .stat-value {
+                font-size: 2.2rem !important;
+                font-weight: 700 !important;
+                color: var(--primary-orange) !important;
+                margin-bottom: 0.5rem !important;
+                line-height: 1 !important;
+            }
+
+            .stat-label {
+                font-size: 0.9rem !important;
+                text-transform: uppercase !important;
+                font-weight: 600 !important;
+                color: var(--text-gray) !important;
+                letter-spacing: 0.5px !important;
+            }
+
+            .admin-tabs {
+                display: flex !important;
+                gap: 0.5rem !important;
+                margin-bottom: 1.5rem !important;
+                overflow-x: auto !important;
+                overflow-y: visible !important;
+                white-space: nowrap !important;
+                padding: 0.75rem 0 !important;
+                -webkit-overflow-scrolling: touch !important;
+                scrollbar-width: none !important;
+                border-bottom: 2px solid var(--border-light) !important;
+                width: 100% !important;
+                position: relative !important;
+            }
+
+            .admin-tabs::after {
+                content: '⟩' !important;
+                position: sticky !important;
+                right: 0 !important;
+                top: auto !important;
+                transform: none !important;
+                background: white !important;
+                padding: 0.5rem 0.75rem !important;
+                color: var(--primary-orange) !important;
+                font-weight: bold !important;
+                font-size: 0.9rem !important;
+                pointer-events: none !important;
+                z-index: 100 !important;
+                animation: slideArrow 1.5s ease-in-out infinite !important;
+                border-radius: 4px !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+                display: block !important;
+            }
+
+            @keyframes slideArrow {
+                0% {
+                    opacity: 0.6;
+                }
+                50% {
+                    opacity: 1;
+                }
+                100% {
+                    opacity: 0.6;
+                }
+            }
+
+            .admin-tabs::-webkit-scrollbar {
+                display: none !important;
+            }
+
+            .admin-tab {
+                padding: 0.75rem 1rem !important;
+                font-size: 0.9rem !important;
+                flex-shrink: 0 !important;
+                cursor: pointer !important;
+                border: none !important;
+                background: transparent !important;
+                color: var(--text-gray) !important;
+                transition: all 0.3s ease !important;
+                border-bottom: 3px solid transparent !important;
+                margin-bottom: -2px !important;
+                white-space: nowrap !important;
+            }
+
+            .admin-tab.active {
+                color: var(--primary-orange) !important;
+                border-bottom-color: var(--primary-orange) !important;
+            }
+
+            .admin-table {
+                border-radius: 8px !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                border: none !important;
+                width: 100% !important;
+            }
+
+            .admin-table table {
+                width: 100% !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .admin-table thead {
+                display: none !important;
+            }
+
+            .admin-table tbody {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .admin-table tbody tr {
+                display: block !important;
+                background: white !important;
+                border-radius: 8px !important;
+                margin-bottom: 1rem !important;
+                padding: 1.25rem !important;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+                border: 1px solid var(--border-light) !important;
+                border-left: 5px solid var(--primary-orange) !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+             .admin-table tbody tr:hover {
+                background: white !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+            }
+
+            .admin-table tbody tr:last-child {
+                margin-bottom: 0 !important;
+            }
+
+            .admin-table td {
+                display: block !important;
+                padding: 0.75rem 0 !important;
+                border: none !important;
+                margin-bottom: 0.75rem !important;
+                text-align: left !important;
+                width: 100% !important;
+                overflow-wrap: break-word !important;
+                word-break: break-word !important;
+            }
+
+            .admin-table td:last-child {
+                margin-bottom: 0 !important;
+            }
+
+            .admin-table td::before {
+                content: attr(data-label) !important;
+                font-weight: 600 !important;
+                color: var(--primary-orange) !important;
+                display: block !important;
+                margin-bottom: 0.375rem !important;
+                font-size: 0.85rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.3px !important;
+            }
+
+            .action-btn {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 0.4rem !important;
+                padding: 0.65rem 1rem !important;
+                font-size: 0.8rem !important;
+                margin-right: 0.5rem !important;
+                margin-bottom: 0.5rem !important;
+                width: auto !important;
+                white-space: nowrap !important;
+            }
+
+            .action-btn:last-child {
+                margin-right: 0 !important;
+            }
+
+            .empty-state {
+                padding: 2rem 1rem !important;
+                border-radius: 8px !important;
+                background: white !important;
+                text-align: center !important;
+            }
+
+            .empty-state i {
+                font-size: 2.5rem !important;
+                margin-bottom: 1rem !important;
+            }
+
+            .empty-state h3 {
+                font-size: 1.1rem !important;
+            }
+
+            .empty-state p {
+                font-size: 0.9rem !important;
+            }
+
+            .btn-success {
+                width: 100% !important;
+                padding: 0.75rem 1rem !important;
+                margin-bottom: 1rem !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            .form-section {
+                padding: 1.25rem !important;
+            }
+
+            .form-group {
+                margin-bottom: 1rem !important;
+            }
+
+            .badge-status {
+                font-size: 0.8rem !important;
+                padding: 0.4rem 0.8rem !important;
+                display: inline-block !important;
+            }
+        }
+
+        /* Extra small devices (phones in portrait) */
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.6rem 0.75rem;
+            }
+
+            .logo {
+                font-size: 0.9rem;
+            }
+
+            .logo span {
+                display: inline;
+            }
+
+            .container-main {
+                padding: 0.75rem;
+                gap: 1rem;
+                margin: 0;
+                width: 100%;
+            }
+
+            .page-header {
+                padding: 1rem;
+            }
+
+            .page-header h1 {
+                font-size: 1.4rem;
+                margin-bottom: 0.4rem;
             }
 
             .page-header p {
@@ -741,21 +1081,17 @@ $access_result = $conn->query("
             }
 
             .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-                margin: 0 0 1rem ;
+                gap: 0.75rem;
             }
 
             .stat-card {
-                padding: 1.25rem 1rem;
-                border-radius: 8px;
-                border-left: 4px solid var(--primary-orange);
-                margin: 0;
+                padding: 1rem;
+                min-height: 95px;
             }
 
             .stat-value {
                 font-size: 2rem;
-                margin-bottom: 0.5rem;
+                margin-bottom: 0.4rem;
             }
 
             .stat-label {
@@ -763,38 +1099,44 @@ $access_result = $conn->query("
             }
 
             .admin-tabs {
-                gap: 0.5rem;
-                margin-bottom: 1rem;
+                padding: 0.5rem 0;
             }
 
             .admin-tab {
-                padding: 0.75rem 1rem;
+                padding: 0.6rem 0.8rem;
+                font-size: 0.8rem;
+            }
+
+            .main-content {
+                gap: 1rem;
+            }
+
+            .admin-table tbody tr {
+                padding: 1rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .admin-table td {
+                padding: 0.5rem 0;
+                margin-bottom: 0.5rem;
                 font-size: 0.9rem;
             }
 
-            .admin-table {
-                overflow-x: auto;
-                padding: 1rem;
-            }
-
-            .admin-table table {
-                font-size: 0.85rem;
+            .admin-table td::before {
+                font-size: 0.75rem;
+                margin-bottom: 0.25rem;
             }
 
             .action-btn {
-                display: block;
-                margin-bottom: 0.5rem;
-                width: 100%;
-                text-align: center;
-                padding: 0.6rem 0.8rem;
-                font-size: 0.9rem;
+                padding: 0.55rem 0.8rem;
+                font-size: 0.75rem;
+                margin-right: 0.3rem;
+                margin-bottom: 0.4rem;
             }
 
-            .form-section {
-                padding: 1.5rem 1rem;
-            }
-
-            .form-group {
+            .btn-success {
+                padding: 0.65rem 0.8rem !important;
+                font-size: 0.9rem !important;
                 margin-bottom: 1rem;
             }
         }
@@ -802,7 +1144,6 @@ $access_result = $conn->query("
 </head>
 <body>
 
-<!-- Header -->
 <header class="header">
     <div class="header-container">
         <div class="logo">
@@ -810,7 +1151,6 @@ $access_result = $conn->query("
             <span>Citas Smart Archive</span>
         </div>
         
-        <!-- Desktop Navigation -->
         <nav class="nav-links">
             <a href="index.php" class="nav-link"><i class="fas fa-home"></i> Home</a>
             <div class="notification-center" id="notificationCenter" style="position: relative;">
@@ -845,7 +1185,6 @@ $access_result = $conn->query("
             <a href="#" class="nav-link logout" onclick="handleLogout(event)"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </nav>
 
-        <!-- Mobile Hamburger Menu Button -->
         <button class="hamburger-menu" id="hamburgerMenu">
             <span></span>
             <span></span>
@@ -854,10 +1193,8 @@ $access_result = $conn->query("
     </div>
 </header>
 
-<!-- Mobile Navigation Overlay -->
 <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
 
-<!-- Mobile Navigation Menu -->
 <nav class="mobile-nav-menu" id="mobileNavMenu">
     <?php if (is_logged_in()): ?>
     <div class="mobile-user-menu">
@@ -896,9 +1233,7 @@ $access_result = $conn->query("
     <?php endif; ?>
 </nav>
 
-<!-- Main Container -->
 <div class="container-main">
-    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-section">
             <h3>Navigation</h3>
@@ -912,15 +1247,12 @@ $access_result = $conn->query("
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Page Header -->
         <section class="page-header">
             <h1><i class="fas fa-shield-alt me-2"></i>Admin Dashboard</h1>
             <p>Centralized management system for the Thesis Repository</p>
         </section>
 
-        <!-- Statistics Grid -->
         <div class="stats-grid">
             <div class="stat-card" onclick="switchTab('thesis-tab')">
                 <div class="stat-value"><?php echo $total_thesis; ?></div>
@@ -936,7 +1268,6 @@ $access_result = $conn->query("
             </div>
         </div>
 
-        <!-- Admin Tabs -->
         <div class="admin-tabs">
             <button class="admin-tab active" onclick="switchTab('thesis-tab')">
                 <i class="fas fa-file-alt me-2"></i>Thesis Management
@@ -949,7 +1280,6 @@ $access_result = $conn->query("
             </button>
         </div>
 
-        <!-- Thesis Management Tab -->
         <div id="thesis-tab" class="admin-section">
             <div style="margin-bottom: 1.5rem;">
                 <a href="admin_includes/admin_add_thesis_page.php" class="btn btn-success">
@@ -972,11 +1302,11 @@ $access_result = $conn->query("
                         <?php if ($thesis_result && $thesis_result->num_rows > 0): ?>
                             <?php while ($thesis = $thesis_result->fetch_assoc()): ?>
                             <tr>
-                                <td><?php echo str_pad($thesis['id'], 3, '0', STR_PAD_LEFT); ?></td>
-                                <td><?php echo htmlspecialchars(substr($thesis['title'], 0, 50)); ?></td>
-                                <td><?php echo htmlspecialchars($thesis['author']); ?></td>
-                                <td><?php echo htmlspecialchars($thesis['course'] . ' / ' . $thesis['year']); ?></td>
-                                <td>
+                                <td data-label="ID"><?php echo str_pad($thesis['id'], 3, '0', STR_PAD_LEFT); ?></td>
+                                <td data-label="Title"><?php echo htmlspecialchars(substr($thesis['title'], 0, 50)); ?></td>
+                                <td data-label="Author"><?php echo htmlspecialchars($thesis['author']); ?></td>
+                                <td data-label="Course/Year"><?php echo htmlspecialchars($thesis['course'] . ' / ' . $thesis['year']); ?></td>
+                                <td data-label="Status">
                                     <?php
                                         $status = $thesis['status'];
                                         $badgeClass = '';
@@ -993,7 +1323,7 @@ $access_result = $conn->query("
                                         <?php echo ucfirst($status); ?>
                                     </span>
                                 </td>
-                                <td>
+                                <td data-label="Actions">
                                     <button class="action-btn" onclick="viewThesis(<?php echo $thesis['id']; ?>)" title="View Details">
                                         <i class="fas fa-eye"></i> View
                                     </button>
@@ -1021,7 +1351,6 @@ $access_result = $conn->query("
             </div>
         </div>
 
-        <!-- User Management Tab -->
         <div id="user-tab" class="admin-section" style="display: none;">
             <div class="admin-table">
                 <table class="table">
@@ -1040,17 +1369,17 @@ $access_result = $conn->query("
                         <?php if ($users_result && $users_result->num_rows > 0): ?>
                             <?php while ($user = $users_result->fetch_assoc()): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($user['student_id']); ?></td>
-                                <td><?php echo htmlspecialchars($user['full_name']); ?></td>
-                                <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                <td><?php echo htmlspecialchars(ucfirst($user['user_role'] ?? 'student')); ?></td>
-                                <td><?php echo htmlspecialchars($user['course']); ?></td>
-                                <td>
+                                <td data-label="Student ID"><?php echo htmlspecialchars($user['student_id']); ?></td>
+                                <td data-label="Name"><?php echo htmlspecialchars($user['full_name']); ?></td>
+                                <td data-label="Email"><?php echo htmlspecialchars($user['email']); ?></td>
+                                <td data-label="Role"><?php echo htmlspecialchars(ucfirst($user['user_role'] ?? 'student')); ?></td>
+                                <td data-label="Course"><?php echo htmlspecialchars($user['course']); ?></td>
+                                <td data-label="Status">
                                     <span class="badge-status badge-<?php echo $user['account_status'] === 'active' ? 'success' : 'warning'; ?>">
                                         <?php echo ucfirst($user['account_status']); ?>
                                     </span>
                                 </td>
-                                <td>
+                                <td data-label="Actions">
                                     <button class="action-btn" onclick="openEditUserModal(<?php echo $user['id']; ?>, '<?php echo htmlspecialchars($user['full_name'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($user['email'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($user['student_id'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($user['course'], ENT_QUOTES); ?>', '<?php echo $user['account_status']; ?>')">
                                         <i class="fas fa-edit"></i> Edit
                                     </button>
@@ -1080,7 +1409,6 @@ $access_result = $conn->query("
             </div>
         </div>
 
-        <!-- Access Requests Tab -->
         <div id="access-tab" class="admin-section" style="display: none;">
             <div class="admin-table">
                 <table class="table">
@@ -1097,11 +1425,11 @@ $access_result = $conn->query("
                         <?php if ($access_result && $access_result->num_rows > 0): ?>
                             <?php while ($request = $access_result->fetch_assoc()): ?>
                             <tr>
-                                <td>REQ<?php echo str_pad($request['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                                <td><?php echo htmlspecialchars($request['full_name']); ?></td>
-                                <td><?php echo htmlspecialchars(substr($request['title'], 0, 40)); ?></td>
-                                <td><?php echo date('M d, Y', strtotime($request['requested_at'])); ?></td>
-                                <td>
+                                <td data-label="Request ID">REQ<?php echo str_pad($request['id'], 4, '0', STR_PAD_LEFT); ?></td>
+                                <td data-label="Student Name"><?php echo htmlspecialchars($request['full_name']); ?></td>
+                                <td data-label="Thesis Title"><?php echo htmlspecialchars(substr($request['title'], 0, 40)); ?></td>
+                                <td data-label="Requested Date"><?php echo date('M d, Y', strtotime($request['requested_at'])); ?></td>
+                                <td data-label="Actions">
                                     <button class="action-btn" onclick="approveAccess(<?php echo $request['id']; ?>, <?php echo $request['user_id']; ?>, <?php echo $request['thesis_id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
                                         <i class="fas fa-check"></i> Approve
                                     </button>
@@ -1128,7 +1456,6 @@ $access_result = $conn->query("
     </main>
 </div>
 
-<!-- Edit User Modal -->
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -1172,8 +1499,7 @@ $access_result = $conn->query("
                 <h6 class="mb-3"><i class="fas fa-tools me-2"></i>Account Management Actions</h6>
                 
                 <div id="actionButtonsContainer" class="d-grid gap-2">
-                    <!-- Buttons will be inserted here based on status -->
-                </div>
+                    </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -1182,9 +1508,6 @@ $access_result = $conn->query("
     </div>
 </div>
 
-<!-- Add Thesis Modal -->
-
-<!-- View Thesis Modal -->
 <div class="modal fade" id="viewThesisModal" tabindex="-1" aria-labelledby="viewThesisModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -1234,7 +1557,6 @@ $access_result = $conn->query("
     </div>
 </div>
 
-<!-- Edit Thesis Modal -->
 <div class="modal fade" id="editThesisModal" tabindex="-1" aria-labelledby="editThesisModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -1902,7 +2224,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- User Details Modal -->
 <?php include 'admin_includes/user_details_modal.html'; ?>
                             
 </body>
