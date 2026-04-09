@@ -563,6 +563,7 @@ $access_result = $conn->query("
                 padding: 1.25rem 1rem;
                 border-radius: 8px;
                 border-left: 4px solid var(--primary-orange);
+                margin: 0;
             }
 
             .stat-value {
