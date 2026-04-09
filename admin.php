@@ -745,8 +745,8 @@ $access_result = $conn->query("
             }
 
             .stat-card {
-                padding: 1.25rem 1rem;
-                border-radius: 1px;
+                padding: 1.25rem 10rem;
+                border-radius: 8px;
                 border-left: 4px solid var(--primary-orange);
             }
 
