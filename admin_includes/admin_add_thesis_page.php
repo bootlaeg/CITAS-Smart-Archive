@@ -1272,50 +1272,64 @@ function populateClassificationForm(classification) {
 }
 
 function submitForm() {
-    // Check if classification has been generated
-    if (!classificationGenerated) {
-        showAlert('⚠️ Please click "Generate Classification" first before saving', 'warning');
-        return;
-    }
+    try {
+        // Check if classification has been generated
+        if (!classificationGenerated) {
+            showAlert('⚠️ Please click "Generate Classification" first before saving', 'warning');
+            return;
+        }
 
-    console.log('=== SAVING THESIS & CLASSIFICATION ===');
+        console.log('=== SAVING THESIS & CLASSIFICATION ===');
 
-    // Collect thesis data
-    const documentType = document.getElementById('documentType').value;
-    const pageCount = document.getElementById('pageCount').value;
-    
-    const thesisData = {
-        // Thesis Info
-        title: document.getElementById('thesisTitle').value,
-        author: document.getElementById('thesisAuthor').value,
-        degree: document.getElementById('thesisDegree').value,  // Extracted from PDF/DOCX
-        course: document.getElementById('thesisCourse').value,
-        year: parseInt(document.getElementById('thesisYear').value),
-        abstract: document.getElementById('thesisAbstract').value,
-        status: document.getElementById('thesisStatus').value,
+        // Helper function to safely get element value
+        const getElementValue = (id, defaultValue = '') => {
+            const element = document.getElementById(id);
+            if (!element) {
+                console.warn(`Warning: Element with id '${id}' not found`);
+                return defaultValue;
+            }
+            return element.value || defaultValue;
+        };
+
+        // Collect thesis data with safe element access
+        const documentType = getElementValue('documentType');
+        const pageCount = getElementValue('pageCount');
         
-        // Document Info
-        document_type: documentType,
-        page_count: pageCount ? parseInt(pageCount) : null,
-        
-        // Classification Data
-        subject_category: document.getElementById('classifSubjectCategory').value,
-        research_method: document.getElementById('classifResearchMethod').value,
+        const thesisData = {
+            // Thesis Info
+            title: getElementValue('thesisTitle'),
+            author: getElementValue('thesisAuthor'),
+            course: getElementValue('thesisCourse'),
+            year: parseInt(getElementValue('thesisYear', '0')) || new Date().getFullYear(),
+            abstract: getElementValue('thesisAbstract'),
+            status: getElementValue('thesisStatus', 'approved'),
+            
+            // Document Info
+            document_type: documentType,
+            page_count: pageCount ? parseInt(pageCount) : null,
+            
+            // Classification Data
+            subject_category: getElementValue('classifSubjectCategory'),
+            research_method: getElementValue('classifResearchMethod'),
         
         // Keywords and Citations from form fields
-        keywords: document.getElementById('classifKeywords').value
-            .split(',')
-            .map(k => k.trim())
-            .filter(k => k.length > 0),
+        keywords: (() => {
+            const keywordsStr = getElementValue('classifKeywords', '');
+            if (!keywordsStr) return [];
+            return keywordsStr.split(',')
+                .map(k => k.trim())
+                .filter(k => k.length > 0);
+        })(),
         
         citations: (() => {
             try {
-                const citationsValue = document.getElementById('classifReferences').value;
+                const citationsValue = getElementValue('classifReferences', '[]');
                 if (citationsValue && citationsValue.startsWith('[')) {
                     return JSON.parse(citationsValue);
                 }
                 return [];
             } catch (e) {
+                console.warn('Error parsing citations:', e);
                 return [];
             }
         })()
@@ -1382,6 +1396,11 @@ function submitForm() {
         console.error('Error details:', error.stack);
         showAlert('❌ Error: ' + error.message, 'danger');
     });
+    } catch (error) {
+        console.error('❌ Unexpected error in submitForm:', error);
+        console.error('Error stack:', error.stack);
+        showAlert('❌ Unexpected error: ' + error.message, 'danger');
+    }
 }
 
 // ============================================
