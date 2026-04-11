@@ -2154,7 +2154,7 @@ if (hamburgerMenu) {
                 transition: all 0.3s;
                 opacity: 0.6;
             ">
-                <i class="fas fa-list"></i> Template
+                <i class="fas fa-list"></i> Local
             </button>
             <span id="currentSourceLabel" style="
                 padding: 10px 12px;
