@@ -28,7 +28,7 @@ $request_id = isset($_POST['request_id']) ? intval($_POST['request_id']) : 0;
 $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
 $thesis_id = isset($_POST['thesis_id']) ? intval($_POST['thesis_id']) : 0;
 
-if ($request_id <= 0 || $user_id <= 0 || $thesis_id <= 0) {
+if ($user_id <= 0 || $thesis_id <= 0) {
     echo json_encode([
         'success' => false, 
         'message' => 'Invalid parameters',
@@ -42,9 +42,16 @@ if ($request_id <= 0 || $user_id <= 0 || $thesis_id <= 0) {
     exit();
 }
 
-// Verify request exists
-$verify = $conn->prepare("SELECT id, user_id FROM chatbot_access_requests WHERE id = ?");
-$verify->bind_param("i", $request_id);
+// Verify request exists - if request_id is 0, lookup by user_id and thesis_id
+if ($request_id > 0) {
+    $verify = $conn->prepare("SELECT id, user_id FROM chatbot_access_requests WHERE id = ?");
+    $verify->bind_param("i", $request_id);
+} else {
+    // Fallback: lookup by user_id and thesis_id
+    $verify = $conn->prepare("SELECT id, user_id FROM chatbot_access_requests WHERE user_id = ? AND thesis_id = ? ORDER BY requested_at DESC LIMIT 1");
+    $verify->bind_param("ii", $user_id, $thesis_id);
+}
+
 $verify->execute();
 $result = $verify->get_result();
 
@@ -53,6 +60,10 @@ if ($result->num_rows === 0) {
     $verify->close();
     exit();
 }
+
+// Get the actual request_id if we looked it up
+$request = $result->fetch_assoc();
+$request_id = $request['id'];
 
 $request = $result->fetch_assoc();
 $verify->close();

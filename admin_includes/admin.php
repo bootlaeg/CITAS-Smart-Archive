@@ -957,7 +957,7 @@ $chatbot_access_result = $conn->query("
                                     <button class="action-btn" onclick="approveChatbotAccess(<?php echo $request['id']; ?>, <?php echo $request['user_id']; ?>, <?php echo $request['thesis_id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
                                         <i class="fas fa-check"></i> Approve
                                     </button>
-                                    <button class="action-btn action-btn-danger" onclick="denyChatbotAccess(<?php echo $request['id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
+                                    <button class="action-btn action-btn-danger" onclick="denyChatbotAccess(<?php echo $request['id']; ?>, <?php echo $request['user_id']; ?>, <?php echo $request['thesis_id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
                                         <i class="fas fa-times"></i> Deny
                                     </button>
                                 </td>
@@ -1372,14 +1372,14 @@ window.approveChatbotAccess = function(requestId, userId, thesisId, userName) {
 }
 
 // Deny Chatbot Access Request
-window.denyChatbotAccess = function(requestId, userName) {
-    console.log('denyChatbotAccess called with:', {requestId, userName});
+window.denyChatbotAccess = function(requestId, userId, thesisId, userName) {
+    console.log('denyChatbotAccess called with:', {requestId, userId, thesisId, userName});
     if (!confirm(`Deny chatbot access for "${userName}"?`)) return;
     
     fetch('chatbot_includes/deny_chatbot_access.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'request_id=' + requestId
+        body: 'request_id=' + requestId + '&user_id=' + userId + '&thesis_id=' + thesisId
     })
     .then(response => response.json())
     .then(data => {
