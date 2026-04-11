@@ -2156,18 +2156,6 @@ if (hamburgerMenu) {
             ">
                 <i class="fas fa-list"></i> Local
             </button>
-            <span id="currentSourceLabel" style="
-                padding: 10px 12px;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 6px;
-                font-size: 0.8rem;
-                color: #333;
-                font-weight: 600;
-                text-align: center;
-                white-space: nowrap;
-                min-width: 100px;
-            ">AI Mode</span>
         </div>
         
         <!-- Input and Send Button Row -->
@@ -2220,21 +2208,19 @@ const chatbotMessages = document.getElementById('chatbotMessages');
 let chatbotSourceMode = 'ollama';  // 'ollama' or 'template'
 
 // Chat elements will be initialized when DOM is ready
-let sourceOllamaBtn, sourceTemplateBtn, currentSourceLabel;
+let sourceOllamaBtn, sourceTemplateBtn;
 
 // Check access on page load if logged in
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize source mode buttons
     sourceOllamaBtn = document.getElementById('sourceOllamaBtn');
     sourceTemplateBtn = document.getElementById('sourceTemplateBtn');
-    currentSourceLabel = document.getElementById('currentSourceLabel');
 
     // Add event listeners for source buttons
     if (sourceOllamaBtn) {
         sourceOllamaBtn.addEventListener('click', () => {
             console.log('Switched to OLLAMA mode');
             chatbotSourceMode = 'ollama';
-            currentSourceLabel.textContent = 'AI Mode';
             sourceOllamaBtn.style.opacity = '1';
             sourceOllamaBtn.style.borderWidth = '2px';
             sourceTemplateBtn.style.opacity = '0.6';
@@ -2246,7 +2232,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sourceTemplateBtn.addEventListener('click', () => {
             console.log('Switched to TEMPLATE mode');
             chatbotSourceMode = 'template';
-            currentSourceLabel.textContent = 'Template';
             sourceTemplateBtn.style.opacity = '1';
             sourceTemplateBtn.style.borderWidth = '2px';
             sourceOllamaBtn.style.opacity = '0.6';
