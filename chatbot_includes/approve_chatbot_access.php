@@ -29,7 +29,16 @@ $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
 $thesis_id = isset($_POST['thesis_id']) ? intval($_POST['thesis_id']) : 0;
 
 if ($request_id <= 0 || $user_id <= 0 || $thesis_id <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Invalid parameters',
+        'debug' => [
+            'request_id' => $request_id,
+            'user_id' => $user_id,
+            'thesis_id' => $thesis_id,
+            'post_data' => $_POST
+        ]
+    ]);
     exit();
 }
 

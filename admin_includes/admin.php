@@ -1346,7 +1346,8 @@ function rejectAccess(requestId, userName) {
 }
 
 // Approve Chatbot Access Request
-function approveChatbotAccess(requestId, userId, thesisId, userName) {
+window.approveChatbotAccess = function(requestId, userId, thesisId, userName) {
+    console.log('approveChatbotAccess called with:', {requestId, userId, thesisId, userName});
     if (!confirm(`Approve chatbot access for "${userName}"?`)) return;
     
     fetch('chatbot_includes/approve_chatbot_access.php', {
@@ -1356,18 +1357,23 @@ function approveChatbotAccess(requestId, userId, thesisId, userName) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Approve response:', data);
         if (data.success) {
             alert(data.message);
             location.reload();
         } else {
             alert('Error: ' + (data.message || 'Failed to approve'));
+            if (data.debug) {
+                console.error('Debug info:', data.debug);
+            }
         }
     })
     .catch(error => alert('Error approving chatbot access'));
 }
 
 // Deny Chatbot Access Request
-function denyChatbotAccess(requestId, userName) {
+window.denyChatbotAccess = function(requestId, userName) {
+    console.log('denyChatbotAccess called with:', {requestId, userName});
     if (!confirm(`Deny chatbot access for "${userName}"?`)) return;
     
     fetch('chatbot_includes/deny_chatbot_access.php', {
@@ -1377,11 +1383,15 @@ function denyChatbotAccess(requestId, userName) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Deny response:', data);
         if (data.success) {
             alert(data.message);
             location.reload();
         } else {
             alert('Error: ' + (data.message || 'Failed to deny'));
+            if (data.debug) {
+                console.error('Debug info:', data.debug);
+            }
         }
     })
     .catch(error => alert('Error denying chatbot access'));

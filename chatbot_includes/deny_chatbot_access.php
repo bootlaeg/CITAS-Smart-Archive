@@ -27,7 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $request_id = isset($_POST['request_id']) ? intval($_POST['request_id']) : 0;
 
 if ($request_id <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid request ID']);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Invalid request ID',
+        'debug' => [
+            'request_id' => $request_id,
+            'post_data' => $_POST
+        ]
+    ]);
     exit();
 }
 
