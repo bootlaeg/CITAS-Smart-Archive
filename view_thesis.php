@@ -1205,15 +1205,14 @@ if (is_logged_in()) {
 
         /* Chat Input Area */
         .chatbot-input-area {
-            padding: 1rem;
             border-top: 1px solid var(--border-light);
             display: flex;
-            gap: 0.5rem;
+            flex-direction: column;
             background: white;
+            overflow: hidden;
         }
 
         .chatbot-input-field {
-            flex: 1;
             border: 1px solid var(--border-light);
             border-radius: 8px;
             padding: 0.75rem 1rem;
@@ -1241,6 +1240,7 @@ if (is_logged_in()) {
             align-items: center;
             justify-content: center;
             width: 40px;
+            height: 40px;
         }
 
         .chatbot-send-btn:hover:not(:disabled) {
@@ -2119,54 +2119,71 @@ if (hamburgerMenu) {
     <!-- Chat Input Area -->
     <div class="chatbot-input-area" id="chatbotInputArea" style="display: none;">
         <!-- Source Selection Buttons (for testing) -->
-        <div style="display: flex; gap: 10px; padding: 10px; background: #f5f5f5; border-bottom: 1px solid #ddd;">
-            <button id="sourceOllamaBtn" style="
-                padding: 8px 16px;
+        <div style="
+            display: flex;
+            gap: 8px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        ">
+            <button id="sourceOllamaBtn" type="button" style="
+                flex: 1;
+                padding: 10px 12px;
                 border: 2px solid #27AE60;
                 background: #27AE60;
                 color: white;
                 border-radius: 6px;
                 cursor: pointer;
                 font-weight: 600;
-                font-size: 0.9rem;
+                font-size: 0.85rem;
                 transition: all 0.3s;
+                opacity: 1;
             ">
-                <i class="fas fa-brain me-1"></i>Ollama (AI)
+                <i class="fas fa-brain"></i> Ollama (AI)
             </button>
-            <button id="sourceTemplateBtn" style="
-                padding: 8px 16px;
+            <button id="sourceTemplateBtn" type="button" style="
+                flex: 1;
+                padding: 10px 12px;
                 border: 2px solid #F39C12;
                 background: #F39C12;
                 color: white;
                 border-radius: 6px;
                 cursor: pointer;
                 font-weight: 600;
-                font-size: 0.9rem;
+                font-size: 0.85rem;
                 transition: all 0.3s;
+                opacity: 0.6;
             ">
-                <i class="fas fa-list me-1"></i>Template
+                <i class="fas fa-list"></i> Template
             </button>
             <span id="currentSourceLabel" style="
-                margin-left: auto;
-                padding: 8px 16px;
+                padding: 10px 12px;
                 background: white;
+                border: 1px solid #ddd;
                 border-radius: 6px;
-                font-size: 0.9rem;
+                font-size: 0.8rem;
                 color: #333;
                 font-weight: 600;
-            ">Current: Ollama</span>
+                text-align: center;
+                white-space: nowrap;
+                min-width: 100px;
+            ">AI Mode</span>
         </div>
         
-        <input 
-            type="text" 
-            class="chatbot-input-field" 
-            id="chatbotInput" 
-            placeholder="Ask me anything about this thesis..."
-            autocomplete="off"
-        >
-        <button class="chatbot-send-btn" id="chatbotSendBtn">
-            <i class="fas fa-paper-plane"></i>
-        </button>
+        <!-- Input and Send Button Row -->
+        <div style="display: flex; gap: 0.5rem; padding: 1rem; align-items: flex-end;">
+            <input 
+                type="text" 
+                class="chatbot-input-field" 
+                id="chatbotInput" 
+                placeholder="Ask me anything about this thesis..."
+                autocomplete="off"
+                style="flex: 1; margin: 0; border: 1px solid #ddd; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.95rem;"
+            >
+            <button class="chatbot-send-btn" id="chatbotSendBtn" type="button" style="margin: 0; width: 40px; height: 40px; padding: 0;">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
     </div>
 
     <!-- Back button (shown during chat) -->
@@ -2201,38 +2218,64 @@ const chatbotMessages = document.getElementById('chatbotMessages');
 
 // Source selection tracking (for testing)
 let chatbotSourceMode = 'ollama';  // 'ollama' or 'template'
-const sourceOllamaBtn = document.getElementById('sourceOllamaBtn');
-const sourceTemplateBtn = document.getElementById('sourceTemplateBtn');
-const currentSourceLabel = document.getElementById('currentSourceLabel');
 
-// Add event listeners for source buttons
-if (sourceOllamaBtn) {
-    sourceOllamaBtn.addEventListener('click', () => {
-        chatbotSourceMode = 'ollama';
-        currentSourceLabel.textContent = 'Current: Ollama (AI)';
+// Chat elements will be initialized when DOM is ready
+let sourceOllamaBtn, sourceTemplateBtn, currentSourceLabel;
+
+// Check access on page load if logged in
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize source mode buttons
+    sourceOllamaBtn = document.getElementById('sourceOllamaBtn');
+    sourceTemplateBtn = document.getElementById('sourceTemplateBtn');
+    currentSourceLabel = document.getElementById('currentSourceLabel');
+
+    // Add event listeners for source buttons
+    if (sourceOllamaBtn) {
+        sourceOllamaBtn.addEventListener('click', () => {
+            console.log('Switched to OLLAMA mode');
+            chatbotSourceMode = 'ollama';
+            currentSourceLabel.textContent = 'AI Mode';
+            sourceOllamaBtn.style.opacity = '1';
+            sourceOllamaBtn.style.borderWidth = '2px';
+            sourceTemplateBtn.style.opacity = '0.6';
+            sourceTemplateBtn.style.borderWidth = '1px';
+        });
+    }
+
+    if (sourceTemplateBtn) {
+        sourceTemplateBtn.addEventListener('click', () => {
+            console.log('Switched to TEMPLATE mode');
+            chatbotSourceMode = 'template';
+            currentSourceLabel.textContent = 'Template';
+            sourceTemplateBtn.style.opacity = '1';
+            sourceTemplateBtn.style.borderWidth = '2px';
+            sourceOllamaBtn.style.opacity = '0.6';
+            sourceOllamaBtn.style.borderWidth = '1px';
+        });
+    }
+
+    // Set initial state (Ollama is selected by default)
+    if (sourceOllamaBtn) {
         sourceOllamaBtn.style.opacity = '1';
         sourceOllamaBtn.style.borderWidth = '2px';
+    }
+    if (sourceTemplateBtn) {
         sourceTemplateBtn.style.opacity = '0.6';
         sourceTemplateBtn.style.borderWidth = '1px';
-    });
-}
+    }
 
-if (sourceTemplateBtn) {
-    sourceTemplateBtn.addEventListener('click', () => {
-        chatbotSourceMode = 'template';
-        currentSourceLabel.textContent = 'Current: Template';
-        sourceTemplateBtn.style.opacity = '1';
-        sourceTemplateBtn.style.borderWidth = '2px';
-        sourceOllamaBtn.style.opacity = '0.6';
-        sourceOllamaBtn.style.borderWidth = '1px';
-    });
-}
-
-// Set initial state (Ollama is selected)
-sourceOllamaBtn.style.opacity = '1';
-sourceOllamaBtn.style.borderWidth = '2px';
-sourceTemplateBtn.style.opacity = '0.6';
-sourceTemplateBtn.style.borderWidth = '1px';
+    // Original access overlay initialization
+    if (<?php echo is_logged_in() ? 'true' : 'false'; ?>) {
+        // Show access overlay by default when panel opens
+        chatbotAccessOverlay.style.display = 'flex';
+    } else {
+        // Show login requirement if not logged in
+        const messageElement = document.getElementById('accessOverlayMessage');
+        messageElement.textContent = 'Please login to access the thesis chatbot features.';
+        const buttons = document.querySelector('.access-overlay-buttons');
+        buttons.innerHTML = '<button class="btn-request-access-overlay" onclick="window.location.href=\'index.php\'"><i class="fas fa-sign-in-alt me-2"></i>Login</button>';
+    }
+});
 const chatbotInputArea = document.getElementById('chatbotInputArea');
 const chatbotInput = document.getElementById('chatbotInput');
 const chatbotSendBtn = document.getElementById('chatbotSendBtn');
