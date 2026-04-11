@@ -230,19 +230,41 @@ class DocumentMetadataExtractor {
                 }
             }
             
-            // Step 2: If no text found, try to extract from FlateDecode compressed streams
-            if (empty(trim($text))) {
-                // Find all stream objects with FlateDecode
-                $stream_pattern = '/stream\s*\n(.+?)\nendstream/s';
-                if (preg_match_all($stream_pattern, $content, $stream_matches)) {
-                    foreach ($stream_matches[1] as $stream_data) {
-                        // Try to decompress if it's compressed
+            // Step 2: Extract and decompress FlateDecode streams using /Length to determine stream size
+            if (preg_match_all('/\/Length\s+(\d+)[^\n]*\n[^\n]*stream\s*\n/s', $content, $length_matches, PREG_OFFSET_CAPTURE)) {
+                foreach ($length_matches[1] as $idx => $length_match) {
+                    $length = intval($length_match[0]);
+                    // Get the offset of the full match (including "stream\n")
+                    $full_match_text = $length_matches[0][$idx][0];
+                    $full_match_offset = $length_matches[0][$idx][1];
+                    // Position right after the matched pattern
+                    $offset = $full_match_offset + strlen($full_match_text);
+                    
+                    // Extract exactly $length bytes from this position
+                    if ($offset + $length <= strlen($content)) {
+                        $stream_data = substr($content, $offset, $length);
+                        
+                        // Try to decompress
                         $decompressed = self::decompressPdfStream($stream_data);
-                        if ($decompressed) {
+                        
+                        if ($decompressed && !empty(trim($decompressed))) {
                             // Extract text from decompressed content
                             if (preg_match_all('/BT\s*(.+?)\s*ET/s', $decompressed, $matches)) {
                                 foreach ($matches[1] as $block) {
-                                    $text .= self::extractTextFromTextBlock($block) . ' ';
+                                    $extracted = self::extractTextFromTextBlock($block);
+                                    if (!empty(trim($extracted))) {
+                                        $text .= $extracted . ' ';
+                                    }
+                                }
+                            }
+                            
+                            // Also try to extract text operators directly
+                            if (preg_match_all('/\(([^)]{5,})\)\s*Tj/', $decompressed, $matches)) {
+                                foreach ($matches[1] as $str) {
+                                    $decoded = self::decodePdfString($str);
+                                    if (trim($decoded) !== '' && strlen(trim($decoded)) > 2) {
+                                        $text .= $decoded . ' ';
+                                    }
                                 }
                             }
                         }
@@ -250,11 +272,10 @@ class DocumentMetadataExtractor {
                 }
             }
             
-            // Step 3: If still no text, try alternative text extraction from all parenthesized strings
-            if (empty(trim($text))) {
-                if (preg_match_all('/\(([^()]{10,})\)/', $content, $matches)) {
+            // Step 3: If still no text, try alternative text extraction
+            if (strlen(trim($text)) < 100) {
+                if (preg_match_all('/\(([^\(\)]{10,200})\)/', $content, $matches)) {
                     foreach ($matches[1] as $str) {
-                        // Filter out non-text strings (metadata, etc)
                         if (self::isLikelyTextContent($str)) {
                             $text .= $str . ' ';
                         }
@@ -302,15 +323,31 @@ class DocumentMetadataExtractor {
     private static function extractTextFromTextBlock($block) {
         $text = '';
         
-        // Simple approach: extract all parenthesized strings within the block
-        // PDF text strings are in (text) format, separated by operators like Tj, TJ, ', "
+        // PDF text can be fragmented across multiple text positioning commands
+        // Text appears in TJ (Show Text with Positioning) and Tj (Show Text) operators
+        // Format: TJ [(String1) offset (String2) offset ...] TJ
+       
+        // Extract all TJ array text operators - these contain the actual visible text
+        // Pattern: [...text strings and numbers...] TJ
+        if (preg_match_all('/\[([^\[\]]*?)\]\s*TJ/s', $block, $tj_matches)) {
+            foreach ($tj_matches[1] as $tj_array) {
+                // Extract all parenthesized strings from this TJ array (in order)
+                if (preg_match_all('/\(([^()\\\\]*(?:\\\\.[^()\\\\]*)*)\)/', $tj_array, $str_matches)) {
+                    foreach ($str_matches[1] as $str) {
+                        $decoded = self::decodePdfString($str);
+                        // Concatenate directly (PDF handles spacing with positioning)
+                        $text .= $decoded;
+                    }
+                }
+            }
+            // Add space after each TJ operation
+            $text = trim($text) . ' ';
+        }
         
-        if (preg_match_all("/\\(([^()\\\\]*(?:\\\\.[^()\\\\]*)*)\\)/", $block, $matches)) {
+        // Also try simple Tj operators (show text without positioning array)
+        if (preg_match_all("/\\(([^()\\\\]*(?:\\\\.[^()\\\\]*)*)\\)\\s*Tj/", $block, $matches)) {
             foreach ($matches[1] as $str) {
-                // Decode PDF escape sequences
                 $decoded = self::decodePdfString($str);
-                
-                // Add if it looks like real text (not empty, has some content)
                 if (trim($decoded) !== '') {
                     $text .= $decoded . ' ';
                 }
