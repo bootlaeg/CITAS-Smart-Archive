@@ -1,0 +1,204 @@
+<?php
+/**
+ * Chatbot Response Handler
+ * Processes user messages and returns AI-generated responses
+ */
+
+header('Content-Type: application/json; charset=utf-8');
+
+// Force error logging
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../debug_chatbot_error.log');
+error_reporting(E_ALL);
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+try {
+    require_once __DIR__ . '/../db_includes/db_connect.php';
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    exit(1);
+}
+
+if (!isset($_SESSION['user_id'])) {
+    echo json_encode(['success' => false, 'message' => 'Not logged in']);
+    exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+    exit();
+}
+
+$thesis_id = isset($_POST['thesis_id']) ? intval($_POST['thesis_id']) : 0;
+$user_message = isset($_POST['message']) ? trim($_POST['message']) : '';
+
+if ($thesis_id <= 0 || empty($user_message)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
+    exit();
+}
+
+// Verify database connection
+if (!isset($conn) || $conn === null) {
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    exit();
+}
+
+// Check if user has approved chatbot access
+$access_check = $conn->prepare("
+    SELECT id FROM chatbot_access_requests 
+    WHERE user_id = ? AND thesis_id = ? AND status = 'approved'
+");
+
+if (!$access_check) {
+    error_log("Prepare failed in chatbot_response: " . $conn->error);
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    exit();
+}
+
+$access_check->bind_param("ii", $_SESSION['user_id'], $thesis_id);
+
+if (!$access_check->execute()) {
+    error_log("Execute failed in chatbot_response: " . $access_check->error);
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    $access_check->close();
+    exit();
+}
+
+if ($access_check->get_result()->num_rows === 0) {
+    echo json_encode(['success' => false, 'message' => 'You do not have access to chatbot features for this thesis']);
+    $access_check->close();
+    exit();
+}
+$access_check->close();
+
+// Get thesis details
+$thesis_stmt = $conn->prepare("
+    SELECT t.id, t.title, t.author, t.abstract, t.category, t.keywords
+    FROM thesis t
+    WHERE t.id = ?
+");
+
+if (!$thesis_stmt) {
+    error_log("Prepare failed for thesis query: " . $conn->error);
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    exit();
+}
+
+$thesis_stmt->bind_param("i", $thesis_id);
+
+if (!$thesis_stmt->execute()) {
+    error_log("Execute failed for thesis query: " . $thesis_stmt->error);
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    $thesis_stmt->close();
+    exit();
+}
+
+$result = $thesis_stmt->get_result();
+
+if ($result->num_rows === 0) {
+    echo json_encode(['success' => false, 'message' => 'Thesis not found']);
+    $thesis_stmt->close();
+    exit();
+}
+
+$thesis = $result->fetch_assoc();
+$thesis_stmt->close();
+
+// Build context for the chatbot
+$thesis_context = sprintf(
+    "Thesis Information:\nTitle: %s\nAuthor: %s\nAbstract: %s\nCategory: %s\nKeywords: %s",
+    $thesis['title'],
+    $thesis['author'],
+    substr($thesis['abstract'] ?? 'N/A', 0, 500),
+    $thesis['category'] ?? 'Not classified',
+    $thesis['keywords'] ?? 'N/A'
+);
+
+// Generate response
+try {
+    // Try to use Ollama service for intelligent responses
+    require_once __DIR__ . '/../ai_includes/ollama_service.php';
+    $ollama = new OllamaService('phi');
+    
+    if ($ollama->isAvailable()) {
+        $prompt = "You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user's question concisely and professionally in 2-3 sentences max.\n\n" . 
+                  $thesis_context . "\n\n" .
+                  "User Question: " . $user_message . "\n\nAnswer:";
+        
+        $response = $ollama->prompt($prompt, ['temperature' => 0.5]);
+        
+        echo json_encode([
+            'success' => true,
+            'response' => trim($response),
+            'source' => 'ollama'
+        ]);
+    } else {
+        // Fallback to template if Ollama not available
+        $fallback_response = generateFallbackResponse($user_message, $thesis);
+        echo json_encode([
+            'success' => true,
+            'response' => $fallback_response,
+            'source' => 'template'
+        ]);
+    }
+} catch (Exception $e) {
+    // Log detailed error information
+    error_log("=== CHATBOT ERROR ===");
+    error_log("Error Message: " . $e->getMessage());
+    error_log("Error Code: " . $e->getCode());
+    error_log("Error File: " . $e->getFile());
+    error_log("Error Line: " . $e->getLine());
+    error_log("Error Trace: " . $e->getTraceAsString());
+    error_log("=== END ERROR ===");
+    
+    // Use fallback response
+    $fallback_response = generateFallbackResponse($user_message, $thesis);
+    
+    echo json_encode([
+        'success' => true,
+        'response' => $fallback_response,
+        'source' => 'template'
+    ]);
+}
+
+$conn->close();
+
+/**
+ * Generate fallback response based on predefined patterns
+ */
+function generateFallbackResponse($user_message, $thesis) {
+    $message_lower = strtolower($user_message);
+    
+    // Pattern matching for common questions
+    if (preg_match('/summary|abstract|overview/', $message_lower)) {
+        return "Here's a summary of this thesis: " . substr($thesis['abstract'] ?? 'No abstract available', 0, 300) . "...";
+    }
+    
+    if (preg_match('/author|who wrote|research|researcher/', $message_lower)) {
+        return "This thesis was authored by " . $thesis['author'] . ". You can find more details in the thesis information section.";
+    }
+    
+    if (preg_match('/keywords|topic|subject|field/', $message_lower)) {
+        $keywords = $thesis['keywords'] ?? 'Classification information not available';
+        return "The main topics and keywords for this thesis are: " . $keywords;
+    }
+    
+    if (preg_match('/download|access|view|full|document/', $message_lower)) {
+        return "You can access and download the full thesis document from the overview tab. The download button is located in the document section.";
+    }
+    
+    if (preg_match('/help|question|how|what|where/', $message_lower)) {
+        return "I'm here to help! You can ask me about:\n- The thesis summary and abstract\n- Author and research information\n- Keywords and topics covered\n- How to access the full document\n\nFeel free to ask any specific questions about this thesis.";
+    }
+    
+    // Default response
+    return "Thank you for your question. This thesis is titled \"" . 
+           $thesis['title'] . "\" and was authored by " . $thesis['author'] . 
+           ". Feel free to ask me more specific questions about the abstract, keywords, or how to access the full document.";
+}
+?>

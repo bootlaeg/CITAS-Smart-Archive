@@ -991,6 +991,419 @@ if (is_logged_in()) {
             color: var(--primary-dark);
             text-decoration: underline;
         }
+
+        /* ============== CHATBOT UI STYLES ============== */
+
+        /* Floating Chat Bubble */
+        .chatbot-bubble {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: all 0.3s ease;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .chatbot-bubble:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(230, 126, 34, 0.4);
+        }
+
+        .chatbot-bubble.active {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Session Panel */
+        .session-panel {
+            flex: 1;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Chat Panel */
+        .chatbot-panel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 16px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            z-index: 2100;
+            animation: slideInRight 0.3s ease;
+            border-left: 1px solid var(--border-light);
+        }
+
+        .chatbot-panel.open {
+            display: flex;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        /* Chat Panel Header */
+        .chatbot-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-dark) 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary-dark);
+        }
+
+        .chatbot-header-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chatbot-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        /* Chat Messages Container */
+        .chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            bg-color: #FAFAFA;
+        }
+
+        /* Message Styles */
+        .chat-message {
+            display: flex;
+            margin-bottom: 0.75rem;
+            animation: slideInMessage 0.3s ease;
+        }
+
+        @keyframes slideInMessage {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-message.user {
+            justify-content: flex-end;
+        }
+
+        .chat-message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            word-wrap: break-word;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .message-content.user {
+            background: var(--primary-orange);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-content.bot {
+            background: var(--light-cream);
+            color: var(--text-dark);
+            border-bottom-left-radius: 4px;
+            border-left: 3px solid var(--primary-orange);
+        }
+
+        /* Loading Indicator */
+        .chat-message.loading .message-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary-orange);
+            animation: bounce 1.4s infinite;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                opacity: 0.5;
+                transform: translateY(0);
+            }
+            40% {
+                opacity: 1;
+                transform: translateY(-8px);
+            }
+        }
+
+        /* Chat Input Area */
+        .chatbot-input-area {
+            padding: 1rem;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: 0.5rem;
+            background: white;
+        }
+
+        .chatbot-input-field {
+            flex: 1;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-input-field:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+        }
+
+        .chatbot-send-btn {
+            background: var(--primary-orange);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+        }
+
+        .chatbot-send-btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .chatbot-send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Access Control Overlay */
+        .chatbot-access-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2200;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 12px;
+        }
+
+        .access-overlay-icon {
+            font-size: 3rem;
+            color: var(--primary-orange);
+            margin-bottom: 1rem;
+        }
+
+        .access-overlay-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .access-overlay-message {
+            color: var(--text-gray);
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .access-overlay-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn-request-access-overlay {
+            background: var(--primary-orange);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-request-access-overlay:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.2);
+        }
+
+        .btn-close-access-overlay {
+            background: var(--border-light);
+            color: var(--text-gray);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-close-access-overlay:hover {
+            background: #d1d5db;
+            color: var(--text-dark);
+        }
+
+        /* Access Status Messages */
+        .access-status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .access-status-pending {
+            background: #FFF8E1;
+            color: #F57F17;
+            border: 1px solid #FFC107;
+        }
+
+        .access-status-denied {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #EF5350;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .chatbot-panel {
+                width: 100%;
+                right: 0;
+            }
+
+            .chatbot-bubble {
+                bottom: 16px;
+                right: 16px;
+                width: 56px;
+                height: 56px;
+                font-size: 1.25rem;
+            }
+
+            .message-content {
+                max-width: 90%;
+            }
+
+            .chatbot-input-area {
+                padding: 0.75rem;
+            }
+
+            .chatbot-input-field {
+                padding: 0.65rem 0.75rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .chatbot-panel {
+                width: 100%;
+            }
+
+            .chatbot-header-title {
+                font-size: 0.9rem;
+            }
+
+            .message-content {
+                max-width: 95%;
+                padding: 0.65rem 0.85rem;
+                font-size: 0.9rem;
+            }
+
+            .access-overlay-icon {
+                font-size: 2.5rem;
+            }
+
+            .access-overlay-title {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1622,6 +2035,668 @@ if (hamburgerMenu) {
         });
     });
 }
+</script>
+
+<!-- Floating Chat Bubble -->
+<button class="chatbot-bubble" id="chatbotBubble" title="Open AI Chatbot">
+    <i class="fas fa-comments"></i>
+</button>
+
+<!-- Chatbot Panel -->
+<div class="chatbot-panel" id="chatbotPanel">
+    <div class="chatbot-header">
+        <h2 class="chatbot-header-title">
+            <i class="fas fa-robot"></i>
+            Thesis Assistant
+        </h2>
+        <button class="chatbot-close-btn" id="chatbotCloseBtn" title="Close chatbot">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Access Control Overlay -->
+    <div class="chatbot-access-overlay" id="chatbotAccessOverlay">
+        <div class="access-overlay-icon">
+            <i class="fas fa-lock"></i>
+        </div>
+        <h3 class="access-overlay-title">Chatbot Access Required</h3>
+        <p class="access-overlay-message" id="accessOverlayMessage">
+            To use the AI chatbot for thesis analysis, you need to request access first. This helps us maintain security and ensure proper usage.
+        </p>
+        <div class="access-overlay-buttons">
+            <button class="btn-request-access-overlay" id="requestAccessBtn">
+                <i class="fas fa-paper-plane me-2"></i>Request Access
+            </button>
+            <button class="btn-close-access-overlay" id="closeAccessOverlayBtn">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Session Management Panel -->
+    <div id="sessionPanel" class="session-panel" style="
+        display: none;
+        flex: 1;
+        overflow-y: auto;
+        background: #f8f9fa;
+        padding: 0;
+    ">
+        <div style="padding: 15px;">
+            <button id="newChatBtn" style="
+                width: 100%;
+                padding: 12px;
+                background: #E67E22;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                margin-bottom: 15px;
+                transition: background 0.3s;
+            " onmouseover="this.style.background='#D35400'" onmouseout="this.style.background='#E67E22'">
+                <i class="fas fa-plus"></i>New Chat
+            </button>
+
+            <div id="sessionsList" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Sessions will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Quota Status Display -->
+    <div id="chatbotQuotaStatus" style="padding: 10px; border-bottom: 1px solid #eee; display: none;"></div>
+
+    <!-- Chat Messages Container -->
+    <div class="chatbot-messages" id="chatbotMessages" style="display: none;">
+        <div class="chat-message bot">
+            <div class="message-content bot">
+                <i class="fas fa-smile"></i> Hello! I'm the Thesis Assistant. I can help you with analysis, summaries, and questions about this thesis. How can I assist you today?
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Input Area -->
+    <div class="chatbot-input-area" id="chatbotInputArea" style="display: none;">
+        <input 
+            type="text" 
+            class="chatbot-input-field" 
+            id="chatbotInput" 
+            placeholder="Ask me anything about this thesis..."
+            autocomplete="off"
+        >
+        <button class="chatbot-send-btn" id="chatbotSendBtn">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+
+    <!-- Back button (shown during chat) -->
+    <div id="chatbackButton" style="
+        display: none;
+        padding: 10px;
+        border-top: 1px solid #eee;
+        background: white;
+    ">
+        <button id="backToSessionsBtn" style="
+            width: 100%;
+            padding: 8px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        ">
+            <i class="fas fa-arrow-left me-2"></i>Back to Sessions
+        </button>
+    </div>
+</div>
+
+<script>
+// ============== CHATBOT INITIALIZATION ==============
+
+const chatbotBubble = document.getElementById('chatbotBubble');
+const chatbotPanel = document.getElementById('chatbotPanel');
+const chatbotCloseBtn = document.getElementById('chatbotCloseBtn');
+const chatbotMessages = document.getElementById('chatbotMessages');
+const chatbotInputArea = document.getElementById('chatbotInputArea');
+const chatbotInput = document.getElementById('chatbotInput');
+const chatbotSendBtn = document.getElementById('chatbotSendBtn');
+const chatbotAccessOverlay = document.getElementById('chatbotAccessOverlay');
+const requestAccessBtn = document.getElementById('requestAccessBtn');
+const closeAccessOverlayBtn = document.getElementById('closeAccessOverlayBtn');
+const sessionPanel = document.getElementById('sessionPanel');
+const sessionsList = document.getElementById('sessionsList');
+const newChatBtn = document.getElementById('newChatBtn');
+const backToSessionsBtn = document.getElementById('backToSessionsBtn');
+const chatbackButton = document.getElementById('chatbackButton');
+
+const thesisId = <?php echo $thesis_id; ?>;
+let hasChatbotAccess = false;
+let accessCheckInProgress = false;
+let currentSessionId = null;
+let sessionMessages = [];
+const maxSessions = 5;
+
+// Open chatbot panel
+chatbotBubble.addEventListener('click', () => {
+    chatbotPanel.classList.add('open');
+    chatbotBubble.classList.add('active');
+    
+    // Check access status when opening
+    if (!accessCheckInProgress) {
+        checkChatbotAccessStatus();
+    }
+});
+
+// Close chatbot panel
+chatbotCloseBtn.addEventListener('click', () => {
+    closeChatbotPanel();
+});
+
+closeAccessOverlayBtn.addEventListener('click', () => {
+    closeChatbotPanel();
+});
+
+// New chat button
+newChatBtn.addEventListener('click', () => {
+    createNewSession();
+});
+
+// Back to sessions button
+backToSessionsBtn.addEventListener('click', () => {
+    showSessionView();
+});
+
+// Close panel function
+function closeChatbotPanel() {
+    chatbotPanel.classList.remove('open');
+    chatbotBubble.classList.remove('active');
+}
+
+// Send message when button clicked
+chatbotSendBtn.addEventListener('click', sendMessage);
+
+// Send message on Enter key
+chatbotInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+// Check chatbot access status
+function checkChatbotAccessStatus() {
+    if (accessCheckInProgress) return;
+    
+    accessCheckInProgress = true;
+    
+    fetch('chatbot_includes/check_chatbot_access.php?thesis_id=' + thesisId)
+        .then(response => response.json())
+        .then(data => {
+            accessCheckInProgress = false;
+            
+            if (data.has_access) {
+                // User has access
+                hasChatbotAccess = true;
+                enableChatbot();
+            } else {
+                // No access - show appropriate message
+                hasChatbotAccess = false;
+                showAccessControl(data.status);
+            }
+        })
+        .catch(error => {
+            accessCheckInProgress = false;
+            console.error('Error checking chatbot access:', error);
+            showAccessControl('error');
+        });
+}
+
+// Show access control overlay with appropriate message
+function showAccessControl(status) {
+    chatbotMessages.style.display = 'none';
+    chatbotInputArea.style.display = 'none';
+    chatbotAccessOverlay.style.display = 'flex';
+    
+    const messageElement = document.getElementById('accessOverlayMessage');
+    
+    switch(status) {
+        case 'pending':
+            messageElement.textContent = 'Your chatbot access request is pending approval. An administrator will review your request shortly.';
+            requestAccessBtn.style.display = 'none';
+            break;
+        case 'denied':
+            messageElement.textContent = 'Your previous chatbot access request was denied. Please contact an administrator if you believe this was a mistake.';
+            requestAccessBtn.style.display = 'none';
+            break;
+        case 'no_request':
+            messageElement.textContent = 'To use the AI chatbot for thesis analysis, you need to request access first. This helps us maintain security and ensure proper usage.';
+            requestAccessBtn.style.display = 'block';
+            break;
+        case 'error':
+            messageElement.textContent = 'There was an error checking your access status. Please try again later.';
+            requestAccessBtn.style.display = 'block';
+            break;
+        default:
+            messageElement.textContent = 'To use the AI chatbot, you need to request access first.';
+            requestAccessBtn.style.display = 'block';
+    }
+}
+
+// Request chatbot access
+requestAccessBtn.addEventListener('click', () => {
+    if (!<?php echo is_logged_in() ? 'true' : 'false'; ?>) {
+        alert('Please login to request chatbot access.');
+        window.location.href = 'index.php';
+        return;
+    }
+    
+    requestAccessBtn.disabled = true;
+    requestAccessBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+    
+    fetch('chatbot_includes/request_chatbot_access.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'thesis_id=' + thesisId
+    })
+    .then(response => response.json())
+    .then(data => {
+        requestAccessBtn.disabled = false;
+        requestAccessBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Request Access';
+        
+        if (data.success) {
+            if (data.already_approved) {
+                // Re-enable chatbot
+                hasChatbotAccess = true;
+                enableChatbot();
+            } else {
+                // Show pending status
+                const messageElement = document.getElementById('accessOverlayMessage');
+                messageElement.textContent = 'Your access request has been submitted! An administrator will review it shortly.';
+                requestAccessBtn.style.display = 'none';
+                alert(data.message);
+            }
+        } else {
+            alert('Error: ' + (data.message || 'Failed to submit request'));
+        }
+    })
+    .catch(error => {
+        requestAccessBtn.disabled = false;
+        requestAccessBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Request Access';
+        console.error('Error requesting access:', error);
+        alert('Error submitting request. Please try again.');
+    });
+});
+
+// Enable chatbot functionality
+function enableChatbot() {
+    chatbotAccessOverlay.style.display = 'none';
+    sessionPanel.style.display = 'flex';
+    chatbotMessages.style.display = 'none';
+    chatbotInputArea.style.display = 'none';
+    chatbackButton.style.display = 'none';
+    
+    // Load and display sessions
+    loadAndDisplaySessions();
+}
+
+// Show chat view
+function showChatView() {
+    sessionPanel.style.display = 'none';
+    chatbotMessages.style.display = 'flex';
+    chatbotInputArea.style.display = 'flex';
+    chatbackButton.style.display = 'block';
+    chatbotInput.focus();
+}
+
+// Show session list view
+function showSessionView() {
+    sessionPanel.style.display = 'flex';
+    chatbotMessages.style.display = 'none';
+    chatbotInputArea.style.display = 'none';
+    chatbackButton.style.display = 'none';
+    loadAndDisplaySessions();
+}
+
+// ============== SESSION MANAGEMENT ==============
+
+// Load and display sessions in session panel
+async function loadAndDisplaySessions() {
+    try {
+        const response = await fetch('chatbot_includes/list_sessions.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'thesis_id=' + thesisId
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('Sessions loaded:', data.session_count + '/' + data.max_sessions);
+            renderSessionsList(data);
+        }
+    } catch (error) {
+        console.error('Error loading sessions:', error);
+        sessionsList.innerHTML = '<p style="padding: 10px; color: #999;">Error loading sessions</p>';
+    }
+}
+
+// Render sessions list UI
+function renderSessionsList(data) {
+    sessionsList.innerHTML = '';
+    
+    if (data.sessions.length === 0) {
+        sessionsList.innerHTML = `
+            <div style="
+                padding: 20px;
+                text-align: center;
+                color: #999;
+            ">
+                <p><i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i></p>
+                <p>No chat sessions yet</p>
+                <p style="font-size: 0.9rem;">Click "New Chat" to start</p>
+            </div>
+        `;
+        return;
+    }
+    
+    data.sessions.forEach(session => {
+        const createdDate = new Date(session.created_at).toLocaleString();
+        const sessionEl = document.createElement('div');
+        sessionEl.style.cssText = `
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        `;
+        sessionEl.innerHTML = `
+            <div style="flex: 1; cursor: pointer;">
+                <div style="font-weight: 600; color: #2C3E50; margin-bottom: 4px;">
+                    ${session.session_name}
+                </div>
+                <div style="font-size: 0.85rem; color: #666;">
+                    <i class="fas fa-message me-1"></i>${session.message_count} messages · ${createdDate}
+                </div>
+            </div>
+            <button onclick="deleteSessionConfirm(${session.id})" style="
+                background: #dc3545;
+                color: white;
+                border: none;
+                padding: 6px 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.85rem;
+                ml-2: 10px;
+            " title="Delete session">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        
+        // Click to load session
+        sessionEl.querySelector('div[style*="flex: 1"]').addEventListener('click', () => {
+            loadSession(session.id);
+        });
+        
+        sessionEl.addEventListener('mouseover', () => {
+            sessionEl.style.background = '#f0f0f0';
+            sessionEl.style.borderColor = '#E67E22';
+        });
+        sessionEl.addEventListener('mouseout', () => {
+            sessionEl.style.background = 'white';
+            sessionEl.style.borderColor = '#ddd';
+        });
+        
+        sessionsList.appendChild(sessionEl);
+    });
+    
+    // Show quota status
+    const quotaEl = document.createElement('div');
+    quotaEl.style.cssText = 'padding: 10px; text-align: center; font-size: 0.85rem; color: #666; margin-top: 10px; border-top: 1px solid #eee;';
+    if (data.quota_exceeded) {
+        quotaEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${data.session_count}/${data.max_sessions} sessions (limit reached)`;
+        quotaEl.style.color = '#E67E22';
+    } else {
+        quotaEl.innerHTML = `${data.session_count}/${data.max_sessions} sessions`;
+    }
+    sessionsList.appendChild(quotaEl);
+}
+
+// Load a session and show chat
+async function loadSession(sessionId) {
+    try {
+        const response = await fetch('chatbot_includes/load_session.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'session_id=' + sessionId
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            currentSessionId = data.session.id;
+            sessionMessages = data.messages;
+            
+            // Clear and reload messages
+            clearChatMessages();
+            
+            // Add all previous messages
+            data.messages.forEach(msg => {
+                addMessageToChat('user', msg.user_message);
+                addMessageToChat('bot', msg.bot_response);
+            });
+            
+            // Show chat view
+            showChatView();
+            console.log('Loaded session:', data.session.session_name);
+        }
+    } catch (error) {
+        console.error('Error loading session:', error);
+        alert('Failed to load session');
+    }
+}
+
+// Delete session with confirmation
+async function deleteSessionConfirm(sessionId) {
+    if (!confirm('Are you sure? This will permanently delete this session and all messages.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('chatbot_includes/delete_session.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'session_id=' + sessionId
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            loadAndDisplaySessions();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error deleting session:', error);
+        alert('Failed to delete session');
+    }
+}
+
+// Create new session and start chat
+async function createNewSession() {
+    try {
+        const response = await fetch('chatbot_includes/create_session.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body:'thesis_id=' + thesisId + '&session_name=Chat ' + new Date().toLocaleString()
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            currentSessionId = data.session_id;
+            sessionMessages = [];
+            clearChatMessages();
+            showChatView();
+            console.log('New session created:', currentSessionId);
+            return true;
+        } else if (data.quota_exceeded) {
+            alert(data.message);
+            loadAndDisplaySessions();
+            return false;
+        } else {
+            alert('Error: ' + data.message);
+            return false;
+        }
+    } catch (error) {
+        console.error('Error creating session:', error);
+        alert('Failed to create session');
+        return false;
+    }
+}
+
+// Save message to session
+async function saveMessageToSession(userMessage, botResponse) {
+    if (!currentSessionId) return;
+    
+    try {
+        const response = await fetch('chatbot_includes/save_message.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'session_id=' + currentSessionId + 
+                  '&user_message=' + encodeURIComponent(userMessage) +
+                  '&bot_response=' + encodeURIComponent(botResponse)
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('Message saved to session');
+        }
+    } catch (error) {
+        console.error('Error saving message:', error);
+    }
+}
+
+
+// Send message function
+function sendMessage() {
+    if (!hasChatbotAccess) {
+        alert('You do not have access to the chatbot. Please request access first.');
+        return;
+    }
+    
+    if (!currentSessionId) {
+        alert('Please select or create a chat session first.');
+        return;
+    }
+    
+    const message = chatbotInput.value.trim();
+    if (!message) return;
+    
+    sendMessageContinue(message);
+}
+
+function sendMessageContinue(message) {
+    // Add user message to chat
+    addMessageToChat('user', message);
+    chatbotInput.value = '';
+    
+    // Show loading indicator
+    showLoadingIndicator();
+    
+    // Send to server
+    fetch('chatbot_includes/chatbot_response.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'thesis_id=' + thesisId + '&message=' + encodeURIComponent(message)
+    })
+    .then(response => response.json())
+    .then(data => {
+        removeLoadingIndicator();
+        
+        if (data.success) {
+            addMessageToChat('bot', data.response);
+            
+            // Save message to session database
+            saveMessageToSession(message, data.response);
+        } else {
+            addMessageToChat('bot', 'Sorry, I encountered an error processing your request. Please try again.');
+        }
+    })
+    .catch(error => {
+        removeLoadingIndicator();
+        console.error('Error:', error);
+        addMessageToChat('bot', 'Sorry, I encountered a connection error. Please check your internet and try again.');
+    });
+}
+
+// Add message to chat display
+function addMessageToChat(sender, text) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message ' + sender;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content ' + sender;
+    contentDiv.textContent = text;
+    
+    messageDiv.appendChild(contentDiv);
+    chatbotMessages.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+}
+
+// Show loading indicator
+function showLoadingIndicator() {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message bot loading';
+    messageDiv.id = 'loadingIndicator';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content bot';
+    
+    const dotsDiv = document.createElement('div');
+    dotsDiv.className = 'loading-dots';
+    dotsDiv.innerHTML = '<div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>';
+    
+    contentDiv.appendChild(dotsDiv);
+    messageDiv.appendChild(contentDiv);
+    chatbotMessages.appendChild(messageDiv);
+    
+    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+}
+
+// Remove loading indicator
+function removeLoadingIndicator() {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    if (loadingIndicator) {
+        loadingIndicator.remove();
+    }
+}
+
+// Clear all messages from chat
+function clearChatMessages() {
+    chatbotMessages.innerHTML = '';
+}
+
+// Check access on page load if logged in
+document.addEventListener('DOMContentLoaded', () => {
+    if (<?php echo is_logged_in() ? 'true' : 'false'; ?>) {
+        // Show access overlay by default when panel opens
+        chatbotAccessOverlay.style.display = 'flex';
+    } else {
+        // Show login requirement if not logged in
+        const messageElement = document.getElementById('accessOverlayMessage');
+        messageElement.textContent = 'Please login to access the thesis chatbot features.';
+        const buttons = document.querySelector('.access-overlay-buttons');
+        buttons.innerHTML = '<button class="btn-request-access-overlay" onclick="window.location.href=\'index.php\'"><i class="fas fa-sign-in-alt me-2"></i>Login</button>';
+    }
+});
 </script>
 
 </body>
