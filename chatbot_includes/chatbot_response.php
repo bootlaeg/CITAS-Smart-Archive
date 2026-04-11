@@ -48,10 +48,13 @@ if (!isset($conn) || $conn === null) {
     exit();
 }
 
-// Check if user has approved chatbot access
+// Check if user has approved thesis access (which gives chatbot access too)
+$user_id = $_SESSION['user_id'];
+error_log("Checking access - user_id=$user_id, thesis_id=$thesis_id");
+
 $access_check = $conn->prepare("
-    SELECT id FROM chatbot_access_requests 
-    WHERE user_id = ? AND thesis_id = ? AND status = 'approved'
+    SELECT id, status FROM thesis_access 
+    WHERE user_id = ? AND thesis_id = ?
 ");
 
 if (!$access_check) {
@@ -60,7 +63,7 @@ if (!$access_check) {
     exit();
 }
 
-$access_check->bind_param("ii", $_SESSION['user_id'], $thesis_id);
+$access_check->bind_param("ii", $user_id, $thesis_id);
 
 if (!$access_check->execute()) {
     error_log("Execute failed in chatbot_response: " . $access_check->error);
@@ -69,11 +72,27 @@ if (!$access_check->execute()) {
     exit();
 }
 
-if ($access_check->get_result()->num_rows === 0) {
-    echo json_encode(['success' => false, 'message' => 'You do not have access to chatbot features for this thesis']);
+$access_result = $access_check->get_result();
+error_log("Access check returned " . $access_result->num_rows . " rows");
+
+if ($access_result->num_rows === 0) {
+    error_log("No access record found - user_id=$user_id, thesis_id=$thesis_id");
+    echo json_encode(['success' => false, 'message' => 'No access request found. Please request access in Browse Thesis.']);
     $access_check->close();
     exit();
 }
+
+$access_row = $access_result->fetch_assoc();
+error_log("Access status: " . $access_row['status']);
+
+if ($access_row['status'] !== 'approved') {
+    error_log("Access not approved - status: " . $access_row['status']);
+    echo json_encode(['success' => false, 'message' => 'Your access request is still pending. Please wait for admin approval.']);
+    $access_check->close();
+    exit();
+}
+
+error_log("Access check passed");
 $access_check->close();
 
 // Get thesis details

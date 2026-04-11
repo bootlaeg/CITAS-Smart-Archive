@@ -2581,13 +2581,17 @@ function sendMessageContinue(message) {
     .then(data => {
         removeLoadingIndicator();
         
+        console.log('Chatbot response:', data);
+        
         if (data.success) {
             addMessageToChat('bot', data.response);
             
             // Save message to session database
             saveMessageToSession(message, data.response);
         } else {
-            addMessageToChat('bot', 'Sorry, I encountered an error processing your request. Please try again.');
+            const errorMsg = data.message || 'Unknown error';
+            console.error('Chatbot error:', errorMsg);
+            addMessageToChat('bot', 'Sorry, error: ' + errorMsg);
         }
     })
     .catch(error => {
