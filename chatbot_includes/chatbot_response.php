@@ -140,17 +140,17 @@ $thesis_context = sprintf(
 
 // Generate response - TEST MODE (Ollama only, no fallback)
 try {
-    // Try to use Ollama service for intelligent responses
-    require_once __DIR__ . '/../ai_includes/ollama_service.php';
-    $ollama = new OllamaService('phi', 'http://192.168.254.114:11434');
+    // Use cURL-based Ollama service like admin page does (more reliable)
+    require_once __DIR__ . '/../ai_includes/ollama_service_curl.php';
     
     $prompt = "You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user's question concisely and professionally in 2-3 sentences max.\n\n" . 
               $thesis_context . "\n\n" .
               "User Question: " . $user_message . "\n\nAnswer:";
     
-    error_log("Sending prompt to Ollama: " . substr($prompt, 0, 100) . "...");
+    error_log("Sending prompt to Ollama via cURL: " . substr($prompt, 0, 100) . "...");
     
-    // Try to send the prompt directly (don't check isAvailable first)
+    // Use cURL-based Ollama
+    $ollama = new OllamaServiceCurl('phi', 'http://192.168.254.114:11434');
     $response = $ollama->prompt($prompt, ['temperature' => 0.5]);
     
     error_log("Ollama response received: " . substr($response, 0, 100) . "...");
