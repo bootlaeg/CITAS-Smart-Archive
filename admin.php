@@ -26,7 +26,7 @@ $thesis_result = $conn->query("SELECT * FROM thesis ORDER BY created_at DESC LIM
 // Get all users
 $users_result = $conn->query("SELECT * FROM users ORDER BY created_at DESC LIMIT 20");
 
-// Get pending thesis access requests
+// Get pending access requests
 $access_result = $conn->query("
     SELECT ta.id, ta.user_id, ta.thesis_id, ta.requested_at,
            u.full_name, u.student_id,
@@ -36,19 +36,6 @@ $access_result = $conn->query("
     JOIN thesis t ON ta.thesis_id = t.id
     WHERE ta.status = 'pending'
     ORDER BY ta.requested_at DESC
-    LIMIT 20
-");
-
-// Get pending chatbot access requests
-$chatbot_access_result = $conn->query("
-    SELECT car.id, car.user_id, car.thesis_id, car.requested_at,
-           u.full_name, u.student_id,
-           t.title
-    FROM chatbot_access_requests car
-    JOIN users u ON car.user_id = u.id
-    JOIN thesis t ON car.thesis_id = t.id
-    WHERE car.status = 'pending'
-    ORDER BY car.requested_at DESC
     LIMIT 20
 ");
 ?>
@@ -536,6 +523,79 @@ $chatbot_access_result = $conn->query("
 
         .hamburger-menu.active span:nth-child(3) {
             transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        /* Search Filter Styles */
+        .search-filter-container {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            color: var(--primary-orange);
+            font-size: 1rem;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            background: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-gray);
+        }
+
+        .search-input:hover {
+            border-color: var(--primary-orange);
+            box-shadow: 0 2px 6px rgba(230, 126, 34, 0.1);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1), 0 2px 8px rgba(230, 126, 34, 0.15);
+            background: white;
+        }
+
+        .search-input:focus::placeholder {
+            color: #bcc1ca;
+        }
+
+        @media (max-width: 768px) {
+            .search-filter-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .search-input-wrapper {
+                max-width: 100%;
+            }
+
+            .btn-success {
+                width: 100% !important;
+            }
         }
 
         /* Mobile Navigation Overlay */
@@ -1294,10 +1354,14 @@ $chatbot_access_result = $conn->query("
         </div>
 
         <div id="thesis-tab" class="admin-section">
-            <div style="margin-bottom: 1.5rem;">
+            <div class="search-filter-container" style="margin-bottom: 1.5rem;">
                 <a href="admin_includes/admin_add_thesis_page.php" class="btn btn-success">
                     <i class="fas fa-plus me-2"></i>Add New Thesis
                 </a>
+                <div class="search-input-wrapper">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="thesisSearchInput" class="search-input" placeholder="Search theses by ID, title, author, or course..." aria-label="Search theses">
+                </div>
             </div>
             <div class="admin-table">
                 <table class="table">
@@ -1365,6 +1429,10 @@ $chatbot_access_result = $conn->query("
         </div>
 
         <div id="user-tab" class="admin-section" style="display: none;">
+            <div class="search-input-wrapper" style="margin-bottom: 1.5rem;">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="userSearchInput" class="search-input" placeholder="Search users by ID, name, email, or course..." aria-label="Search users">
+            </div>
             <div class="admin-table">
                 <table class="table">
                     <thead>
@@ -1423,6 +1491,10 @@ $chatbot_access_result = $conn->query("
         </div>
 
         <div id="access-tab" class="admin-section" style="display: none;">
+            <div class="search-input-wrapper" style="margin-bottom: 1.5rem;">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="accessSearchInput" class="search-input" placeholder="Search requests by ID, name, or thesis title..." aria-label="Search access requests">
+            </div>
             <div class="admin-table">
                 <table class="table">
                     <thead>
@@ -1435,49 +1507,23 @@ $chatbot_access_result = $conn->query("
                         </tr>
                     </thead>
                     <tbody>
-                        <?php 
-                        $has_access_requests = ($access_result && $access_result->num_rows > 0);
-                        $has_chatbot_requests = ($chatbot_access_result && $chatbot_access_result->num_rows > 0);
-                        
-                        if ($has_access_requests || $has_chatbot_requests):
-                        ?>
-                            <?php if ($has_access_requests): ?>
-                                <?php while ($request = $access_result->fetch_assoc()): ?>
-                                <tr>
-                                    <td data-label="Request ID">REQ<?php echo str_pad($request['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                                    <td data-label="Student Name"><?php echo htmlspecialchars($request['full_name']); ?></td>
-                                    <td data-label="Thesis Title"><?php echo htmlspecialchars(substr($request['title'], 0, 40)); ?></td>
-                                    <td data-label="Requested Date"><?php echo date('M d, Y', strtotime($request['requested_at'])); ?></td>
-                                    <td data-label="Actions">
-                                        <button class="action-btn" onclick="approveAccess(<?php echo $request['id']; ?>, <?php echo $request['user_id']; ?>, <?php echo $request['thesis_id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
-                                            <i class="fas fa-check"></i> Approve
-                                        </button>
-                                        <button class="action-btn action-btn-danger" onclick="rejectAccess(<?php echo $request['id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
-                                            <i class="fas fa-times"></i> Reject
-                                        </button>
-                                    </td>
-                                </tr>
-                                <?php endwhile; ?>
-                            <?php endif; ?>
-                            
-                            <?php if ($has_chatbot_requests): ?>
-                                <?php while ($request = $chatbot_access_result->fetch_assoc()): ?>
-                                <tr style="background-color: #FFF5E6;">
-                                    <td data-label="Request ID"><span style="background: #E67E22; color: white; padding: 3px 8px; border-radius: 3px; font-size: 0.85rem; font-weight: 700;">CHAT</span> <?php echo str_pad($request['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                                    <td data-label="Student Name"><?php echo htmlspecialchars($request['full_name']); ?></td>
-                                    <td data-label="Thesis Title"><?php echo htmlspecialchars(substr($request['title'], 0, 40)); ?></td>
-                                    <td data-label="Requested Date"><?php echo date('M d, Y', strtotime($request['requested_at'])); ?></td>
-                                    <td data-label="Actions">
-                                        <button class="action-btn" onclick="approveChatbotAccess(<?php echo $request['id']; ?>, <?php echo $request['user_id']; ?>, <?php echo $request['thesis_id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
-                                            <i class="fas fa-check"></i> Approve
-                                        </button>
-                                        <button class="action-btn action-btn-danger" onclick="rejectChatbotAccess(<?php echo $request['id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
-                                            <i class="fas fa-times"></i> Reject
-                                        </button>
-                                    </td>
-                                </tr>
-                                <?php endwhile; ?>
-                            <?php endif; ?>
+                        <?php if ($access_result && $access_result->num_rows > 0): ?>
+                            <?php while ($request = $access_result->fetch_assoc()): ?>
+                            <tr>
+                                <td data-label="Request ID">REQ<?php echo str_pad($request['id'], 4, '0', STR_PAD_LEFT); ?></td>
+                                <td data-label="Student Name"><?php echo htmlspecialchars($request['full_name']); ?></td>
+                                <td data-label="Thesis Title"><?php echo htmlspecialchars(substr($request['title'], 0, 40)); ?></td>
+                                <td data-label="Requested Date"><?php echo date('M d, Y', strtotime($request['requested_at'])); ?></td>
+                                <td data-label="Actions">
+                                    <button class="action-btn" onclick="approveAccess(<?php echo $request['id']; ?>, <?php echo $request['user_id']; ?>, <?php echo $request['thesis_id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="action-btn action-btn-danger" onclick="rejectAccess(<?php echo $request['id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
                         <?php else: ?>
                             <tr>
                                 <td colspan="5" class="text-center py-4">
@@ -1726,6 +1772,174 @@ window.switchTab = function(tabName) {
     });
 };
 
+// ===== SEARCH & FILTER FUNCTIONALITY =====
+
+// Debounce helper function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Filter Thesis Table
+function filterThesisTable(searchTerm) {
+    const rows = document.querySelectorAll('#thesis-tab table tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        // Skip the empty state row
+        if (row.querySelector('.empty-state')) {
+            return;
+        }
+
+        // Get searchable cell values
+        const id = row.querySelector('[data-label="ID"]')?.textContent || '';
+        const title = row.querySelector('[data-label="Title"]')?.textContent || '';
+        const author = row.querySelector('[data-label="Author"]')?.textContent || '';
+        const courseYear = row.querySelector('[data-label="Course/Year"]')?.textContent || '';
+
+        // Combine all searchable content
+        const searchContent = (id + ' ' + title + ' ' + author + ' ' + courseYear).toLowerCase();
+
+        // Case-insensitive partial match
+        if (searchContent.includes(searchTerm.toLowerCase())) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Show/hide "no results" message
+    showNoResultsMessage('#thesis-tab table tbody', visibleCount);
+}
+
+// Filter User Table
+function filterUserTable(searchTerm) {
+    const rows = document.querySelectorAll('#user-tab table tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        // Skip the empty state row
+        if (row.querySelector('.empty-state')) {
+            return;
+        }
+
+        // Get searchable cell values
+        const studentId = row.querySelector('[data-label="Student ID"]')?.textContent || '';
+        const name = row.querySelector('[data-label="Name"]')?.textContent || '';
+        const email = row.querySelector('[data-label="Email"]')?.textContent || '';
+        const course = row.querySelector('[data-label="Course"]')?.textContent || '';
+
+        // Combine all searchable content
+        const searchContent = (studentId + ' ' + name + ' ' + email + ' ' + course).toLowerCase();
+
+        // Case-insensitive partial match
+        if (searchContent.includes(searchTerm.toLowerCase())) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Show/hide "no results" message
+    showNoResultsMessage('#user-tab table tbody', visibleCount);
+}
+
+// Filter Access Requests Table
+function filterAccessTable(searchTerm) {
+    const rows = document.querySelectorAll('#access-tab table tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        // Skip the empty state row
+        if (row.querySelector('.empty-state')) {
+            return;
+        }
+
+        // Get searchable cell values
+        const requestId = row.querySelector('[data-label="Request ID"]')?.textContent || '';
+        const studentName = row.querySelector('[data-label="Student Name"]')?.textContent || '';
+        const thesisTitle = row.querySelector('[data-label="Thesis Title"]')?.textContent || '';
+
+        // Combine all searchable content
+        const searchContent = (requestId + ' ' + studentName + ' ' + thesisTitle).toLowerCase();
+
+        // Case-insensitive partial match
+        if (searchContent.includes(searchTerm.toLowerCase())) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Show/hide "no results" message
+    showNoResultsMessage('#access-tab table tbody', visibleCount);
+}
+
+// Show/Hide "No Results" Message
+function showNoResultsMessage(tableBodySelector, visibleCount) {
+    const tableBody = document.querySelector(tableBodySelector);
+    if (!tableBody) return;
+
+    // Remove existing "no results" row if present
+    const existingNoResults = tableBody.querySelector('.no-results-row');
+    if (existingNoResults) {
+        existingNoResults.remove();
+    }
+
+    // If no results, add a "no results" message
+    if (visibleCount === 0) {
+        const colCount = tableBody.parentElement.querySelector('thead tr').children.length;
+        const noResultsRow = document.createElement('tr');
+        noResultsRow.className = 'no-results-row';
+        noResultsRow.innerHTML = `
+            <td colspan="${colCount}" class="text-center py-4">
+                <div style="color: var(--text-gray); font-size: 0.95rem;">
+                    <i class="fas fa-search" style="font-size: 2rem; opacity: 0.3; margin-bottom: 0.5rem; display: block;"></i>
+                    No matching records found
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(noResultsRow);
+    }
+}
+
+// Initialize search inputs with debounced event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Thesis search
+    const thesisSearch = document.getElementById('thesisSearchInput');
+    if (thesisSearch) {
+        thesisSearch.addEventListener('input', debounce(function(e) {
+            filterThesisTable(e.target.value);
+        }, 300));
+    }
+
+    // User search
+    const userSearch = document.getElementById('userSearchInput');
+    if (userSearch) {
+        userSearch.addEventListener('input', debounce(function(e) {
+            filterUserTable(e.target.value);
+        }, 300));
+    }
+
+    // Access request search
+    const accessSearch = document.getElementById('accessSearchInput');
+    if (accessSearch) {
+        accessSearch.addEventListener('input', debounce(function(e) {
+            filterAccessTable(e.target.value);
+        }, 300));
+    }
+});
+
 // Admin Functions - Define in global scope
 
 window.verifyUser = function(userId, userName) {
@@ -1914,48 +2128,6 @@ window.rejectAccess = function(requestId, userName) {
         console.error('Reject error:', error);
         alert('Error rejecting access: ' + error.message);
     });
-}
-
-// Approve Chatbot Access Request
-window.approveChatbotAccess = function(requestId, userId, thesisId, userName) {
-    if (!confirm(`Approve chatbot access for "${userName}"?`)) return;
-    
-    fetch('admin_includes/admin_approve_chatbot_access.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'request_id=' + requestId + '&user_id=' + userId + '&thesis_id=' + thesisId
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            location.reload();
-        } else {
-            alert(data.message || 'Error approving chatbot access');
-        }
-    })
-    .catch(error => alert('Error approving chatbot access: ' + error.message));
-}
-
-// Reject Chatbot Access Request
-window.rejectChatbotAccess = function(requestId, userName) {
-    if (!confirm(`Reject chatbot access for "${userName}"?`)) return;
-    
-    fetch('admin_includes/admin_deny_chatbot_access.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'request_id=' + requestId
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.message);
-            location.reload();
-        } else {
-            alert(data.message || 'Error rejecting chatbot access');
-        }
-    })
-    .catch(error => alert('Error rejecting chatbot access: ' + error.message));
 }
 
 // Edit User Modal
