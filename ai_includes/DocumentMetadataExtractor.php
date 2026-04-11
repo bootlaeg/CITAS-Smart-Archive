@@ -35,7 +35,7 @@ class DocumentMetadataExtractor {
     /**
      * Extract metadata from DOCX file
      * @param string $file_path Path to DOCX file
-     * @return array Metadata (title, authors, year, abstract)
+     * @return array Metadata (title, authors, year, abstract, page_count)
      */
     private static function extractFromDocx($file_path) {
         try {
@@ -57,7 +57,15 @@ class DocumentMetadataExtractor {
             $text = self::extractTextFromWordXml($xml_content);
             
             // Parse metadata from extracted text
-            return self::parseMetadataFromText($text);
+            $metadata = self::parseMetadataFromText($text);
+            
+            // Extract page count
+            $page_count = self::extractPageCountFromDocx($file_path);
+            if ($page_count) {
+                $metadata['page_count'] = $page_count;
+            }
+            
+            return $metadata;
             
         } catch (Exception $e) {
             error_log("DOCX extraction error: " . $e->getMessage());
@@ -191,7 +199,15 @@ class DocumentMetadataExtractor {
                 return ['error' => 'Unable to extract text from PDF'];
             }
             
-            return self::parseMetadataFromText($content);
+            $metadata = self::parseMetadataFromText($content);
+            
+            // Extract page count
+            $page_count = self::extractPageCountFromPdf($file_path);
+            if ($page_count) {
+                $metadata['page_count'] = $page_count;
+            }
+            
+            return $metadata;
         } catch (Exception $e) {
             return ['error' => 'Failed to extract PDF metadata: ' . $e->getMessage()];
         }
@@ -348,6 +364,110 @@ class DocumentMetadataExtractor {
         
         return $metadata;
     }
+    
+    /**
+     * Extract page count from DOCX file (from document properties)
+     * @param string $file_path Path to DOCX file
+     * @return int|null Page count or null if not found
+     */
+    private static function extractPageCountFromDocx($file_path) {
+        try {
+            $zip = new ZipArchive();
+            if ($zip->open($file_path) !== true) {
+                return null;
+            }
+            
+            // Try to read app.xml which contains page count
+            $app_xml = $zip->getFromName('docProps/app.xml');
+            $zip->close();
+            
+            if ($app_xml) {
+                libxml_use_internal_errors(true);
+                $dom = new DOMDocument();
+                if (@$dom->loadXML($app_xml)) {
+                    $xpath = new DOMXPath($dom);
+                    
+                    // Register the namespace
+                    $xpath->registerNamespace('ep', 'http://schemas.openxmlformats.org/officeDocument/2006/extended-properties');
+                    
+                    // Try to get Pages element with namespace
+                    $pages = $xpath->query('//ep:Pages');
+                    
+                    if ($pages && $pages->length > 0) {
+                        $page_count = intval($pages->item(0)->nodeValue);
+                        if ($page_count > 0) {
+                            libxml_use_internal_errors(false);
+                            return $page_count;
+                        }
+                    }
+                    
+                    // Try without namespace in case namespace prefix is different
+                    $pages = $xpath->query('//*[local-name()="Pages"]');
+                    if ($pages && $pages->length > 0) {
+                        $page_count = intval($pages->item(0)->nodeValue);
+                        if ($page_count > 0) {
+                            libxml_use_internal_errors(false);
+                            return $page_count;
+                        }
+                    }
+                }
+                libxml_use_internal_errors(false);
+            }
+            
+            return null;
+        } catch (Exception $e) {
+            error_log("Page count extraction error: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Extract page count from PDF file
+     * @param string $file_path Path to PDF file
+     * @return int|null Page count or null if not found
+     */
+    private static function extractPageCountFromPdf($file_path) {
+        try {
+            $content = file_get_contents($file_path);
+            
+            if (!$content) {
+                return null;
+            }
+            
+            // Look for the Root object and Pages reference
+            // PDF structure: catalogs usually have /Type /Catalog and /Pages reference
+            // Pages object has /Kids array with individual page references
+            
+            // Try to find /Type /Catalog and extract /Pages
+            if (preg_match('/\/Type\s*\/Catalog.*?\/Pages\s*(\d+)\s+0\s+R/s', $content, $matches)) {
+                $pages_obj_num = $matches[1];
+                
+                // Now find the Pages object and count /Kids
+                if (preg_match("/$pages_obj_num\\s+0\\s+obj.*?\\/Type\s*\\/Pages.*?\\/Kids\s*\\[([^\\]]+)\\]/s", $content, $pages_matches)) {
+                    $kids = $pages_matches[1];
+                    // Count the number of references (each looks like "N 0 R")
+                    preg_match_all('/(\d+)\s+0\s+R/', $kids, $page_refs);
+                    $page_count = count($page_refs[0]);
+                    if ($page_count > 0) {
+                        return $page_count;
+                    }
+                }
+            }
+            
+            // Fallback: Count all page objects (objects with /Type /Page)
+            preg_match_all('/\/Type\s*\/Page[^s]/', $content, $matches);
+            if (count($matches[0]) > 0) {
+                return count($matches[0]);
+            }
+            
+            return null;
+        } catch (Exception $e) {
+            error_log("PDF page count extraction error: " . $e->getMessage());
+            return null;
+        }
+    }
 }
+
+?>
 
 ?>

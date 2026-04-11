@@ -65,6 +65,7 @@ try {
     error_log("  Authors: " . substr($metadata['authors'] ?? '', 0, 60));
     error_log("  Year: " . ($metadata['year'] ?? 'NOT FOUND'));
     error_log("  Abstract length: " . strlen($metadata['abstract'] ?? ''));
+    error_log("  Page count: " . ($metadata['page_count'] ?? 'NOT FOUND'));
     
     // Validate extraction quality
     $quality_warnings = [];
@@ -92,7 +93,8 @@ try {
             'title' => $metadata['title'] ?? '',
             'author' => $metadata['authors'] ?? '',
             'year' => $metadata['year'] ?? '',
-            'abstract' => $metadata['abstract'] ?? ''
+            'abstract' => $metadata['abstract'] ?? '',
+            'page_count' => $metadata['page_count'] ?? null
         ],
         'debug' => [
             'warnings' => $quality_warnings

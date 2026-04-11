@@ -694,8 +694,14 @@ function handleFileUploadWithExtraction(event) {
         document.getElementById('thesisAuthor').value = metadata.author || '';
         document.getElementById('thesisYear').value = metadata.year || '';
         document.getElementById('thesisAbstract').value = metadata.abstract || '';
+        document.getElementById('pageCount').value = metadata.page_count || '';
         
         console.log('✓ Fields populated with extracted data');
+        
+        // If page count extracted, show it
+        if (metadata.page_count) {
+            console.log('✓ Page count detected:', metadata.page_count);
+        }
         
         // Enable thesis section
         enableSection('thesisFormSection');
@@ -1285,6 +1291,9 @@ function submitForm() {
     console.log('=== SAVING THESIS & CLASSIFICATION ===');
 
     // Collect thesis data
+    const documentType = document.getElementById('documentType').value;
+    const pageCount = document.getElementById('pageCount').value;
+    
     const thesisData = {
         // Thesis Info
         title: document.getElementById('thesisTitle').value,
@@ -1293,6 +1302,10 @@ function submitForm() {
         year: parseInt(document.getElementById('thesisYear').value),
         abstract: document.getElementById('thesisAbstract').value,
         status: document.getElementById('thesisStatus').value,
+        
+        // Document Info
+        document_type: documentType,
+        page_count: pageCount ? parseInt(pageCount) : null,
         
         // Classification Data
         subject_category: document.getElementById('classifSubjectCategory').value,
@@ -1324,6 +1337,20 @@ function submitForm() {
     if (!thesisData.title || !thesisData.abstract || !thesisData.course) {
         showAlert('❌ Please fill in Title, Abstract, and Course', 'danger');
         return;
+    }
+    
+    // Validate document type
+    if (!documentType) {
+        showAlert('❌ Please select a Document Type', 'danger');
+        return;
+    }
+    
+    // Validate page count for journals
+    if (documentType === 'journal') {
+        if (!pageCount || pageCount < 10 || pageCount > 20) {
+            showAlert('❌ Journal documents must be between 10-20 pages. Current: ' + (pageCount || 'Not specified'), 'danger');
+            return;
+        }
     }
 
     showAlert('💾 Saving thesis and classification...', 'info');
@@ -1506,6 +1533,38 @@ document.addEventListener('DOMContentLoaded', function() {
             field.addEventListener('input', saveFormData);
         }
     });
+    
+    // Add validation for document type and page count
+    const documentTypeSelect = document.getElementById('documentType');
+    const pageCountInput = document.getElementById('pageCount');
+    const pageCountWarning = document.getElementById('pageCountWarning');
+    
+    function validateJournalPageCount() {
+        const docType = documentTypeSelect.value;
+        const pageCount = pageCountInput.value;
+        
+        if (docType === 'journal') {
+            if (!pageCount) {
+                pageCountWarning.textContent = '⚠️ Page count required for journals';
+                pageCountWarning.style.display = 'block';
+            } else if (pageCount < 10 || pageCount > 20) {
+                pageCountWarning.textContent = `⚠️ Journal must be 10-20 pages (current: ${pageCount})`;
+                pageCountWarning.style.display = 'block';
+            } else {
+                pageCountWarning.style.display = 'none';
+            }
+        } else {
+            pageCountWarning.style.display = 'none';
+        }
+    }
+    
+    if (documentTypeSelect) {
+        documentTypeSelect.addEventListener('change', validateJournalPageCount);
+    }
+    if (pageCountInput) {
+        pageCountInput.addEventListener('change', validateJournalPageCount);
+        pageCountInput.addEventListener('input', validateJournalPageCount);
+    }
     
     // Add file upload handler for automatic extraction
     const fileInput = document.getElementById('thesisFile');
