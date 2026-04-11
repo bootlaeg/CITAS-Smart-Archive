@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $thesis_id = isset($_POST['thesis_id']) ? intval($_POST['thesis_id']) : 0;
 $user_message = isset($_POST['message']) ? trim($_POST['message']) : '';
+$source = isset($_POST['source']) ? $_POST['source'] : 'ollama';  // 'ollama' or 'template'
 
 if ($thesis_id <= 0 || empty($user_message)) {
     echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
@@ -138,91 +139,106 @@ $thesis_context = sprintf(
     $thesis['keywords'] ?? 'N/A'
 );
 
-// Generate response - TEST MODE (Ollama only, no fallback)
+// Generate response - Route based on selected source
 try {
-    $prompt = "You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user's question concisely and professionally in 2-3 sentences max.\n\n" . 
-              $thesis_context . "\n\n" .
-              "User Question: " . $user_message . "\n\nAnswer:";
-    
-    error_log("Sending prompt to Ollama: " . substr($prompt, 0, 100) . "...");
-    
-    // Build request using same approach as OllamaServiceCurl but with LONGER timeouts for tunnel
-    // Clean UTF-8 characters (same as ollama_service_curl.php does)
-    $prompt = mb_convert_encoding($prompt, 'UTF-8', 'UTF-8');
-    $prompt = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/u', ' ', $prompt);
-    
-    $data = [
-        'model' => 'phi',
-        'prompt' => $prompt,
-        'stream' => false,
-        'temperature' => 0.5,
-    ];
-    
-    $jsonData = json_encode($data);
-    
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log("JSON encode error: " . json_last_error_msg());
-        throw new Exception("Failed to encode prompt to JSON");
+    // Check which source the user selected
+    if ($source === 'template') {
+        error_log("Using TEMPLATE response source");
+        $response = generateFallbackResponse($user_message, $thesis);
+        
+        echo json_encode([
+            'success' => true,
+            'response' => $response,
+            'source' => 'template'
+        ]);
+    } else {
+        // Use Ollama
+        error_log("Using OLLAMA response source");
+        
+        $prompt = "You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user's question concisely and professionally in 2-3 sentences max.\n\n" . 
+                  $thesis_context . "\n\n" .
+                  "User Question: " . $user_message . "\n\nAnswer:";
+        
+        error_log("Sending prompt to Ollama: " . substr($prompt, 0, 100) . "...");
+        
+        // Build request using same approach as OllamaServiceCurl but with LONGER timeouts for tunnel
+        // Clean UTF-8 characters (same as ollama_service_curl.php does)
+        $prompt = mb_convert_encoding($prompt, 'UTF-8', 'UTF-8');
+        $prompt = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/u', ' ', $prompt);
+        
+        $data = [
+            'model' => 'phi',
+            'prompt' => $prompt,
+            'stream' => false,
+            'temperature' => 0.5,
+        ];
+        
+        $jsonData = json_encode($data);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("JSON encode error: " . json_last_error_msg());
+            throw new Exception("Failed to encode prompt to JSON");
+        }
+        
+        // Direct cURL request - use cloudflared tunnel URL (like admin page does)
+        // Check for environment variable or use default cloudflared URL
+        $ollamaUrl = getenv('OLLAMA_BASE_URL') ?: 'https://ollama.citas-smart-archive.com';
+        $url = $ollamaUrl . '/api/generate';
+        $ch = curl_init($url);
+        
+        if (!$ch) {
+            throw new Exception("Failed to initialize cURL");
+        }
+        
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($jsonData)
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 300);  // 5 minutes total timeout
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);  // 30 seconds connection timeout (increased from 10)
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        
+        error_log("Executing cURL request to $url with 30-second connection timeout");
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        $curlErrno = curl_errno($ch);
+        
+        error_log("cURL errno: $curlErrno, HTTP Code: $httpCode");
+        
+        if (!empty($curlError)) {
+            error_log("cURL Error: $curlError");
+            throw new Exception("cURL Error: $curlError");
+        }
+        
+        curl_close($ch);
+        
+        if ($response === false) {
+            throw new Exception("Failed to get response from Ollama");
+        }
+        
+        error_log("Ollama response received: " . substr($response, 0, 100) . "...");
+        
+        // Parse response
+        $decoded = json_decode($response, true);
+        
+        if (isset($decoded['error'])) {
+            throw new Exception("Ollama API Error: " . $decoded['error']);
+        }
+        
+        $ollamaResponse = trim($decoded['response'] ?? $response);
+        
+        echo json_encode([
+            'success' => true,
+            'response' => $ollamaResponse,
+            'source' => 'ollama'
+        ]);
     }
-    
-    // Direct cURL request - use cloudflared tunnel URL (like admin page does)
-    // Check for environment variable or use default cloudflared URL
-    $ollamaUrl = getenv('OLLAMA_BASE_URL') ?: 'https://ollama.citas-smart-archive.com';
-    $url = $ollamaUrl . '/api/generate';
-    $ch = curl_init($url);
-    
-    if (!$ch) {
-        throw new Exception("Failed to initialize cURL");
-    }
-    
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Content-Length: ' . strlen($jsonData)
-    ]);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 300);  // 5 minutes total timeout
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);  // 30 seconds connection timeout (increased from 10)
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    
-    error_log("Executing cURL request to $url with 30-second connection timeout");
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    $curlErrno = curl_errno($ch);
-    
-    error_log("cURL errno: $curlErrno, HTTP Code: $httpCode");
-    
-    if (!empty($curlError)) {
-        error_log("cURL Error: $curlError");
-        throw new Exception("cURL Error: $curlError");
-    }
-    
-    curl_close($ch);
-    
-    if ($response === false) {
-        throw new Exception("Failed to get response from Ollama");
-    }
-    
-    error_log("Ollama response received: " . substr($response, 0, 100) . "...");
-    
-    // Parse response
-    $decoded = json_decode($response, true);
-    
-    if (isset($decoded['error'])) {
-        throw new Exception("Ollama API Error: " . $decoded['error']);
-    }
-    
-    $ollamaResponse = trim($decoded['response'] ?? $response);
-    
-    echo json_encode([
-        'success' => true,
-        'response' => $ollamaResponse,
-        'source' => 'ollama'
-    ]);
     
 } catch (Exception $e) {
     // Log detailed error information

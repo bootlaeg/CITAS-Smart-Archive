@@ -2118,6 +2118,45 @@ if (hamburgerMenu) {
 
     <!-- Chat Input Area -->
     <div class="chatbot-input-area" id="chatbotInputArea" style="display: none;">
+        <!-- Source Selection Buttons (for testing) -->
+        <div style="display: flex; gap: 10px; padding: 10px; background: #f5f5f5; border-bottom: 1px solid #ddd;">
+            <button id="sourceOllamaBtn" style="
+                padding: 8px 16px;
+                border: 2px solid #27AE60;
+                background: #27AE60;
+                color: white;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.9rem;
+                transition: all 0.3s;
+            ">
+                <i class="fas fa-brain me-1"></i>Ollama (AI)
+            </button>
+            <button id="sourceTemplateBtn" style="
+                padding: 8px 16px;
+                border: 2px solid #F39C12;
+                background: #F39C12;
+                color: white;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.9rem;
+                transition: all 0.3s;
+            ">
+                <i class="fas fa-list me-1"></i>Template
+            </button>
+            <span id="currentSourceLabel" style="
+                margin-left: auto;
+                padding: 8px 16px;
+                background: white;
+                border-radius: 6px;
+                font-size: 0.9rem;
+                color: #333;
+                font-weight: 600;
+            ">Current: Ollama</span>
+        </div>
+        
         <input 
             type="text" 
             class="chatbot-input-field" 
@@ -2159,6 +2198,41 @@ const chatbotBubble = document.getElementById('chatbotBubble');
 const chatbotPanel = document.getElementById('chatbotPanel');
 const chatbotCloseBtn = document.getElementById('chatbotCloseBtn');
 const chatbotMessages = document.getElementById('chatbotMessages');
+
+// Source selection tracking (for testing)
+let chatbotSourceMode = 'ollama';  // 'ollama' or 'template'
+const sourceOllamaBtn = document.getElementById('sourceOllamaBtn');
+const sourceTemplateBtn = document.getElementById('sourceTemplateBtn');
+const currentSourceLabel = document.getElementById('currentSourceLabel');
+
+// Add event listeners for source buttons
+if (sourceOllamaBtn) {
+    sourceOllamaBtn.addEventListener('click', () => {
+        chatbotSourceMode = 'ollama';
+        currentSourceLabel.textContent = 'Current: Ollama (AI)';
+        sourceOllamaBtn.style.opacity = '1';
+        sourceOllamaBtn.style.borderWidth = '2px';
+        sourceTemplateBtn.style.opacity = '0.6';
+        sourceTemplateBtn.style.borderWidth = '1px';
+    });
+}
+
+if (sourceTemplateBtn) {
+    sourceTemplateBtn.addEventListener('click', () => {
+        chatbotSourceMode = 'template';
+        currentSourceLabel.textContent = 'Current: Template';
+        sourceTemplateBtn.style.opacity = '1';
+        sourceTemplateBtn.style.borderWidth = '2px';
+        sourceOllamaBtn.style.opacity = '0.6';
+        sourceOllamaBtn.style.borderWidth = '1px';
+    });
+}
+
+// Set initial state (Ollama is selected)
+sourceOllamaBtn.style.opacity = '1';
+sourceOllamaBtn.style.borderWidth = '2px';
+sourceTemplateBtn.style.opacity = '0.6';
+sourceTemplateBtn.style.borderWidth = '1px';
 const chatbotInputArea = document.getElementById('chatbotInputArea');
 const chatbotInput = document.getElementById('chatbotInput');
 const chatbotSendBtn = document.getElementById('chatbotSendBtn');
@@ -2571,11 +2645,11 @@ function sendMessageContinue(message) {
     // Show loading indicator
     showLoadingIndicator();
     
-    // Send to server
+    // Send to server with selected source
     fetch('chatbot_includes/chatbot_response.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'thesis_id=' + thesisId + '&message=' + encodeURIComponent(message)
+        body: 'thesis_id=' + thesisId + '&message=' + encodeURIComponent(message) + '&source=' + chatbotSourceMode
     })
     .then(response => response.json())
     .then(data => {
