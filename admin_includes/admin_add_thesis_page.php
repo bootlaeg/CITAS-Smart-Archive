@@ -344,6 +344,71 @@ require_admin();
             color: #2E7D32;
             font-weight: 500;
         }
+
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            .button-group {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+                margin-top: 2rem;
+                justify-content: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                padding: 0.75rem 1rem;
+                justify-content: center;
+                border-radius: 6px;
+            }
+
+            .form-container {
+                padding: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-group label {
+                font-size: 0.95rem;
+            }
+
+            .info-box {
+                padding: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .button-group {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .btn {
+                padding: 0.65rem 0.75rem;
+                font-size: 0.9rem;
+            }
+
+            .header {
+                padding: 0.75rem 1rem;
+            }
+
+            .form-container {
+                padding: 0.75rem;
+            }
+
+            h1 {
+                font-size: 1.25rem;
+            }
+        }
     </style>
 </head>
 <body>
