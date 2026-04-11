@@ -2395,7 +2395,8 @@ function renderSessionsList(data) {
         
         // Click to load session - attach to main element
         sessionEl.addEventListener('click', (e) => {
-            console.log('Session clicked:', session.id);
+            console.log('Session clicked, full object:', session);
+            console.log('Session ID:', session.id, 'Type:', typeof session.id);
             e.preventDefault();
             loadSession(session.id);
         });

@@ -20,6 +20,8 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $thesis_id = isset($_POST['thesis_id']) ? intval($_POST['thesis_id']) : 0;
 
+error_log("list_sessions: user_id=$user_id, thesis_id=$thesis_id");
+
 // Get all sessions for this user on this thesis
 $stmt = $conn->prepare("
     SELECT id, session_name, message_count, created_at, last_accessed
@@ -28,14 +30,27 @@ $stmt = $conn->prepare("
     ORDER BY last_accessed DESC
 ");
 
+if (!$stmt) {
+    error_log("Statement prepare failed: " . $conn->error);
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    exit();
+}
+
 $stmt->bind_param("ii", $user_id, $thesis_id);
-$stmt->execute();
+if (!$stmt->execute()) {
+    error_log("Statement execute failed: " . $stmt->error);
+    echo json_encode(['success' => false, 'message' => 'Database error']);
+    exit();
+}
+
 $result = $stmt->get_result();
 
 $sessions = [];
 while ($row = $result->fetch_assoc()) {
+    error_log("Session row: " . json_encode($row));
     $sessions[] = $row;
 }
+error_log("Total sessions found: " . count($sessions));
 $stmt->close();
 
 // Check quota
