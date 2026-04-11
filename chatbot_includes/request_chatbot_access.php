@@ -30,7 +30,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-require_once __DIR__ . '/create_notification.php';
+require_once __DIR__ . '/../client_includes/create_notification.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
@@ -162,6 +162,5 @@ try {
 // Return success
 echo json_encode(['success' => true, 'message' => 'Chatbot access request submitted! Please wait for admin approval.']);
 $conn->close();
-exit();
 exit();
 ?>

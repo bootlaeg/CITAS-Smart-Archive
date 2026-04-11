@@ -4,7 +4,7 @@
  * Creates the necessary database table for chatbot access control
  */
 
-require_once __DIR__ . '/db_includes/db_connect.php';
+require_once __DIR__ . '/../db_includes/db_connect.php';
 
 // Check if chatbot_access_requests table exists
 $result = $conn->query("SHOW TABLES LIKE 'chatbot_access_requests'");

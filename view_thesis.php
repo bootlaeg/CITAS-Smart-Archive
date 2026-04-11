@@ -1113,7 +1113,7 @@ if (is_logged_in()) {
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            bg-color: #FAFAFA;
+            background-color: #FAFAFA;
         }
 
         /* Message Styles */
