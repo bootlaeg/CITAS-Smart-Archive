@@ -19,7 +19,7 @@ $thesis_result = $conn->query("SELECT * FROM thesis ORDER BY created_at DESC LIM
 // Get all users
 $users_result = $conn->query("SELECT * FROM users ORDER BY created_at DESC LIMIT 20");
 
-// Get pending access requests
+// Get pending access requests (thesis file access)
 $access_result = $conn->query("
     SELECT ta.id, ta.user_id, ta.thesis_id, ta.requested_at,
            u.full_name, u.student_id,
@@ -29,6 +29,20 @@ $access_result = $conn->query("
     JOIN thesis t ON ta.thesis_id = t.id
     WHERE ta.status = 'pending'
     ORDER BY ta.requested_at DESC
+    LIMIT 20
+");
+
+// Get pending chatbot access requests
+$pending_chatbot = $conn->query("SELECT COUNT(*) as count FROM chatbot_access_requests WHERE status = 'pending'")->fetch_assoc()['count'];
+$chatbot_access_result = $conn->query("
+    SELECT car.id, car.user_id, car.thesis_id, car.requested_at,
+           u.full_name, u.student_id,
+           t.title
+    FROM chatbot_access_requests car
+    JOIN users u ON car.user_id = u.id
+    JOIN thesis t ON car.thesis_id = t.id
+    WHERE car.status = 'pending'
+    ORDER BY car.requested_at DESC
     LIMIT 20
 ");
 ?>
@@ -719,6 +733,10 @@ $access_result = $conn->query("
                 <div class="stat-value"><?php echo $pending_access; ?></div>
                 <div class="stat-label">Pending Access Requests</div>
             </div>
+            <div class="stat-card" onclick="switchTab('chatbot-access-tab')">
+                <div class="stat-value"><?php echo $pending_chatbot; ?></div>
+                <div class="stat-label">Pending Chatbot Access</div>
+            </div>
         </div>
 
         <!-- Admin Tabs -->
@@ -731,6 +749,9 @@ $access_result = $conn->query("
             </button>
             <button class="admin-tab" onclick="switchTab('access-tab')">
                 <i class="fas fa-key me-2"></i>Access Requests
+            </button>
+            <button class="admin-tab" onclick="switchTab('chatbot-access-tab')">
+                <i class="fas fa-robot me-2"></i>Chatbot Access
             </button>
         </div>
 
@@ -902,6 +923,52 @@ $access_result = $conn->query("
                                     <div class="empty-state">
                                         <i class="fas fa-inbox"></i>
                                         <p>No pending access requests</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Chatbot Access Requests Tab -->
+        <div id="chatbot-access-tab" class="admin-section" style="display: none;">
+            <div class="admin-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Request ID</th>
+                            <th>Student Name</th>
+                            <th>Thesis Title</th>
+                            <th>Requested Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($chatbot_access_result && $chatbot_access_result->num_rows > 0): ?>
+                            <?php while ($request = $chatbot_access_result->fetch_assoc()): ?>
+                            <tr>
+                                <td>CHAT<?php echo str_pad($request['id'], 4, '0', STR_PAD_LEFT); ?></td>
+                                <td><?php echo htmlspecialchars($request['full_name']); ?></td>
+                                <td><?php echo htmlspecialchars(substr($request['title'], 0, 40)); ?></td>
+                                <td><?php echo date('M d, Y', strtotime($request['requested_at'])); ?></td>
+                                <td>
+                                    <button class="action-btn" onclick="approveChatbotAccess(<?php echo $request['id']; ?>, <?php echo $request['user_id']; ?>, <?php echo $request['thesis_id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="action-btn action-btn-danger" onclick="denyChatbotAccess(<?php echo $request['id']; ?>, '<?php echo htmlspecialchars($request['full_name'], ENT_QUOTES); ?>')">
+                                        <i class="fas fa-times"></i> Deny
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="empty-state">
+                                        <i class="fas fa-inbox"></i>
+                                        <p>No pending chatbot access requests</p>
                                     </div>
                                 </td>
                             </tr>
@@ -1276,6 +1343,48 @@ function rejectAccess(requestId, userName) {
         }
     })
     .catch(error => alert('Error rejecting access'));
+}
+
+// Approve Chatbot Access Request
+function approveChatbotAccess(requestId, userId, thesisId, userName) {
+    if (!confirm(`Approve chatbot access for "${userName}"?`)) return;
+    
+    fetch('chatbot_includes/approve_chatbot_access.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'request_id=' + requestId + '&user_id=' + userId + '&thesis_id=' + thesisId
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to approve'));
+        }
+    })
+    .catch(error => alert('Error approving chatbot access'));
+}
+
+// Deny Chatbot Access Request
+function denyChatbotAccess(requestId, userName) {
+    if (!confirm(`Deny chatbot access for "${userName}"?`)) return;
+    
+    fetch('chatbot_includes/deny_chatbot_access.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'request_id=' + requestId
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to deny'));
+        }
+    })
+    .catch(error => alert('Error denying chatbot access'));
 }
 
 // Edit User Modal
