@@ -214,27 +214,48 @@ class DocumentMetadataExtractor {
     }
     
     /**
-     * Extract text from PDF (basic method)
+     * Extract text from PDF (handles FlateDecode compression)
      * @param string $file_path Path to PDF file
      * @return string Extracted text
      */
     private static function extractTextFromPdf($file_path) {
         try {
             $content = file_get_contents($file_path);
-            
-            // Extract text streams from PDF
-            // Look for text objects (BT...ET blocks)
             $text = '';
             
-            // Pattern to find text content
+            // Step 1: Try to extract from uncompressed BT...ET blocks first
             if (preg_match_all('/BT\s*(.+?)\s*ET/s', $content, $matches)) {
                 foreach ($matches[1] as $block) {
-                    // Extract strings in parentheses
-                    if (preg_match_all('/\((.*?)\)\s*T[jdf]/s', $block, $strings)) {
-                        foreach ($strings[1] as $str) {
-                            // Decode PDF string escape sequences
-                            $str = preg_replace('/\\\([0-7]{1,3})/', chr(intval('$1', 8)), $str);
-                            $str = preg_replace('/\\\n/', '', $str);
+                    $text .= self::extractTextFromTextBlock($block) . ' ';
+                }
+            }
+            
+            // Step 2: If no text found, try to extract from FlateDecode compressed streams
+            if (empty(trim($text))) {
+                // Find all stream objects with FlateDecode
+                $stream_pattern = '/stream\s*\n(.+?)\nendstream/s';
+                if (preg_match_all($stream_pattern, $content, $stream_matches)) {
+                    foreach ($stream_matches[1] as $stream_data) {
+                        // Try to decompress if it's compressed
+                        $decompressed = self::decompressPdfStream($stream_data);
+                        if ($decompressed) {
+                            // Extract text from decompressed content
+                            if (preg_match_all('/BT\s*(.+?)\s*ET/s', $decompressed, $matches)) {
+                                foreach ($matches[1] as $block) {
+                                    $text .= self::extractTextFromTextBlock($block) . ' ';
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Step 3: If still no text, try alternative text extraction from all parenthesized strings
+            if (empty(trim($text))) {
+                if (preg_match_all('/\(([^()]{10,})\)/', $content, $matches)) {
+                    foreach ($matches[1] as $str) {
+                        // Filter out non-text strings (metadata, etc)
+                        if (self::isLikelyTextContent($str)) {
                             $text .= $str . ' ';
                         }
                     }
@@ -243,8 +264,93 @@ class DocumentMetadataExtractor {
             
             return trim($text);
         } catch (Exception $e) {
+            error_log("PDF text extraction error: " . $e->getMessage());
             return '';
         }
+    }
+    
+    /**
+     * Decompress a PDF stream using FlateDecode
+     * @param string $stream_data Raw stream data
+     * @return string|null Decompressed data or null if decompression fails
+     */
+    private static function decompressPdfStream($stream_data) {
+        try {
+            // Try gzuncompress first (for zlib wrapper) - works for most PDFs
+            $decompressed = @gzuncompress($stream_data);
+            if ($decompressed) {
+                return $decompressed;
+            }
+            
+            // Try gzinflate (for raw deflate data)
+            $decompressed = @gzinflate($stream_data);
+            if ($decompressed) {
+                return $decompressed;
+            }
+            
+            return null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+    
+    /**
+     * Extract text from a PDF text block (BT...ET section)
+     * @param string $block Text block content
+     * @return string Extracted text
+     */
+    private static function extractTextFromTextBlock($block) {
+        $text = '';
+        
+        // Simple approach: extract all parenthesized strings within the block
+        // PDF text strings are in (text) format, separated by operators like Tj, TJ, ', "
+        
+        if (preg_match_all("/\\(([^()\\\\]*(?:\\\\.[^()\\\\]*)*)\\)/", $block, $matches)) {
+            foreach ($matches[1] as $str) {
+                // Decode PDF escape sequences
+                $decoded = self::decodePdfString($str);
+                
+                // Add if it looks like real text (not empty, has some content)
+                if (trim($decoded) !== '') {
+                    $text .= $decoded . ' ';
+                }
+            }
+        }
+        
+        return trim($text);
+    }
+    
+    /**
+     * Decode PDF string escape sequences
+     * @param string $str PDF encoded string
+     * @return string Decoded string
+     */
+    private static function decodePdfString($str) {
+        // Remove PDF escape sequences
+        $str = preg_replace('/\\\\([0-7]{1,3})/', chr(intval('$1', 8)), $str);
+        $str = preg_replace('/\\\\n/', "\n", $str);
+        $str = preg_replace('/\\\\r/', "\r", $str);
+        $str = preg_replace('/\\\\t/', "\t", $str);
+        $str = preg_replace('/\\\\/', '', $str);
+        
+        return $str;
+    }
+    
+    /**
+     * Check if a string is likely text content (not metadata)
+     * @param string $str String to check
+     * @return bool True if likely text content
+     */
+    private static function isLikelyTextContent($str) {
+        // Filter out strings that look like binary data or metadata
+        if (strlen($str) < 10) return false;
+        
+        // Count printable ASCII characters
+        $printable = preg_match_all('/[\x20-\x7E\n\r\t]/', $str);
+        $total = strlen($str);
+        
+        // If more than 50% are printable, consider it text
+        return ($printable / $total) > 0.5;
     }
     
     /**
