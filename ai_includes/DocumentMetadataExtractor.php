@@ -231,26 +231,27 @@ class DocumentMetadataExtractor {
             }
             
             // Step 2: Extract and decompress FlateDecode streams using /Length to determine stream size
-            if (preg_match_all('/\/Length\s+(\d+)[^\n]*\n[^\n]*stream\s*\n/s', $content, $length_matches, PREG_OFFSET_CAPTURE)) {
-                foreach ($length_matches[1] as $idx => $length_match) {
-                    $length = intval($length_match[0]);
-                    // Get the offset of the full match (including "stream\n")
-                    $full_match_text = $length_matches[0][$idx][0];
-                    $full_match_offset = $length_matches[0][$idx][1];
-                    // Position right after the matched pattern
-                    $offset = $full_match_offset + strlen($full_match_text);
+            // Use a regex that captures both the length and the stream marker position
+            if (preg_match_all('/\/Length\s+(\d+).*?stream[\r\n]+/s', $content, $stream_matches, PREG_OFFSET_CAPTURE)) {
+                foreach ($stream_matches[0] as $idx => $full_match) {
+                    $stream_length = intval($stream_matches[1][$idx][0]);
+                    $match_text = $full_match[0];
+                    $match_pos = $full_match[1];
                     
-                    // Extract exactly $length bytes from this position
-                    if ($offset + $length <= strlen($content)) {
-                        $stream_data = substr($content, $offset, $length);
+                    // The stream data starts right after "stream" and the line ending(s)
+                    $stream_start = $match_pos + strlen($match_text);
+                    
+                    // Extract exactly $stream_length bytes
+                    if ($stream_start + $stream_length <= strlen($content)) {
+                        $stream_data = substr($content, $stream_start, $stream_length);
                         
                         // Try to decompress
                         $decompressed = self::decompressPdfStream($stream_data);
                         
                         if ($decompressed && !empty(trim($decompressed))) {
                             // Extract text from decompressed content
-                            if (preg_match_all('/BT\s*(.+?)\s*ET/s', $decompressed, $matches)) {
-                                foreach ($matches[1] as $block) {
+                            if (preg_match_all('/BT\s*(.+?)\s*ET/s', $decompressed, $text_matches)) {
+                                foreach ($text_matches[1] as $block) {
                                     $extracted = self::extractTextFromTextBlock($block);
                                     if (!empty(trim($extracted))) {
                                         $text .= $extracted . ' ';
@@ -259,8 +260,8 @@ class DocumentMetadataExtractor {
                             }
                             
                             // Also try to extract text operators directly
-                            if (preg_match_all('/\(([^)]{5,})\)\s*Tj/', $decompressed, $matches)) {
-                                foreach ($matches[1] as $str) {
+                            if (preg_match_all('/\(([^)]{5,})\)\s*Tj/', $decompressed, $tj_matches)) {
+                                foreach ($tj_matches[1] as $str) {
                                     $decoded = self::decodePdfString($str);
                                     if (trim($decoded) !== '' && strlen(trim($decoded)) > 2) {
                                         $text .= $decoded . ' ';
@@ -297,15 +298,43 @@ class DocumentMetadataExtractor {
      */
     private static function decompressPdfStream($stream_data) {
         try {
+            // Don't pass empty data
+            if (empty($stream_data)) {
+                return null;
+            }
+            
+            // Remove trailing whitespace/control characters that aren't part of the compressed data
+            // PDF streams can have extra whitespace on their boundaries
+            $stream_data = rtrim($stream_data, " \t\n\r\0");
+            
+            if (empty($stream_data)) {
+                return null;
+            }
+            
             // Try gzuncompress first (for zlib wrapper) - works for most PDFs
-            $decompressed = @gzuncompress($stream_data);
-            if ($decompressed) {
+            set_error_handler(function($errno, $errstr) {
+                // Suppress error output
+            });
+            
+            $decompressed = gzuncompress($stream_data);
+            
+            if ($decompressed !== false) {
+                restore_error_handler();
                 return $decompressed;
             }
             
+            restore_error_handler();
+            
             // Try gzinflate (for raw deflate data)
-            $decompressed = @gzinflate($stream_data);
-            if ($decompressed) {
+            set_error_handler(function($errno, $errstr) {
+                // Suppress error output
+            });
+            
+            $decompressed = gzinflate($stream_data);
+            
+            restore_error_handler();
+            
+            if ($decompressed !== false) {
                 return $decompressed;
             }
             

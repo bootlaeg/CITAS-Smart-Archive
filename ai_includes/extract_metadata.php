@@ -5,7 +5,7 @@
  */
 
 header('Content-Type: application/json; charset=utf-8');
-error_reporting(E_ALL);
+error_reporting(0);
 ini_set('display_errors', '0');
 
 require_once '../db_includes/db_connect.php';
@@ -13,13 +13,11 @@ require_once './DocumentMetadataExtractor.php';
 require_login();
 require_admin();
 
-error_log("=== METADATA EXTRACTION REQUEST ===");
-
-// Set error handler
+// Custom error handler that logs but doesn't output
 set_error_handler(function($errno, $errstr) {
-    error_log("Extraction Error ($errno): $errstr");
-    echo json_encode(['success' => false, 'message' => 'Error: ' . $errstr]);
-    exit;
+    error_log("Extraction Process Error ($errno): $errstr");
+    // Don't output errors to client
+    return true;
 });
 
 try {
@@ -108,6 +106,8 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
+} finally {
+    restore_error_handler();
 }
 
 ?>
