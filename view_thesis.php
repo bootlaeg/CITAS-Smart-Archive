@@ -2319,10 +2319,16 @@ async function loadAndDisplaySessions() {
             body: 'thesis_id=' + thesisId
         });
         const data = await response.json();
+        console.log('List sessions response:', data);
         
         if (data.success) {
             console.log('Sessions loaded:', data.session_count + '/' + data.max_sessions);
+            if (data.sessions && data.sessions.length > 0) {
+                console.log('First session:', data.sessions[0]);
+            }
             renderSessionsList(data);
+        } else {
+            console.error('Error loading sessions:', data.message);
         }
     } catch (error) {
         console.error('Error loading sessions:', error);
@@ -2350,6 +2356,7 @@ function renderSessionsList(data) {
     }
     
     data.sessions.forEach(session => {
+        console.log('Rendering session:', session);
         const createdDate = new Date(session.created_at).toLocaleString();
         const sessionEl = document.createElement('div');
         sessionEl.style.cssText = `

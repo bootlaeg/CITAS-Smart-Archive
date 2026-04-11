@@ -25,8 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $user_id = $_SESSION['user_id'];
 $session_id = isset($_POST['session_id']) ? intval($_POST['session_id']) : 0;
 
+error_log("load_session: user_id=$user_id, session_id=$session_id");
+
 if ($session_id <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Invalid session']);
+    echo json_encode(['success' => false, 'message' => 'Invalid session ID: ' . $session_id]);
     exit();
 }
 
@@ -42,7 +44,8 @@ $verify->execute();
 $verify_result = $verify->get_result();
 
 if ($verify_result->num_rows === 0) {
-    echo json_encode(['success' => false, 'message' => 'Session not found or unauthorized']);
+    error_log("load_session: Session verification failed for session_id=$session_id, user_id=$user_id");
+    echo json_encode(['success' => false, 'message' => 'Session not found or unauthorized', 'debug' => ['session_id' => $session_id, 'user_id' => $user_id]]);
     $verify->close();
     exit();
 }
