@@ -2364,7 +2364,7 @@ function renderSessionsList(data) {
             align-items: center;
         `;
         sessionEl.innerHTML = `
-            <div style="flex: 1; cursor: pointer;">
+            <div style="flex: 1; cursor: pointer; pointer-events: none;">
                 <div style="font-weight: 600; color: #2C3E50; margin-bottom: 4px;">
                     ${session.session_name}
                 </div>
@@ -2372,7 +2372,7 @@ function renderSessionsList(data) {
                     <i class="fas fa-message me-1"></i>${session.message_count} messages · ${createdDate}
                 </div>
             </div>
-            <button onclick="deleteSessionConfirm(${session.id})" style="
+            <button onclick="event.stopPropagation(); deleteSessionConfirm(${session.id})" style="
                 background: #dc3545;
                 color: white;
                 border: none;
@@ -2380,14 +2380,16 @@ function renderSessionsList(data) {
                 border-radius: 4px;
                 cursor: pointer;
                 font-size: 0.85rem;
-                ml-2: 10px;
+                margin-left: 10px;
             " title="Delete session">
                 <i class="fas fa-trash"></i>
             </button>
         `;
         
-        // Click to load session
-        sessionEl.querySelector('div[style*="flex: 1"]').addEventListener('click', () => {
+        // Click to load session - attach to main element
+        sessionEl.addEventListener('click', (e) => {
+            console.log('Session clicked:', session.id);
+            e.preventDefault();
             loadSession(session.id);
         });
         
@@ -2417,6 +2419,7 @@ function renderSessionsList(data) {
 
 // Load a session and show chat
 async function loadSession(sessionId) {
+    console.log('loadSession called with sessionId:', sessionId);
     try {
         const response = await fetch('chatbot_includes/load_session.php', {
             method: 'POST',
@@ -2424,10 +2427,13 @@ async function loadSession(sessionId) {
             body: 'session_id=' + sessionId
         });
         const data = await response.json();
+        console.log('Load session response:', data);
         
         if (data.success) {
             currentSessionId = data.session.id;
             sessionMessages = data.messages;
+            
+            console.log('currentSessionId set to:', currentSessionId);
             
             // Clear and reload messages
             clearChatMessages();
@@ -2441,6 +2447,8 @@ async function loadSession(sessionId) {
             // Show chat view
             showChatView();
             console.log('Loaded session:', data.session.session_name);
+        } else {
+            alert('Error: ' + data.message);
         }
     } catch (error) {
         console.error('Error loading session:', error);
