@@ -8,7 +8,10 @@ class OllamaServiceCurl {
     private $baseUrl;
     private $model;
     
-    public function __construct($model = 'mistral', $baseUrl = 'http://localhost:11434') {
+    public function __construct($model = 'mistral', $baseUrl = null) {
+        if ($baseUrl === null) {
+            $baseUrl = getenv('OLLAMA_BASE_URL') ?: 'https://ollama.citas-smart-archive.com';
+        }
         $this->baseUrl = rtrim($baseUrl, '/');
         $this->model = $model;
     }
