@@ -150,15 +150,12 @@ try {
         error_log("Inserting new classification for thesis ID: $thesisId");
         
         $classStmt = $conn->prepare("
-            INSERT INTO thesis_classification (thesis_id, subject_category, subject_confidence, 
-                                             research_method, method_confidence, complexity_level, 
-                                             complexity_confidence, keywords, citations)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO thesis_classification (thesis_id, subject_category, 
+                                             research_method, keywords, citations)
+            VALUES (?, ?, ?, ?, ?)
         ");
         
-        $confidence = 85.00;
-        $classStmt->bind_param("isdsdsdss", $thesisId, $subjectCategory, $confidence,
-                              $researchMethod, $confidence, $complexityLevel, $confidence,
+        $classStmt->bind_param("issss", $thesisId, $subjectCategory, $researchMethod,
                               $keywordsJson, $citationsJson);
         
         if (!$classStmt->execute()) {
