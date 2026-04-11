@@ -101,7 +101,7 @@ try {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
-        $insertStmt->bind_param("sssisssissis", $title, $author, $course, $year, $abstract, $filePath, $fileType, $fileSize, $documentType, $pageCount, $status);
+        $insertStmt->bind_param("sssissississis", $title, $author, $course, $year, $abstract, $filePath, $fileType, $fileSize, $documentType, $pageCount, $status);
         
         if (!$insertStmt->execute()) {
             throw new Exception("Failed to insert thesis: " . $insertStmt->error);
