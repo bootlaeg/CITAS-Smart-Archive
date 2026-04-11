@@ -140,85 +140,23 @@ $thesis_context = sprintf(
 
 // Generate response - TEST MODE (Ollama only, no fallback)
 try {
+    require_once __DIR__ . '/../ai_includes/ollama_service_curl.php';
+    
     $prompt = "You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user's question concisely and professionally in 2-3 sentences max.\n\n" . 
               $thesis_context . "\n\n" .
               "User Question: " . $user_message . "\n\nAnswer:";
     
-    error_log("Sending prompt to Ollama via cURL: " . substr($prompt, 0, 100) . "...");
+    error_log("Sending prompt to Ollama: " . substr($prompt, 0, 100) . "...");
     
-    // Build request data (same as ollama_service_curl.php does)
-    $data = [
-        'model' => 'phi',
-        'prompt' => $prompt,
-        'stream' => false,
-        'temperature' => 0.5,
-    ];
+    // Use OllamaServiceCurl class with the local IP address
+    $ollama = new OllamaServiceCurl('phi', 'http://192.168.254.114:11434');
+    $ollamaResponse = $ollama->prompt($prompt, ['temperature' => 0.5]);
     
-    // Clean UTF-8 characters
-    $data['prompt'] = mb_convert_encoding($data['prompt'], 'UTF-8', 'UTF-8');
-    $data['prompt'] = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/u', ' ', $data['prompt']);
-    
-    $jsonData = json_encode($data);
-    
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log("JSON encode error: " . json_last_error_msg());
-        throw new Exception("Failed to encode prompt to JSON");
-    }
-    
-    // Make direct cURL request to Ollama
-    $url = 'http://192.168.254.114:11434/api/generate';
-    $ch = curl_init($url);
-    
-    if (!$ch) {
-        throw new Exception("Failed to initialize cURL");
-    }
-    
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Content-Length: ' . strlen($jsonData)
-    ]);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 300);  // 5 minutes total timeout
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    
-    error_log("Executing cURL request to $url");
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    $curlErrno = curl_errno($ch);
-    
-    error_log("cURL errno: $curlErrno, HTTP Code: $httpCode");
-    
-    if (!empty($curlError)) {
-        error_log("cURL Error: $curlError");
-        throw new Exception("cURL Error: $curlError");
-    }
-    
-    curl_close($ch);
-    
-    if ($response === false) {
-        throw new Exception("Failed to get response from Ollama");
-    }
-    
-    error_log("Ollama response received: " . substr($response, 0, 100) . "...");
-    
-    // Parse response
-    $decoded = json_decode($response, true);
-    
-    if (isset($decoded['error'])) {
-        throw new Exception("Ollama API Error: " . $decoded['error']);
-    }
-    
-    $ollamaResponse = trim($decoded['response'] ?? $response);
+    error_log("Ollama response received: " . substr($ollamaResponse, 0, 100) . "...");
     
     echo json_encode([
         'success' => true,
-        'response' => $ollamaResponse,
+        'response' => trim($ollamaResponse),
         'source' => 'ollama'
     ]);
     
