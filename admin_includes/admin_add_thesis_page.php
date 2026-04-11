@@ -515,10 +515,8 @@ require_admin();
                     <label class="form-label"><strong>Course</strong></label>
                     <select class="form-select" id="thesisCourse" name="course" disabled required>
                         <option value="">Select Course</option>
-                        <option value="BSIT">BSIT</option>
-                        <option value="BSCS">BSCS</option>
-                        <option value="BSIS">BSIS</option>
-                        <option value="BSED">BSED</option>
+                        <option value="BSIT">BSIT - Bachelor of Science in Information Technology</option>
+                        <option value="BMMA">BMMA - The Bachelor of Multimedia Arts</option>
                     </select>
                 </div>
                 <div class="col-md-6">
