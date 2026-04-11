@@ -2064,9 +2064,6 @@ if (hamburgerMenu) {
             To use the AI chatbot for thesis analysis, you need to request access first. This helps us maintain security and ensure proper usage.
         </p>
         <div class="access-overlay-buttons">
-            <button class="btn-request-access-overlay" id="requestAccessBtn">
-                <i class="fas fa-paper-plane me-2"></i>Request Access
-            </button>
             <button class="btn-close-access-overlay" id="closeAccessOverlayBtn">
                 Close
             </button>
@@ -2166,7 +2163,6 @@ const chatbotInputArea = document.getElementById('chatbotInputArea');
 const chatbotInput = document.getElementById('chatbotInput');
 const chatbotSendBtn = document.getElementById('chatbotSendBtn');
 const chatbotAccessOverlay = document.getElementById('chatbotAccessOverlay');
-const requestAccessBtn = document.getElementById('requestAccessBtn');
 const closeAccessOverlayBtn = document.getElementById('closeAccessOverlayBtn');
 const sessionPanel = document.getElementById('sessionPanel');
 const sessionsList = document.getElementById('sessionsList');
@@ -2266,71 +2262,21 @@ function showAccessControl(status) {
     
     switch(status) {
         case 'pending':
-            messageElement.textContent = 'Your chatbot access request is pending approval. An administrator will review your request shortly.';
-            requestAccessBtn.style.display = 'none';
+            messageElement.textContent = 'Your access request is pending approval. Once an administrator approves your access to this thesis, you\'ll be able to use the chatbot. You\'ll also be able to view the full thesis content.';
             break;
         case 'denied':
-            messageElement.textContent = 'Your previous chatbot access request was denied. Please contact an administrator if you believe this was a mistake.';
-            requestAccessBtn.style.display = 'none';
+            messageElement.textContent = 'Your access request was denied. Please contact an administrator if you believe this was a mistake.';
             break;
         case 'no_request':
-            messageElement.textContent = 'To use the AI chatbot for thesis analysis, you need to request access first. This helps us maintain security and ensure proper usage.';
-            requestAccessBtn.style.display = 'block';
+            messageElement.textContent = 'To view the full thesis and use the AI chatbot, you need to request access to this thesis. Visit the "Browse Thesis" section to request access.';
             break;
         case 'error':
             messageElement.textContent = 'There was an error checking your access status. Please try again later.';
-            requestAccessBtn.style.display = 'block';
             break;
         default:
-            messageElement.textContent = 'To use the AI chatbot, you need to request access first.';
-            requestAccessBtn.style.display = 'block';
+            messageElement.textContent = 'You do not have access to this thesis or its chatbot features.';
     }
 }
-
-// Request chatbot access
-requestAccessBtn.addEventListener('click', () => {
-    if (!<?php echo is_logged_in() ? 'true' : 'false'; ?>) {
-        alert('Please login to request chatbot access.');
-        window.location.href = 'index.php';
-        return;
-    }
-    
-    requestAccessBtn.disabled = true;
-    requestAccessBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
-    
-    fetch('chatbot_includes/request_chatbot_access.php', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'thesis_id=' + thesisId
-    })
-    .then(response => response.json())
-    .then(data => {
-        requestAccessBtn.disabled = false;
-        requestAccessBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Request Access';
-        
-        if (data.success) {
-            if (data.already_approved) {
-                // Re-enable chatbot
-                hasChatbotAccess = true;
-                enableChatbot();
-            } else {
-                // Show pending status
-                const messageElement = document.getElementById('accessOverlayMessage');
-                messageElement.textContent = 'Your access request has been submitted! An administrator will review it shortly.';
-                requestAccessBtn.style.display = 'none';
-                alert(data.message);
-            }
-        } else {
-            alert('Error: ' + (data.message || 'Failed to submit request'));
-        }
-    })
-    .catch(error => {
-        requestAccessBtn.disabled = false;
-        requestAccessBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Request Access';
-        console.error('Error requesting access:', error);
-        alert('Error submitting request. Please try again.');
-    });
-});
 
 // Enable chatbot functionality
 function enableChatbot() {
