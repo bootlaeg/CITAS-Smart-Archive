@@ -60,9 +60,11 @@ class OllamaServiceCurl {
             if (function_exists('curl_init')) {
                 error_log("[OllamaServiceCurl] Using curl_init");
                 return $this->promptWithCurlFunction($url, $jsonData);
-            } else {
-                error_log("[OllamaServiceCurl] cURL not available, trying shell_exec");
+            } elseif (function_exists('shell_exec')) {
+                error_log("[OllamaServiceCurl] cURL not available, using shell_exec");
                 return $this->promptWithShellExec($url, $jsonData);
+            } else {
+                throw new Exception("Neither curl nor shell_exec available for HTTP requests");
             }
             
         } catch (Exception $e) {

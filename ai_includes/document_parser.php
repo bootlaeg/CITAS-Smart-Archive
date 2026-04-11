@@ -70,85 +70,41 @@ class DocumentParser
     }
 
     /**
-     * Extract text from PDF using simple text extraction
+     * Extract text from PDF using DocumentMetadataExtractor (supports FlateDecode compression)
      */
     private static function extractFromPdf($filePath)
     {
         try {
-            $debugLog = [];
+            // Use our superior DocumentMetadataExtractor which handles compressed PDFs
+            require_once __DIR__ . '/DocumentMetadataExtractor.php';
             
-            // Try using pdfparser if available
-            if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
-                $debugLog[] = 'Trying PHPOffice library...';
-                require_once __DIR__ . '/../vendor/autoload.php';
-                
-                if (class_exists('Smalot\PdfParser\Parser')) {
-                    try {
-                        $parser = new \Smalot\PdfParser\Parser();
-                        $pdf = $parser->parseFile($filePath);
-                        $text = $pdf->getText();
-                        
-                        if (!empty($text)) {
-                            $debugLog[] = '✓ PHPOffice succeeded, extracted ' . strlen($text) . ' bytes';
-                            error_log("PDF extraction via PHPOffice: " . implode(" | ", $debugLog));
-                            return ['success' => true, 'text' => $text, 'error' => ''];
-                        } else {
-                            $debugLog[] = 'PHPOffice returned empty text';
-                        }
-                    } catch (Exception $e) {
-                        $debugLog[] = 'PHPOffice failed: ' . $e->getMessage();
-                    }
-                }
+            $metadata = DocumentMetadataExtractor::extract($filePath, 'pdf');
+            
+            // Combine all extracted text for keyword analysis
+            $text = '';
+            
+            // Add title if available
+            if (!empty($metadata['title'])) {
+                $text .= $metadata['title'] . "\n\n";
             }
-
-            // Fallback: Use command line tools if available (pdftotext)
-            if (self::commandExists('pdftotext')) {
-                $debugLog[] = 'pdftotext found, attempting extraction...';
-                $outputFile = tempnam(sys_get_temp_dir(), 'pdf_');
-                
-                // Try different command formats for Windows/Unix compatibility
-                $commands = [
-                    "pdftotext \"" . $filePath . "\" \"" . $outputFile . "\"",
-                    "pdftotext " . escapeshellarg($filePath) . " " . escapeshellarg($outputFile),
-                ];
-                
-                $extracted = false;
-                foreach ($commands as $command) {
-                    $output = [];
-                    $returnCode = null;
-                    exec($command, $output, $returnCode);
-                    
-                    if ($returnCode === 0 && file_exists($outputFile) && filesize($outputFile) > 0) {
-                        $text = file_get_contents($outputFile);
-                        if (!empty(trim($text))) {
-                            $debugLog[] = '✓ pdftotext succeeded, extracted ' . strlen($text) . ' bytes';
-                            @unlink($outputFile);
-                            error_log("PDF extraction via pdftotext: " . implode(" | ", $debugLog));
-                            return ['success' => true, 'text' => $text, 'error' => ''];
-                        }
-                    }
-                }
-                
-                @unlink($outputFile);
-                $debugLog[] = 'pdftotext command executed but no text extracted';
-            } else {
-                $debugLog[] = 'pdftotext command not found in PATH';
+            
+            // Add authors if available
+            if (!empty($metadata['authors'])) {
+                $text .= "Authors: " . $metadata['authors'] . "\n\n";
             }
-
-            // Fallback: Basic PDF text extraction (improved)
-            $debugLog[] = 'Trying basic regex extraction...';
-            $text = self::basicPdfExtraction($filePath);
+            
+            // Add abstract (most important for keywords)
+            if (!empty($metadata['abstract'])) {
+                $text .= "Abstract: " . $metadata['abstract'] . "\n\n";
+            }
             
             if (!empty($text)) {
-                $debugLog[] = '✓ Basic extraction succeeded, extracted ' . strlen($text) . ' bytes';
-                error_log("PDF extraction via basic method: " . implode(" | ", $debugLog));
+                error_log("PDF extraction via DocumentMetadataExtractor: extracted " . strlen($text) . " bytes (title: " . strlen($metadata['title'] ?? '') . ", abstract: " . strlen($metadata['abstract'] ?? '') . ")");
                 return ['success' => true, 'text' => $text, 'error' => ''];
-            } else {
-                $debugLog[] = 'Basic extraction returned empty text';
             }
-
-            error_log("PDF extraction failed - all methods exhausted: " . implode(" | ", $debugLog));
-            return ['success' => false, 'text' => '', 'error' => 'Could not extract text from PDF. Tried: PDFParser, pdftotext, basic extraction'];
+            
+            error_log("PDF extraction resulted in empty text");
+            return ['success' => false, 'text' => '', 'error' => 'Could not extract text from PDF'];
         } catch (Exception $e) {
             error_log("PDF parsing exception: " . $e->getMessage());
             return ['success' => false, 'text' => '', 'error' => 'PDF parsing error: ' . $e->getMessage()];
@@ -219,14 +175,18 @@ class DocumentParser
                 }
             }
 
-            // For DOC files, try using command line tool
-            if (self::commandExists('catdoc')) {
+            // For DOC files, try using command line tool only if shell_exec is available
+            if (function_exists('shell_exec') && self::commandExists('catdoc')) {
                 $outputFile = tempnam(sys_get_temp_dir(), 'doc_');
                 $command = "catdoc " . escapeshellarg($filePath);
                 
-                $text = shell_exec($command);
-                if (!empty($text)) {
-                    return ['success' => true, 'text' => $text, 'error' => ''];
+                try {
+                    $text = @shell_exec($command);
+                    if (!empty($text)) {
+                        return ['success' => true, 'text' => $text, 'error' => ''];
+                    }
+                } catch (Exception $e) {
+                    // shell_exec failed, continue to next fallback
                 }
             }
 
@@ -548,17 +508,26 @@ class DocumentParser
      */
     private static function commandExists($command)
     {
-        $os = strtoupper(substr(PHP_OS, 0, 3));
-        
-        if ($os === 'WIN') {
-            // Windows: use 'where' command
-            $returnVal = @shell_exec("where $command 2>nul");
-        } else {
-            // Unix/Linux: use 'command -v'
-            $returnVal = @shell_exec("command -v $command 2>/dev/null");
+        // If shell_exec is disabled, we can't check for commands
+        if (!function_exists('shell_exec')) {
+            return false;
         }
         
-        return !empty($returnVal);
+        $os = strtoupper(substr(PHP_OS, 0, 3));
+        
+        try {
+            if ($os === 'WIN') {
+                // Windows: use 'where' command
+                $returnVal = @shell_exec("where $command 2>nul");
+            } else {
+                // Unix/Linux: use 'command -v'
+                $returnVal = @shell_exec("command -v $command 2>/dev/null");
+            }
+            
+            return !empty($returnVal);
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /**
