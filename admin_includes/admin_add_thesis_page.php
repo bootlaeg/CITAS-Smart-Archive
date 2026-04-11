@@ -527,6 +527,24 @@ require_admin();
                 </div>
             </div>
 
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label"><strong>Document Type <span style="color: red;">*</span></strong></label>
+                    <select class="form-select" id="documentType" name="document_type" disabled required>
+                        <option value="">Select Document Type</option>
+                        <option value="journal">Journal (10-20 pages)</option>
+                        <option value="book">Book</option>
+                        <option value="thesis">Thesis</option>
+                        <option value="report">Report</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label"><strong>Page Count</strong></label>
+                    <input type="number" class="form-control" id="pageCount" name="page_count" placeholder="Auto-detected from file" disabled readonly>
+                    <small class="text-muted d-block mt-1" id="pageCountWarning" style="display:none; color: #e74c3c;"></small>
+                </div>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label"><strong>Abstract / Description</strong></label>
                 <textarea class="form-control" id="thesisAbstract" name="abstract" rows="5" placeholder="Auto-extracted from file" disabled required></textarea>

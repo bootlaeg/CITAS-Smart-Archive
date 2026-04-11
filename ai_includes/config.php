@@ -62,6 +62,7 @@ return [
         'Survey/Questionnaire',
         'Simulation & Modeling',
         'Comparative Analysis',
+        'MRAD',
         'Other'
     ],
     

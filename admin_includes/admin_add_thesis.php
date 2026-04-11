@@ -11,6 +11,37 @@ require_once '../client_includes/create_notification.php';
 require_login();
 require_admin();
 
+/**
+ * Extract page count from PDF file
+ * @param string $file_path Full path to PDF file
+ * @return int Page count or 0 if unable to detect
+ */
+function get_pdf_page_count($file_path) {
+    if (!file_exists($file_path) || !is_readable($file_path) || filesize($file_path) === 0) {
+        return 0;
+    }
+    
+    try {
+        $content = file_get_contents($file_path, false, NULL, 0, min(1000000, filesize($file_path)));
+        
+        if (empty($content)) {
+            return 0;
+        }
+        
+        // Look for /Type /Pages and /Count value
+        if (preg_match('/\/Type\s*\/Pages.*?\/Count\s+(\d+)/s', $content, $matches)) {
+            return intval($matches[1]);
+        }
+        
+        // Fallback: count /Page objects (not /Pages)
+        preg_match_all('/\/Type\s*\/Page(?!s)\b/i', $content, $matches);
+        return count($matches[0]) > 0 ? count($matches[0]) : 0;
+    } catch (Exception $e) {
+        error_log("PDF page count extraction error: " . $e->getMessage());
+        return 0;
+    }
+}
+
 // Check if request is POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
@@ -24,11 +55,19 @@ $course = sanitize_input($_POST['course'] ?? '');
 $year = intval($_POST['year'] ?? 0);
 $abstract = sanitize_input($_POST['abstract'] ?? '');
 $status = sanitize_input($_POST['status'] ?? 'pending');
+$document_type = sanitize_input($_POST['document_type'] ?? 'thesis');
+$page_count = intval($_POST['page_count'] ?? 0);
 
 // Validate required fields
 if (empty($title) || empty($author) || empty($course) || empty($year) || empty($abstract)) {
     echo json_encode(['success' => false, 'message' => 'Missing required fields']);
     exit;
+}
+
+// Validate document type
+$valid_document_types = ['journal', 'book', 'thesis', 'report'];
+if (!in_array($document_type, $valid_document_types)) {
+    $document_type = 'thesis';
 }
 
 // Validate status
@@ -85,6 +124,23 @@ if (isset($_FILES['thesis_file']) && $_FILES['thesis_file']['error'] === UPLOAD_
 
     $file_type = $file_ext;
     $file_size = $file['size'];
+    
+    // Extract page count from PDF
+    if ($file_ext === 'pdf') {
+        $page_count = get_pdf_page_count($full_path);
+    }
+    
+    // Validate page count for journal type (must be 10-20 pages)
+    if ($document_type === 'journal') {
+        if ($page_count === 0) {
+            echo json_encode(['success' => false, 'message' => 'Unable to detect page count for journal type. Please verify the PDF is valid.']);
+            exit;
+        }
+        if ($page_count < 10 || $page_count > 20) {
+            echo json_encode(['success' => false, 'message' => 'Journal must be 10-20 pages. Current file has ' . $page_count . ' pages.']);
+            exit;
+        }
+    }
 } else {
     echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error']);
     exit;
@@ -92,8 +148,8 @@ if (isset($_FILES['thesis_file']) && $_FILES['thesis_file']['error'] === UPLOAD_
 
     // Insert thesis into database
     $stmt = $conn->prepare("
-        INSERT INTO thesis (title, author, course, year, abstract, file_path, file_type, file_size, status, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        INSERT INTO thesis (title, author, course, year, abstract, file_path, file_type, file_size, document_type, page_count, status, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     ");
 
     if (!$stmt) {
@@ -103,7 +159,7 @@ if (isset($_FILES['thesis_file']) && $_FILES['thesis_file']['error'] === UPLOAD_
 
     // Bind parameters
     $bind_result = $stmt->bind_param(
-        "sssisssss",
+        "sssissssiss",
         $title,
         $author,
         $course,
@@ -112,6 +168,8 @@ if (isset($_FILES['thesis_file']) && $_FILES['thesis_file']['error'] === UPLOAD_
         $file_path,
         $file_type,
         $file_size,
+        $document_type,
+        $page_count,
         $status
     );
 
