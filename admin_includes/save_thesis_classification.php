@@ -39,6 +39,11 @@ try {
     $filePath = $input['file_path'] ?? null;
     $fileType = $input['file_type'] ?? 'pdf';
     $fileSize = $input['file_size'] ?? null;
+    $documentType = $input['document_type'] ?? 'thesis';
+    $pageCount = $input['page_count'] ?? null;
+    if ($pageCount !== null) {
+        $pageCount = intval($pageCount);
+    }
 
     // Extract classification data
     $subjectCategory = $input['subject_category'] ?? '';
@@ -48,6 +53,8 @@ try {
     $citations = $input['citations'] ?? [];
 
     error_log("Thesis title: $title");
+    error_log("Document type: $documentType");
+    error_log("Page count: $pageCount");
     error_log("File path: $filePath");
     error_log("File type: $fileType");
     error_log("Subject category: $subjectCategory");
@@ -90,11 +97,11 @@ try {
         }
         
         $insertStmt = $conn->prepare("
-            INSERT INTO thesis (title, author, course, year, abstract, file_path, file_type, file_size, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO thesis (title, author, course, year, abstract, file_path, file_type, file_size, document_type, page_count, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
-        $insertStmt->bind_param("sssissis", $title, $author, $course, $year, $abstract, $filePath, $fileType, $fileSize, $status);
+        $insertStmt->bind_param("sssisssissis", $title, $author, $course, $year, $abstract, $filePath, $fileType, $fileSize, $documentType, $pageCount, $status);
         
         if (!$insertStmt->execute()) {
             throw new Exception("Failed to insert thesis: " . $insertStmt->error);
