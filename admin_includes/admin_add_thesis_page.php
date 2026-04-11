@@ -512,12 +512,8 @@ require_admin();
 
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <label class="form-label"><strong>Course</strong></label>
-                    <select class="form-select" id="thesisCourse" name="course" disabled required>
-                        <option value="">Select Course</option>
-                        <option value="BSIT">BSIT - Bachelor of Science in Information Technology</option>
-                        <option value="BMMA">BMMA - The Bachelor of Multimedia Arts</option>
-                    </select>
+                    <label class="form-label"><strong>Degree / Major</strong></label>
+                    <input type="text" class="form-control" id="thesisDegree" name="degree" placeholder="Auto-extracted from file" disabled>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label"><strong>Year</strong></label>
@@ -679,11 +675,17 @@ function handleFileUploadWithExtraction(event) {
         // Populate Thesis Information fields
         document.getElementById('thesisTitle').value = metadata.title || '';
         document.getElementById('thesisAuthor').value = metadata.author || '';
+        document.getElementById('thesisDegree').value = metadata.degree || '';
         document.getElementById('thesisYear').value = metadata.year || '';
         document.getElementById('thesisAbstract').value = metadata.abstract || '';
         document.getElementById('pageCount').value = metadata.page_count || '';
         
         console.log('✓ Fields populated with extracted data');
+        
+        // If degree extracted, show it
+        if (metadata.degree) {
+            console.log('✓ Degree detected:', metadata.degree);
+        }
         
         // If page count extracted, show it
         if (metadata.page_count) {
@@ -1273,6 +1275,7 @@ function submitForm() {
         // Thesis Info
         title: document.getElementById('thesisTitle').value,
         author: document.getElementById('thesisAuthor').value,
+        degree: document.getElementById('thesisDegree').value,  // Extracted from PDF/DOCX
         course: document.getElementById('thesisCourse').value,
         year: parseInt(document.getElementById('thesisYear').value),
         abstract: document.getElementById('thesisAbstract').value,

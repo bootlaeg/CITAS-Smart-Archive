@@ -429,7 +429,8 @@ class DocumentMetadataExtractor {
             'title' => '',
             'authors' => [],
             'year' => '',
-            'abstract' => ''
+            'abstract' => '',
+            'degree' => ''
         ];
         
         // First extract year and abstract from raw text BEFORE collapsing whitespace
@@ -532,9 +533,57 @@ class DocumentMetadataExtractor {
         // Join authors
         $metadata['authors'] = !empty($found_authors) ? implode(', ', array_slice($found_authors, 0, 6)) : '';
         
-        error_log("Parsed metadata: Title=" . substr($metadata['title'], 0, 50) . " | Year=" . $metadata['year'] . " | Authors=" . substr($metadata['authors'], 0, 50));
+        // Extract degree/major
+        $metadata['degree'] = self::extractDegreeFromText($text);
+        
+        error_log("Parsed metadata: Title=" . substr($metadata['title'], 0, 50) . " | Year=" . $metadata['year'] . " | Authors=" . substr($metadata['authors'], 0, 50) . " | Degree=" . $metadata['degree']);
         
         return $metadata;
+    }
+    
+    /**
+     * Extract degree/major from document text
+     * Looks for patterns like "BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY"
+     * @param string $text Document text
+     * @return string Degree and major or empty string
+     */
+    private static function extractDegreeFromText($text) {
+        // Patterns for degree types - ordered from most to least specific
+        $degree_patterns = [
+            // Most specific: Bachelor of Science in MAJOR
+            '/BACHELOR\s+OF\s+SCIENCE\s+IN\s+([A-Z\s]{3,}?)(?:\s+(?:DELGADO|FONTANILLA|REYES|SANTOS|MAGBANUA|VILLANUEVA|DELOS|SANTOS|BY|[A-Z]{2,}\s*,)|\n|$)/i',
+            
+            // Bachelor of MAJOR (with Arts, Music, etc.)
+            '/BACHELOR\s+OF\s+([A-Z\s]{3,}?)(?:\s+(?:DELGADO|FONTANILLA|REYES|SANTOS|MAGBANUA|VILLANUEVA|DELOS|SANTOS|BY|IN|[A-Z]{2,}\s*,)|\n|$)/i',
+            
+            // B.S. in MAJOR
+            '/B\.?S\.?\s+(?:IN\s+)?([A-Z\s]{3,}?)(?:\s+(?:DELGADO|FONTANILLA|REYES|SANTOS|MAGBANUA|VILLANUEVA|DELOS|SANTOS|BY|[A-Z]{2,}\s*,)|\n|$)/i',
+            
+            // Master degrees
+            '/MASTER\s+OF\s+([A-Z\s]{3,}?)(?:\s+(?:DELGADO|FONTANILLA|REYES|SANTOS|MAGBANUA|VILLANUEVA|DELOS|SANTOS|BY|[A-Z]{2,}\s*,)|\n|$)/i',
+            
+            // M.A. in MAJOR
+            '/M\.?A\.?\s+(?:IN\s+)?([A-Z\s]{3,}?)(?:\s+(?:DELGADO|FONTANILLA|REYES|SANTOS|MAGBANUA|VILLANUEVA|DELOS|SANTOS|BY|[A-Z]{2,}\s*,)|\n|$)/i',
+            
+            // Alternative patterns
+            '/For\s+the\s+Degree\s+of\s+([A-Z][A-Za-z\s]{3,}?)(?:\s+(?:DELGADO|FONTANILLA|REYES|SANTOS|MAGBANUA|VILLANUEVA|DELOS|SANTOS|BY)|\n|$)/i',
+        ];
+        
+        foreach ($degree_patterns as $pattern) {
+            if (preg_match($pattern, $text, $matches)) {
+                $degree = trim($matches[1]);
+                // Clean up the degree string
+                $degree = preg_replace('/\s+/', ' ', $degree);
+                $degree = trim($degree, ' .,');
+                
+                // Must be reasonable length and likely degree-related
+                if (strlen($degree) > 3 && strlen($degree) < 100) {
+                    return $degree;
+                }
+            }
+        }
+        
+        return '';
     }
     
     /**

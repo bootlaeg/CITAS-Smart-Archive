@@ -92,7 +92,8 @@ try {
             'author' => $metadata['authors'] ?? '',
             'year' => $metadata['year'] ?? '',
             'abstract' => $metadata['abstract'] ?? '',
-            'page_count' => $metadata['page_count'] ?? null
+            'page_count' => $metadata['page_count'] ?? null,
+            'degree' => $metadata['degree'] ?? ''
         ],
         'debug' => [
             'warnings' => $quality_warnings
