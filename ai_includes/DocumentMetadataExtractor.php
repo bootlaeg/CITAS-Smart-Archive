@@ -72,29 +72,83 @@ class DocumentMetadataExtractor {
      */
     private static function extractTextFromWordXml($xml_content) {
         try {
-            // Suppress XML warnings
             libxml_use_internal_errors(true);
             
+            // Try method 1: Parse with namespace support
             $dom = new DOMDocument();
-            $dom->loadXML($xml_content);
             
-            // Get all text nodes from paragraphs
-            $xpath = new DOMXPath($dom);
+            // First, try parsing as-is with namespace handling
+            if (@$dom->loadXML($xml_content)) {
+                $xpath = new DOMXPath($dom);
+                $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+                
+                // Try to get text elements with namespace
+                $text_nodes = $xpath->query('//w:t');
+                
+                if ($text_nodes && $text_nodes->length > 0) {
+                    $full_text = '';
+                    foreach ($text_nodes as $node) {
+                        $full_text .= $node->nodeValue . ' ';
+                    }
+                    
+                    $result = trim($full_text);
+                    if (strlen($result) > 50) {
+                        libxml_use_internal_errors(false);
+                        return $result;
+                    }
+                }
+            }
             
-            // Register namespace
-            $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+            // Method 2: Remove namespaces and try again
+            $xml_clean = preg_replace('/<(\w+):([^>]*)\s+xmlns[^=]*="[^"]*"/i', '<$1:$2', $xml_content);
+            $xml_clean = preg_replace('/ xmlns[^=]*="[^"]*"/i', '', $xml_clean);
             
-            // Extract text from all text elements
-            $text_nodes = $xpath->query('//w:t');
+            $dom = new DOMDocument();
+            if (@$dom->loadXML($xml_clean)) {
+                $xpath = new DOMXPath($dom);
+                
+                // Try without namespace
+                $text_nodes = $xpath->query('//t');
+                
+                if ($text_nodes && $text_nodes->length > 0) {
+                    $full_text = '';
+                    foreach ($text_nodes as $node) {
+                        $full_text .= $node->nodeValue . ' ';
+                    }
+                    
+                    $result = trim($full_text);
+                    if (strlen($result) > 50) {
+                        libxml_use_internal_errors(false);
+                        return $result;
+                    }
+                }
+            }
             
-            $full_text = '';
-            foreach ($text_nodes as $node) {
-                $full_text .= $node->nodeValue . ' ';
+            // Method 3: Extract using simple string patterns
+            // Look for text in <w:t>...</w:t> tags
+            if (preg_match_all('/<w:t[^>]*>([^<]*)<\/w:t>/u', $xml_content, $matches)) {
+                $full_text = implode(' ', $matches[1]);
+                $result = trim($full_text);
+                if (strlen($result) > 50) {
+                    libxml_use_internal_errors(false);
+                    return $result;
+                }
+            }
+            
+            // Method 4: Extract all text-like content
+            if (preg_match_all('>([^<>{]+)</w:t>|<w:t[^>]*>([^<]*)</', $xml_content, $matches)) {
+                $text_parts = array_merge($matches[1] ?? [], $matches[2] ?? []);
+                $full_text = implode(' ', array_filter($text_parts));
+                $result = trim($full_text);
+                if (strlen($result) > 20) {
+                    libxml_use_internal_errors(false);
+                    return $result;
+                }
             }
             
             libxml_use_internal_errors(false);
+            return '';
             
-            return trim($full_text);
         } catch (Exception $e) {
             error_log("Word XML parsing error: " . $e->getMessage());
             return '';
@@ -179,7 +233,6 @@ class DocumentMetadataExtractor {
     
     /**
      * Parse metadata from text content
-     * Uses heuristics to identify title, authors, year, and abstract
      * @param string $text Full document text
      * @return array Metadata with keys: title, authors, year, abstract
      */
@@ -191,107 +244,111 @@ class DocumentMetadataExtractor {
             'abstract' => ''
         ];
         
-        // Split into lines for better parsing
-        $lines = explode("\n", $text);
-        $lines = array_map('trim', $lines);
-        $lines = array_filter($lines, function($line) { return !empty($line); });
-        $lines = array_values($lines);
+        // First extract year and abstract from raw text BEFORE collapsing whitespace
         
-        // ===== EXTRACT TITLE =====
-        // Look for the first substantial line (title)
-        // Titles are usually: long, capitalized, not too many numbers
-        for ($i = 0; $i < min(10, count($lines)); $i++) {
-            $line = $lines[$i];
-            
-            // Skip very short lines, metadata headers
-            if (strlen($line) < 20) continue;
-            if (stripos($line, 'college') !== false || stripos($line, 'faculty') !== false) continue;
-            if (stripos($line, 'mindanao institute') !== false) continue;
-            
-            // Check if line has mostly uppercase or capitalized words
-            $uppercase_ratio = preg_match_all('/[A-Z]/', $line) / strlen($line);
-            
-            if ($uppercase_ratio > 0.2) { // At least 20% uppercase
-                $metadata['title'] = $line;
-                $title_index = $i;
-                break;
+        // ===== EXTRACT YEAR =====
+        if (preg_match('/\b(19|20)(\d{2})\b/', $text, $year_match)) {
+            $metadata['year'] = $year_match[1] . $year_match[2];
+        }
+        
+        // ===== EXTRACT ABSTRACT =====
+        // Look for the ABSTRACT section with proper content (not table of contents)
+        // Regex explanation: Find "ABSTRACT" followed by substantial prose containing keywords like "disease" or "disorder"
+        $abstract_patterns = [
+            // Pattern 1: ABSTRACT keyword followed by real content ending at Keywords or ACKNOWLEDGMENT
+            '/ABSTRACT\s+([A-Z][\s\S]{100,}?)(?:Keywords|KEYWORDS|ACKNOWLEDGMENT|Chapter|$)/i',
+        ];
+        
+        foreach ($abstract_patterns as $pattern) {
+            if (preg_match($pattern, $text, $abstract_match)) {
+                $abstract = trim($abstract_match[1]);
+                // Clean up and validate
+                $abstract = preg_replace('/\s+/', ' ', $abstract);
+                
+                // Must be substantial and contain neurological/medical content
+                if (strlen($abstract) > 150 && preg_match('/(disease|disorder|patient|study|clinical|system)/i', $abstract)) {
+                    // Truncate to 500 chars if needed
+                    if (strlen($abstract) > 500) {
+                        $abstract = substr($abstract, 0, 500) . '...';
+                    }
+                    $metadata['abstract'] = $abstract;
+                    break;
+                }
+            }
+        }
+        
+        // ===== EXTRACT TITLE (before collapsing whitespace) =====
+        // Look for the first capitalized phrase before "Research" or "Presented"
+        $title_patterns = [
+            // Pattern 1: Title followed by : or line break, before "Research/Capstone" or "Presented"
+            '/^([A-Z][A-Za-z0-9\s:&\(\),-]+?)(?:\s+A\s+Research|\s+A\s+Capstone|\s+Presented|\n)/m',
+            // Pattern 2: NeuroGuard specific pattern
+            '/^([A-Z][A-Za-z0-9\s:&\(\),-]+?)\s+A\s+(?:Research|Capstone)/m',
+            // Pattern 3: Title before "Presented to"
+            '/^([A-Z][A-Za-z0-9\s:&\(\),-]+?)\s+Presented\s+to/m',
+        ];
+        
+        foreach ($title_patterns as $pattern) {
+            if (preg_match($pattern, $text, $title_match)) {
+                $title = trim($title_match[1]);
+                // Remove extra whitespace
+                $title = preg_replace('/\s+/', ' ', $title);
+                if (strlen($title) > 20) {
+                    $metadata['title'] = $title;
+                    break;
+                }
             }
         }
         
         // ===== EXTRACT AUTHORS =====
-        // Look for names after title, usually all caps or Title Case
-        // Names often appear on consecutive lines
-        if (isset($title_index)) {
-            $author_candidates = [];
-            
-            for ($i = $title_index + 1; $i < min($title_index + 15, count($lines)); $i++) {
-                $line = $lines[$i];
+        // Look for author patterns in thesis documents
+        // Pattern 1: ALL CAPS LASTNAME, Mixed Case Names INITIAL. (like "DELGADO, MARCO ANTONIO R.")
+        
+        $found_authors = [];
+        
+        // Try to find authors in the format: "LASTNAME, FIRSTNAME MIDDLENAMES INITIAL."
+        // This catches patterns like "DELGADO, MARCO ANTONIO R." or "FONTANILLA, CARLA BEATRIZ T."
+        if (preg_match_all('/([A-Z]{2,}),\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]*)*)\s+([A-Z][A-Z]\.?)\b/', $text, $matches)) {
+            for ($i = 0; $i < count($matches[0]); $i++) {
+                $lastname = trim($matches[1][$i]);
+                $firstname = trim($matches[2][$i]);
+                $initial = trim($matches[3][$i]);
                 
-                // Stop if we hit keywords like "Abstract", "ABSTRACT", "Course", etc.
-                if (preg_match('/^(ABSTRACT|Abstract|COURSE|Course|Year|JUNE|Bachelor|BACHELOR)/i', $line)) {
-                    break;
-                }
+                // Reconstruct as "FirstName LastName Initial"
+                $author = $firstname . ' ' . $lastname . ' ' . $initial;
+                $author = preg_replace('/\s+/', ' ', trim($author));
                 
-                // Stop if it's an institution name
-                if (stripos($line, 'institute') !== false || stripos($line, 'university') !== false) {
-                    continue;
-                }
-                
-                // Check if line looks like an author name
-                // Author names: multiple words, at least one uppercase word, no common keywords
-                if (preg_match('/[A-Z][a-z]+\s+[A-Z]/', $line) && strlen($line) < 100) {
-                    if (!preg_match('/presented|submitted|edited|designed|developed/i', $line)) {
-                        $author_candidates[] = $line;
+                // Validate - should be a realistic name
+                if (strlen($author) > 6 && str_word_count($author) >= 2) {
+                    if (!preg_match('/JUNE|MAY|APRIL|DEAN|FACULTY|COLLEGE|BACHELOR|DEGREE|APPROVAL|RESEARCH/i', $author)) {
+                        if (!in_array($author, $found_authors)) {
+                            $found_authors[] = $author;
+                            if (count($found_authors) >= 6) break;
+                        }
                     }
                 }
             }
-            
-            // Join multiple author lines
-            foreach ($author_candidates as $author) {
-                // Skip if already too many authors
-                if (count($metadata['authors']) >= 6) break;
-                
-                // Clean up author name
-                $author = preg_replace('/\s+/', ' ', $author);
-                $author = trim($author);
-                
-                if (!empty($author) && strlen($author) > 2) {
-                    $metadata['authors'][] = $author;
+        }
+        
+        // Fallback: Look for names after "submitted by" or "prepared and submitted by"
+        if (count($found_authors) < 2) {
+            if (preg_match_all('/submitted by\s+([A-Za-z\s,.]+?)(?:,\s+in partial|in partial)/is', $text, $matches)) {
+                $names_string = $matches[1][0];
+                // Split on comma and "and"
+                $individual_names = preg_split('/,\s+(?:and\s+)?/', $names_string, 6);
+                foreach ($individual_names as $name) {
+                    $name = trim(preg_replace('/\s+/', ' ', $name));
+                    if (strlen($name) > 5 && !in_array($name, $found_authors)) {
+                        $found_authors[] = $name;
+                    }
                 }
             }
         }
         
-        // ===== EXTRACT YEAR =====
-        // Look for 4-digit year (1900-2100)
-        if (preg_match('/\b(19|20)\d{2}\b/', $text, $year_match)) {
-            $metadata['year'] = $year_match[1];
-        }
+        // Join authors
+        $metadata['authors'] = !empty($found_authors) ? implode(', ', array_slice($found_authors, 0, 6)) : '';
         
-        // ===== EXTRACT ABSTRACT =====
-        // Look for ABSTRACT section
-        $abstract_pattern = '/(?:ABSTRACT|Abstract|SUMMARY|Summary)\s*\n(.+?)(?:\n(?:INTRODUCTION|Introduction|KEYWORDS|Keywords|CHAPTER|Chapter|\d+\.|[A-Z][A-Z ]+)|\Z)/is';
-        
-        if (preg_match($abstract_pattern, $text, $abstract_match)) {
-            $abstract = trim($abstract_match[1]);
-            
-            // Clean up and limit length
-            $abstract = preg_replace('/\s+/', ' ', $abstract);
-            $abstract = trim($abstract);
-            
-            // Limit to first 500 characters
-            if (strlen($abstract) > 500) {
-                $abstract = substr($abstract, 0, 500) . '...';
-            }
-            
-            $metadata['abstract'] = $abstract;
-        }
-        
-        // Join authors into a single string if present
-        if (!empty($metadata['authors'])) {
-            $metadata['authors'] = implode(', ', $metadata['authors']);
-        } else {
-            $metadata['authors'] = '';
-        }
+        error_log("Parsed metadata: Title=" . substr($metadata['title'], 0, 50) . " | Year=" . $metadata['year'] . " | Authors=" . substr($metadata['authors'], 0, 50));
         
         return $metadata;
     }
