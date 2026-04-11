@@ -44,11 +44,11 @@ if ($user_id <= 0 && $request_id <= 0) {
 
 // Verify request exists and get user info - if request_id is 0, lookup by user_id
 if ($request_id > 0) {
-    $verify = $conn->prepare("SELECT id, user_id, thesis_id FROM chatbot_access_requests WHERE id = ?");
+    $verify = $conn->prepare("SELECT id, user_id, thesis_id FROM thesis_access WHERE id = ?");
     $verify->bind_param("i", $request_id);
 } else {
     // Fallback: lookup by user_id and thesis_id
-    $verify = $conn->prepare("SELECT id, user_id, thesis_id FROM chatbot_access_requests WHERE user_id = ? AND thesis_id = ? ORDER BY requested_at DESC LIMIT 1");
+    $verify = $conn->prepare("SELECT id, user_id, thesis_id FROM thesis_access WHERE user_id = ? AND thesis_id = ? ORDER BY requested_at DESC LIMIT 1");
     $verify->bind_param("ii", $user_id, $thesis_id);
 }
 
@@ -70,7 +70,7 @@ $verify->close();
 
 // Update request status
 $update = $conn->prepare("
-    UPDATE chatbot_access_requests 
+    UPDATE thesis_access 
     SET status = 'denied', 
         denied_at = NOW(), 
         denied_by = ?

@@ -45,7 +45,7 @@ if (!isset($conn) || $conn === null) {
 // Check if user has approved thesis access to this thesis
 // (Chatbot access is granted with thesis access approval)
 $check_stmt = $conn->prepare("
-    SELECT id, status, approved_at FROM thesis_access_requests 
+    SELECT id, status, approved_at FROM thesis_access 
     WHERE user_id = ? AND thesis_id = ? 
     ORDER BY requested_at DESC LIMIT 1
 ");

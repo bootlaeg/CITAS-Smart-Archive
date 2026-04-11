@@ -70,9 +70,9 @@ if ($thesis_result->num_rows === 0) {
 $thesis_title = $thesis_result->fetch_assoc()['title'];
 $thesis_check->close();
 
-// Check if chatbot access request already exists and is still pending
+// Check if access request already exists and is still pending
 $check_stmt = $conn->prepare("
-    SELECT id, status FROM chatbot_access_requests 
+    SELECT id, status FROM thesis_access 
     WHERE user_id = ? AND thesis_id = ? 
     ORDER BY requested_at DESC LIMIT 1
 ");
@@ -100,9 +100,9 @@ if ($existing_request) {
     }
 }
 
-// Insert new chatbot access request
+// Insert new access request
 $stmt = $conn->prepare("
-    INSERT INTO chatbot_access_requests (user_id, thesis_id, status, requested_at) 
+    INSERT INTO thesis_access (user_id, thesis_id, status, requested_at) 
     VALUES (?, ?, 'pending', NOW())
 ");
 
