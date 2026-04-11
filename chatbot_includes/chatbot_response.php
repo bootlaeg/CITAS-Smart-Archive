@@ -142,7 +142,7 @@ $thesis_context = sprintf(
 try {
     // Try to use Ollama service for intelligent responses
     require_once __DIR__ . '/../ai_includes/ollama_service.php';
-    $ollama = new OllamaService('phi');
+    $ollama = new OllamaService('phi', 'http://192.168.254.114:11434');
     
     $prompt = "You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user's question concisely and professionally in 2-3 sentences max.\n\n" . 
               $thesis_context . "\n\n" .
