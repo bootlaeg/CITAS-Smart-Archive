@@ -253,7 +253,7 @@ class DocumentMetadataExtractor {
         
         // ===== EXTRACT ABSTRACT =====
         // Look for the ABSTRACT section with proper content (not table of contents)
-        // Regex explanation: Find "ABSTRACT" followed by substantial prose containing keywords like "disease" or "disorder"
+        // Extract the FULL abstract without truncation
         $abstract_patterns = [
             // Pattern 1: ABSTRACT keyword followed by real content ending at Keywords or ACKNOWLEDGMENT
             '/ABSTRACT\s+([A-Z][\s\S]{100,}?)(?:Keywords|KEYWORDS|ACKNOWLEDGMENT|Chapter|$)/i',
@@ -267,10 +267,6 @@ class DocumentMetadataExtractor {
                 
                 // Must be substantial and contain neurological/medical content
                 if (strlen($abstract) > 150 && preg_match('/(disease|disorder|patient|study|clinical|system)/i', $abstract)) {
-                    // Truncate to 500 chars if needed
-                    if (strlen($abstract) > 500) {
-                        $abstract = substr($abstract, 0, 500) . '...';
-                    }
                     $metadata['abstract'] = $abstract;
                     break;
                 }
