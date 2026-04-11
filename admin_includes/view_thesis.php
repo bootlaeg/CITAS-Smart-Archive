@@ -16,8 +16,7 @@ $thesis_id = intval($_GET['id']);
 
 // Get thesis details with classification data
 $stmt = $conn->prepare("
-    SELECT t.*, tc.subject_category, tc.subject_confidence, tc.keywords, tc.research_method, 
-           tc.method_confidence, tc.citations
+    SELECT t.*, tc.subject_category, tc.keywords, tc.research_method, tc.citations
     FROM thesis t
     LEFT JOIN thesis_classification tc ON t.id = tc.thesis_id
     WHERE t.id = ?

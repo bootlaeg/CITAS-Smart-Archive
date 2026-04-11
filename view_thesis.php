@@ -17,8 +17,7 @@ $thesis_id = intval($_GET['id']);
 // Build query based on user role - admins can view any thesis status
 if (is_admin()) {
     $query = "
-        SELECT t.*, tc.subject_category, tc.subject_confidence, tc.keywords, tc.research_method, 
-               tc.method_confidence, tc.complexity_level, tc.complexity_confidence, tc.citations
+        SELECT t.*, tc.subject_category, tc.keywords, tc.research_method, tc.citations
         FROM thesis t
         LEFT JOIN thesis_classification tc ON t.id = tc.thesis_id
         WHERE t.id = ?
@@ -26,8 +25,7 @@ if (is_admin()) {
 } else {
     // Regular users can only view approved theses
     $query = "
-        SELECT t.*, tc.subject_category, tc.subject_confidence, tc.keywords, tc.research_method, 
-               tc.method_confidence, tc.complexity_level, tc.complexity_confidence, tc.citations
+        SELECT t.*, tc.subject_category, tc.keywords, tc.research_method, tc.citations
         FROM thesis t
         LEFT JOIN thesis_classification tc ON t.id = tc.thesis_id
         WHERE t.id = ? AND t.status = 'approved'
@@ -1667,10 +1665,6 @@ if (is_logged_in()) {
                                 <div class="metadata-row">
                                     <span class="metadata-label">Research Type:</span>
                                     <span class="metadata-value"><?php echo !empty($thesis['research_method']) ? htmlspecialchars($thesis['research_method']) : 'Not specified'; ?></span>
-                                </div>
-                                <div class="metadata-row">
-                                    <span class="metadata-label">Complexity Level:</span>
-                                    <span class="metadata-value"><?php echo !empty($thesis['complexity_level']) ? strtoupper(htmlspecialchars($thesis['complexity_level'])) : 'N/A'; ?></span>
                                 </div>
                             </div>
                         </div>
