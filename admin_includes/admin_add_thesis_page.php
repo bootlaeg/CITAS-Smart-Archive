@@ -583,17 +583,6 @@ require_admin();
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label"><strong>Complexity Level</strong></label>
-                    <select class="form-select" id="classifComplexityLevel" disabled>
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate" selected>Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                    </select>
-                </div>
-            </div>
-
             <div class="mb-3">
                 <label class="form-label"><strong>Keywords (comma-separated)</strong></label>
                 <textarea class="form-control" id="classifKeywords" rows="2" placeholder="keyword1, keyword2, keyword3" disabled></textarea>
@@ -798,7 +787,6 @@ function clearClassificationData() {
     // Reset all classification fields to empty/default state
     document.getElementById('classifSubjectCategory').value = '';
     document.getElementById('classifResearchMethod').value = '';
-    document.getElementById('classifComplexityLevel').value = 'intermediate';
     document.getElementById('classifKeywords').value = '';
     document.getElementById('classifReferences').value = '[]';
     document.getElementById('classifRelatedTheses').value = '[]';
@@ -1118,7 +1106,6 @@ function performAIClassification(generateBtn, originalBtnHTML, polishedTitle, po
         console.log('✅ AI response successful');
         console.log('   Subject Category:', aiResponse.subject_category);
         console.log('   Research Method:', aiResponse.research_method);
-        console.log('   Complexity Level:', aiResponse.complexity_level);
         console.log('   Keywords:', aiResponse.keywords);
         console.log('   Author:', aiResponse.author || '(not extracted)');
         
@@ -1147,10 +1134,6 @@ function performAIClassification(generateBtn, originalBtnHTML, polishedTitle, po
         const methodField = document.getElementById('classifResearchMethod');
         methodField.value = aiResponse.research_method || '';
         console.log('✓ Research Method updated:', methodField.value || '(empty)');
-        
-        const complexityField = document.getElementById('classifComplexityLevel');
-        complexityField.value = aiResponse.complexity_level || 'intermediate';
-        console.log('✓ Complexity Level updated:', complexityField.value);
         
         // Use AI-generated keywords only (replace document keywords with AI refined ones)
         const keywordsField = document.getElementById('classifKeywords');
@@ -1250,12 +1233,6 @@ function displayAIResults(aiData) {
                     <p>${aiData.research_method || 'N/A'}</p>
                 </div>
             </div>
-            <div class="row mb-2">
-                <div class="col-md-6">
-                    <strong>Complexity Level:</strong>
-                    <p class="text-capitalize">${aiData.complexity_level || 'intermediate'}</p>
-                </div>
-            </div>
             <div class="mb-3">
                 <strong>AI Keywords:</strong>
                 <div class="mt-2">
@@ -1308,7 +1285,6 @@ function submitForm() {
         // Classification Data
         subject_category: document.getElementById('classifSubjectCategory').value,
         research_method: document.getElementById('classifResearchMethod').value,
-        complexity_level: document.getElementById('classifComplexityLevel').value,
         
         // Keywords and Citations from form fields
         keywords: document.getElementById('classifKeywords').value

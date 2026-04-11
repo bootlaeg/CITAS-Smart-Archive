@@ -45,8 +45,6 @@ class ThesisClassifier {
         'Comparative Analysis'
     ];
     
-    private $complexityLevels = ['beginner', 'intermediate', 'advanced'];
-    
     public function __construct($model = 'phi', $ollamaUrl = 'http://localhost:11434') {
         $this->ollamaService = new OllamaService($model, $ollamaUrl);
         // Database will be loaded lazily when needed
@@ -90,7 +88,6 @@ class ThesisClassifier {
                 'subject' => $this->classifySubject($title, $abstract, $content),
                 'keywords' => $this->extractKeywords($title, $abstract),
                 'research_method' => $this->identifyResearchMethod($title, $abstract, $content),
-                'complexity' => $this->determineComplexity($title, $abstract, $content),
                 'citations' => $this->extractCitations($abstract, $content),
                 'related_theses' => $this->findRelatedTheses($thesisId, $classification['subject']['category'] ?? null)
             ];
@@ -205,33 +202,6 @@ class ThesisClassifier {
     
     /**
      * Determine complexity level (OPTIMIZED - no confidence calculation)
-     * @param string $title
-     * @param string $abstract
-     * @param string $content
-     * @return array
-     */
-    private function determineComplexity($title, $abstract, $content = '') {
-        try {
-            $prompt = "Assess complexity as ONLY ONE of: beginner, intermediate, advanced\n\nTitle: $title\nAbstract: $abstract\n\nRespond with ONLY the level name, nothing else.";
-            
-            $result = $this->ollamaService->prompt($prompt, ['temperature' => 0.3]);
-            $level = trim(strtolower($result));
-            
-            // Validate level
-            if (!in_array($level, $this->complexityLevels)) {
-                $level = 'intermediate';
-            }
-            
-            return [
-                'level' => $level,
-                'confidence' => 100
-            ];
-        } catch (Exception $e) {
-            error_log("Complexity Determination Error: " . $e->getMessage());
-            return ['level' => 'intermediate', 'confidence' => 0];
-        }
-    }
-    
     /**
      * Extract citations from abstract and content
      * @param string $abstract
@@ -325,25 +295,20 @@ class ThesisClassifier {
             $keywords = json_encode($classification['keywords'] ?? []);
             $researchMethod = $classification['research_method']['method'] ?? 'Unknown';
             $methodConfidence = $classification['research_method']['confidence'] ?? 0;
-            $complexityLevel = $classification['complexity']['level'] ?? 'intermediate';
-            $complexityConfidence = $classification['complexity']['confidence'] ?? 0;
             $citations = json_encode($classification['citations'] ?? []);
             $relatedThesisIds = json_encode($classification['related_theses'] ?? []);
             
             $query = "
                 INSERT INTO thesis_classification 
                 (thesis_id, subject_category, subject_confidence, keywords, 
-                 research_method, method_confidence, complexity_level, 
-                 complexity_confidence, citations, related_thesis_ids)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 research_method, method_confidence, citations, related_thesis_ids)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                 subject_category = VALUES(subject_category),
                 subject_confidence = VALUES(subject_confidence),
                 keywords = VALUES(keywords),
                 research_method = VALUES(research_method),
                 method_confidence = VALUES(method_confidence),
-                complexity_level = VALUES(complexity_level),
-                complexity_confidence = VALUES(complexity_confidence),
                 citations = VALUES(citations),
                 related_thesis_ids = VALUES(related_thesis_ids),
                 last_updated = CURRENT_TIMESTAMP
@@ -351,15 +316,13 @@ class ThesisClassifier {
             
             $stmt = $this->getDatabase()->prepare($query);
             $stmt->bind_param(
-                'isdssissss',
+                'isdssiss',
                 $thesisId,
                 $subjectCategory,
                 $subjectConfidence,
                 $keywords,
                 $researchMethod,
                 $methodConfidence,
-                $complexityLevel,
-                $complexityConfidence,
                 $citations,
                 $relatedThesisIds
             );
@@ -440,45 +403,6 @@ class ThesisClassifier {
             return $theses;
         } catch (Exception $e) {
             error_log("Search By Subject Error: " . $e->getMessage());
-            return [];
-        }
-    }
-    
-    /**
-     * Search for theses by complexity level
-     * @param string $level
-     * @param int $limit
-     * @return array
-     */
-    public function searchByComplexity($level, $limit = 10) {
-        try {
-            if (!in_array($level, $this->complexityLevels)) {
-                return [];
-            }
-            
-            $query = "
-                SELECT t.*, tc.* FROM thesis t
-                JOIN thesis_classification tc ON t.id = tc.thesis_id
-                WHERE tc.complexity_level = ?
-                ORDER BY tc.complexity_confidence DESC, t.views DESC
-                LIMIT ?
-            ";
-            
-            $stmt = $this->getDatabase()->prepare($query);
-            $stmt->bind_param('si', $level, $limit);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            
-            $theses = [];
-            while ($row = $result->fetch_assoc()) {
-                $row['keywords'] = json_decode($row['keywords'], true) ?? [];
-                $theses[] = $row;
-            }
-            
-            $stmt->close();
-            return $theses;
-        } catch (Exception $e) {
-            error_log("Search By Complexity Error: " . $e->getMessage());
             return [];
         }
     }

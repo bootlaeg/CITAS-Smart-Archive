@@ -17,7 +17,7 @@ $thesis_id = intval($_GET['id']);
 // Get thesis details with classification data
 $stmt = $conn->prepare("
     SELECT t.*, tc.subject_category, tc.subject_confidence, tc.keywords, tc.research_method, 
-           tc.method_confidence, tc.complexity_level, tc.complexity_confidence, tc.citations
+           tc.method_confidence, tc.citations
     FROM thesis t
     LEFT JOIN thesis_classification tc ON t.id = tc.thesis_id
     WHERE t.id = ?
@@ -648,7 +648,7 @@ if (is_logged_in()) {
                 </div>
 
                 <!-- AI Classification Details -->
-                <?php if (!empty($thesis['subject_category']) || !empty($thesis['research_method']) || !empty($thesis['complexity_level']) || !empty($thesis['citations'])): ?>
+                <?php if (!empty($thesis['subject_category']) || !empty($thesis['research_method']) || !empty($thesis['citations'])): ?>
                     <?php if (!empty($thesis['subject_category'])): ?>
                     <div class="thesis-meta-item">
                         <span class="thesis-meta-label"><i class="fas fa-brain me-2"></i>Subject Category</span>
@@ -660,19 +660,6 @@ if (is_logged_in()) {
                     <div class="thesis-meta-item">
                         <span class="thesis-meta-label"><i class="fas fa-microscope me-2"></i>Research Method</span>
                         <span class="thesis-meta-value"><?php echo htmlspecialchars($thesis['research_method']); ?></span>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <?php if (!empty($thesis['complexity_level'])): ?>
-                    <div class="thesis-meta-item">
-                        <span class="thesis-meta-label"><i class="fas fa-bar-chart me-2"></i>Complexity Level</span>
-                        <span class="thesis-meta-value">
-                            <?php 
-                            $level = strtoupper($thesis['complexity_level']);
-                            $badge_color = ($level === 'BEGINNER') ? 'success' : (($level === 'INTERMEDIATE') ? 'warning' : 'danger');
-                            echo '<span class="badge bg-' . $badge_color . '">' . $level . '</span>';
-                            ?>
-                        </span>
                     </div>
                     <?php endif; ?>
                     

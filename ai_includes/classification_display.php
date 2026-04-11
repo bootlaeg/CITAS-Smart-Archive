@@ -68,24 +68,6 @@ try {
         </div>
     </div>
     
-    <!-- Complexity Level -->
-    <div style="margin-bottom: 15px;">
-        <strong>Complexity Level:</strong>
-        <div style="margin-top: 5px;">
-            <?php
-                $complexity = $classification['complexity_level'];
-                $color = 'secondary';
-                if ($complexity === 'beginner') $color = '#17a2b8';
-                elseif ($complexity === 'intermediate') $color = '#ffc107';
-                elseif ($complexity === 'advanced') $color = '#dc3545';
-            ?>
-            <span style="display: inline-block; background: <?php echo $color; ?>; color: <?php echo ($complexity === 'intermediate' ? '#000' : '#fff'); ?>; padding: 5px 10px; border-radius: 15px; margin-right: 10px;">
-                <?php echo ucfirst($complexity); ?>
-            </span>
-            <small style="color: #666;">Confidence: <?php echo round($classification['complexity_confidence'], 1); ?>%</small>
-        </div>
-    </div>
-    
     <!-- Citations -->
     <?php if (!empty($classification['citations'])): ?>
     <div style="margin-bottom: 15px;">

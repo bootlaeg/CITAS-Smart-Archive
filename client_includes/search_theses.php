@@ -32,7 +32,6 @@ $query = "SELECT
     t.views,
     tc.keywords,
     tc.subject_category,
-    tc.complexity_level,
     tc.research_method
 FROM thesis t
 LEFT JOIN thesis_classification tc ON t.id = tc.thesis_id
@@ -121,7 +120,6 @@ while ($row = $result->fetch_assoc()) {
         'views' => $row['views'],
         'keywords' => $highlighted_keywords,
         'subject_category' => $row['subject_category'],
-        'complexity_level' => $row['complexity_level'],
         'research_method' => $row['research_method']
     ];
 }

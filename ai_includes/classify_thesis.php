@@ -192,25 +192,6 @@ try {
             ]);
             break;
             
-        case 'search_by_complexity':
-            // Search theses by complexity
-            if (!isset($_GET['level']) && !isset($_POST['level'])) {
-                throw new Exception("Missing level parameter");
-            }
-            
-            $level = $_POST['level'] ?? $_GET['level'];
-            $limit = (int)($_GET['limit'] ?? $_POST['limit'] ?? 10);
-            
-            $results = $classifier->searchByComplexity($level, $limit);
-            
-            echo json_encode([
-                'success' => true,
-                'level' => $level,
-                'count' => count($results),
-                'results' => $results
-            ]);
-            break;
-            
         case 'stats':
             // Get classification statistics
             $stats = $classifier->getClassificationStats();
