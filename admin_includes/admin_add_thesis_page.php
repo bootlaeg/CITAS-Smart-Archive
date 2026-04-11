@@ -1279,7 +1279,15 @@ function submitForm() {
             return;
         }
 
+        // Check if a file was uploaded
+        const file = currentUploadedFile;
+        if (!file) {
+            showAlert('❌ Please upload a thesis file first', 'danger');
+            return;
+        }
+
         console.log('=== SAVING THESIS & CLASSIFICATION ===');
+        console.log('File to upload:', file.name);
 
         // Helper function to safely get element value
         const getElementValue = (id, defaultValue = '') => {
@@ -1295,114 +1303,174 @@ function submitForm() {
         const documentType = getElementValue('documentType');
         const pageCount = getElementValue('pageCount');
         
-        const thesisData = {
-            // Thesis Info
-            title: getElementValue('thesisTitle'),
-            author: getElementValue('thesisAuthor'),
-            course: getElementValue('thesisCourse'),
-            year: parseInt(getElementValue('thesisYear', '0')) || new Date().getFullYear(),
-            abstract: getElementValue('thesisAbstract'),
-            status: getElementValue('thesisStatus', 'approved'),
-            
-            // Document Info
-            document_type: documentType,
-            page_count: pageCount ? parseInt(pageCount) : null,
-            
-            // Classification Data
-            subject_category: getElementValue('classifSubjectCategory'),
-            research_method: getElementValue('classifResearchMethod'),
+        showAlert('💾 Uploading file and saving thesis...', 'info');
+        console.log('🚀 Starting file upload...');
         
-        // Keywords and Citations from form fields
-        keywords: (() => {
-            const keywordsStr = getElementValue('classifKeywords', '');
-            if (!keywordsStr) return [];
-            return keywordsStr.split(',')
-                .map(k => k.trim())
-                .filter(k => k.length > 0);
-        })(),
-        
-        citations: (() => {
-            try {
-                const citationsValue = getElementValue('classifReferences', '[]');
-                if (citationsValue && citationsValue.startsWith('[')) {
-                    return JSON.parse(citationsValue);
+        // First, upload the file
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+        uploadFormData.append('title', getElementValue('thesisTitle'));
+        uploadFormData.append('author', getElementValue('thesisAuthor'));
+        uploadFormData.append('course', getElementValue('thesisCourse'));
+        uploadFormData.append('year', getElementValue('thesisYear'));
+
+        // Upload file to uploads directory
+        fetch('../client_includes/upload_thesis_file.php', {
+            method: 'POST',
+            body: uploadFormData
+        })
+        .then(response => {
+            console.log('📨 Upload response status:', response.status);
+            return response.text().then(text => {
+                console.log('📨 Upload response text:', text);
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Invalid upload response: ' + text);
                 }
-                return [];
-            } catch (e) {
-                console.warn('Error parsing citations:', e);
-                return [];
+            });
+        })
+        .then(uploadData => {
+            console.log('📨 Upload data:', uploadData);
+            
+            if (!uploadData.success) {
+                throw new Error(uploadData.error || 'File upload failed');
             }
-        })()
-    };
-
-    console.log('📤 Data to save:', thesisData);
-    
-    // Validate required fields
-    if (!thesisData.title || !thesisData.abstract || !thesisData.course) {
-        showAlert('❌ Please fill in Title, Abstract, and Course', 'danger');
-        return;
-    }
-    
-    // Validate document type
-    if (!documentType) {
-        showAlert('❌ Please select a Document Type', 'danger');
-        return;
-    }
-    
-    // Validate page count for journals
-    if (documentType === 'journal') {
-        if (!pageCount || pageCount < 10 || pageCount > 20) {
-            showAlert('❌ Journal documents must be between 10-20 pages. Current: ' + (pageCount || 'Not specified'), 'danger');
-            return;
-        }
-    }
-
-    showAlert('💾 Saving thesis and classification...', 'info');
-
-    // Send to save endpoint
-    fetch('./save_thesis_classification.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(thesisData)
-    })
-    .then(response => {
-        console.log('📨 Response status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('📨 Response data:', data);
-        
-        if (data.success) {
-            console.log('✅ Thesis saved with ID:', data.thesis_id);
-            showAlert('✅ Thesis and classification saved successfully!', 'success');
             
-            // Clear localStorage
-            localStorage.removeItem('thesisFormData');
-            console.log('✓ Form data cleared from localStorage');
+            console.log('✅ File uploaded successfully:', uploadData.file_path);
             
-            // Redirect after 2 seconds
-            setTimeout(() => {
-                window.location.href = '../admin.php';
-            }, 2000);
-        } else {
-            console.error('❌ Save failed:', data.error);
-            showAlert('❌ Error: ' + data.error, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('❌ Save error:', error);
-        console.error('Error details:', error.stack);
-        showAlert('❌ Error: ' + error.message, 'danger');
-    });
-    } catch (error) {
-        console.error('❌ Unexpected error in submitForm:', error);
-        console.error('Error stack:', error.stack);
-        showAlert('❌ Unexpected error: ' + error.message, 'danger');
-    }
-}
+            // Now save thesis with file path
+            const thesisData = {
+                // Thesis Info
+                title: getElementValue('thesisTitle'),
+                author: getElementValue('thesisAuthor'),
+                course: getElementValue('thesisCourse'),
+                year: parseInt(getElementValue('thesisYear', '0')) || new Date().getFullYear(),
+                abstract: getElementValue('thesisAbstract'),
+                status: getElementValue('thesisStatus', 'approved'),
+                
+                // Document Info
+                document_type: documentType,
+                page_count: pageCount ? parseInt(pageCount) : null,
+                file_path: uploadData.file_path,
+                file_type: uploadData.file_type,
+                file_size: uploadData.file_size,
+                
+                // Classification Data
+                subject_category: getElementValue('classifSubjectCategory'),
+                research_method: getElementValue('classifResearchMethod'),
+                
+                // Keywords and Citations from form fields
+                keywords: (() => {
+                    const keywordsStr = getElementValue('classifKeywords', '');
+                    if (!keywordsStr) return [];
+                    return keywordsStr.split(',')
+                        .map(k => k.trim())
+                        .filter(k => k.length > 0);
+                })(),
+                
+                citations: (() => {
+                    try {
+                        const citationsValue = getElementValue('classifReferences', '[]');
+                        if (citationsValue && citationsValue.startsWith('[')) {
+                            return JSON.parse(citationsValue);
+                        }
+                        return [];
+                    } catch (e) {
+                        console.warn('Error parsing citations:', e);
+                        return [];
+                    }
+                })()
+            };
 
+            console.log('📤 Data to save:', thesisData);
+            
+            // Validate required fields
+            if (!thesisData.title || !thesisData.abstract || !thesisData.course) {
+                showAlert('❌ Please fill in Title, Abstract, and Course', 'danger');
+                return;
+            }
+            
+            // Validate document type
+            if (!documentType) {
+                showAlert('❌ Please select a Document Type', 'danger');
+                return;
+            }
+            
+            // Validate page count for journals
+            if (documentType === 'journal') {
+                if (!pageCount || pageCount < 10 || pageCount > 20) {
+                    showAlert('❌ Journal documents must be between 10-20 pages. Current: ' + (pageCount || 'Not specified'), 'danger');
+                    return;
+                }
+            }
+
+            showAlert('💾 Saving thesis and classification...', 'info');
+            
+            console.log('🚀 Sending request to save_thesis_classification.php');
+            console.log('Request body:', JSON.stringify(thesisData, null, 2));
+
+            // Send to save endpoint
+            return fetch('./save_thesis_classification.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(thesisData)
+            });
+        })
+        .then(response => {
+            console.log('📨 Response status:', response.status);
+            console.log('📨 Response headers:', response.headers);
+            
+            if (!response.ok) {
+                console.error('HTTP Error:', response.status, response.statusText);
+            }
+            
+            // Always try to get text first for debugging
+            return response.text().then(text => {
+                console.log('📨 Response text:', text);
+                
+                // Try to parse as JSON
+                try {
+                    const data = JSON.parse(text);
+                    return { data: data, isJson: true };
+                } catch (e) {
+                    console.error('❌ Failed to parse JSON:', e);
+                    return { data: { error: 'Invalid JSON response: ' + text }, isJson: false };
+                }
+            });
+        })
+        .then(result => {
+            const data = result.data;
+            const isJson = result.isJson;
+            
+            console.log('📨 Parsed data:', data);
+            console.log('📨 Is valid JSON:', isJson);
+            
+            if (data.success) {
+                console.log('✅ Thesis saved with ID:', data.thesis_id);
+                showAlert('✅ Thesis and classification saved successfully!', 'success');
+                
+                // Clear localStorage
+                localStorage.removeItem('thesisFormData');
+                console.log('✓ Form data cleared from localStorage');
+                
+                // Redirect after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '../admin.php';
+                }, 2000);
+            } else {
+                const errorMsg = data.error || 'Unknown error occurred';
+                console.error('❌ Save failed:', errorMsg);
+                showAlert('❌ Error: ' + errorMsg, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Save/Upload error:', error);
+            console.error('Error details:', error.stack);
+            console.error('Error message:', error.message);
+            showAlert('❌ Error: ' + error.message, 'danger');
 // ============================================
 // DRAG AND DROP FILE UPLOAD
 // ============================================

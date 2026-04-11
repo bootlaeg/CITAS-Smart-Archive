@@ -36,6 +36,9 @@ try {
     $year = intval($input['year']);
     $abstract = trim($input['abstract']);
     $status = $input['status'] ?? 'pending';
+    $filePath = $input['file_path'] ?? null;
+    $fileType = $input['file_type'] ?? 'pdf';
+    $fileSize = $input['file_size'] ?? null;
 
     // Extract classification data
     $subjectCategory = $input['subject_category'] ?? '';
@@ -45,6 +48,8 @@ try {
     $citations = $input['citations'] ?? [];
 
     error_log("Thesis title: $title");
+    error_log("File path: $filePath");
+    error_log("File type: $fileType");
     error_log("Subject category: $subjectCategory");
     error_log("Research method: $researchMethod");
     error_log("Complexity level: $complexityLevel");
@@ -78,16 +83,18 @@ try {
         // Insert new thesis
         error_log("Inserting new thesis");
         
-        // Generate unique file path
-        $uniqueId = uniqid();
-        $filePath = "uploads/thesis_files/thesis_" . $uniqueId . ".pdf";
+        // Use the file_path from the upload, or generate a placeholder if not provided
+        if (!$filePath) {
+            $uniqueId = uniqid();
+            $filePath = "uploads/thesis_files/thesis_" . $uniqueId . ".pdf";
+        }
         
         $insertStmt = $conn->prepare("
-            INSERT INTO thesis (title, author, course, year, abstract, file_path, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO thesis (title, author, course, year, abstract, file_path, file_type, file_size, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
-        $insertStmt->bind_param("sssisss", $title, $author, $course, $year, $abstract, $filePath, $status);
+        $insertStmt->bind_param("ssisssis", $title, $author, $course, $year, $abstract, $filePath, $fileType, $fileSize, $status);
         
         if (!$insertStmt->execute()) {
             throw new Exception("Failed to insert thesis: " . $insertStmt->error);
