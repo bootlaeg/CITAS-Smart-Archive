@@ -64,21 +64,27 @@ if (!is_readable($full_path)) {
 
 // If thesis_id is provided, verify user has access
 if ($thesis_id > 0) {
-    $access_check = $conn->prepare("
-        SELECT ta.id FROM thesis_access 
-        WHERE user_id = ? AND thesis_id = ? AND status = 'approved'
-    ");
-    
-    if ($access_check) {
-        $access_check->bind_param("ii", $_SESSION['user_id'], $thesis_id);
-        $access_check->execute();
-        $access_result = $access_check->get_result();
+    // Admins can always access
+    if (!is_admin()) {
+        $access_check = $conn->prepare("
+            SELECT ta.id FROM thesis_access 
+            WHERE user_id = ? AND thesis_id = ? AND status = 'approved'
+        ");
         
-        if ($access_result->num_rows === 0) {
-            http_response_code(403);
-            die('Access Denied: You do not have permission to access this file');
+        if ($access_check) {
+            $access_check->bind_param("ii", $_SESSION['user_id'], $thesis_id);
+            $access_check->execute();
+            $access_result = $access_check->get_result();
+            
+            if ($access_result->num_rows === 0) {
+                http_response_code(403);
+                die('Access Denied: You do not have permission to access this file');
+            }
+            $access_check->close();
+        }ied: You do not have permission to access this file');
+            }
+            $access_check->close();
         }
-        $access_check->close();
     }
 }
 
