@@ -4,6 +4,9 @@
  * Serves uploaded thesis files with proper headers and access control
  */
 
+error_log("=== serve_thesis_file.php called ===");
+error_log("GET params: " . print_r($_GET, true));
+
 require_once 'db_includes/db_connect.php';
 
 // IMPORTANT: Check if user is logged in
@@ -46,6 +49,7 @@ $full_path = __DIR__ . '/' . $file_path;
 
 // Check if file exists
 if (!file_exists($full_path)) {
+    error_log("File not found: " . $full_path);
     http_response_code(404);
     die('File Not Found');
 }
@@ -79,9 +83,6 @@ if ($thesis_id > 0) {
             if ($access_result->num_rows === 0) {
                 http_response_code(403);
                 die('Access Denied: You do not have permission to access this file');
-            }
-            $access_check->close();
-        }ied: You do not have permission to access this file');
             }
             $access_check->close();
         }
