@@ -1,7 +1,7 @@
 <?php
 /**
- * About Us Page - Citas Smart Archive
- * Citas Smart Archive System
+ * About Us Page - CITAS Smart Archive
+ * CITAS Smart Archive System
  */
 
 require_once 'db_includes/db_connect.php';
@@ -21,7 +21,7 @@ if (is_logged_in()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - Citas Smart Archive</title>
+    <title>About Us - CITAS Smart Archive</title>
     <link rel="icon" type="image/png" href="img/CITAS_logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -1320,7 +1320,7 @@ if (is_logged_in()) {
     <div class="header-container">
         <div class="logo">
             <i class="fas fa-book-open"></i>
-            <span>Citas Smart Archive</span>
+            <span>CITAS Smart Archive</span>
         </div>
         
         <!-- Desktop Navigation -->
@@ -1421,7 +1421,7 @@ if (is_logged_in()) {
 <div class="auth-modal-overlay" id="authModalOverlay">
     <div class="auth-modal-content">
         <div class="auth-modal-header">
-            <h2>Welcome to Citas Smart Archive</h2>
+            <h2>Welcome to CITAS Smart Archive</h2>
             <button type="button" class="auth-modal-close" onclick="closeAuthModal()">&times;</button>
         </div>
 
@@ -1581,13 +1581,13 @@ if (is_logged_in()) {
         <!-- Page Header -->
         <section class="page-header">
             <h1><i class="fas fa-info-circle me-2"></i>About Us</h1>
-            <p>Learn more about Citas Smart Archive and the team behind it</p>
+            <p>Learn more about CITAS Smart Archive and the team behind it</p>
         </section>
 
         <!-- About Repository Section -->
         <section class="about-repository">
-            <h3><i class="fas fa-book me-2"></i>About Citas Smart Archive Web System</h3>
-            <p>The Citas Smart Archive Web System makes it easy for Samar College students to access past research online. Students can quickly search and read thesis summaries, while full documents are securely available to registered users. This platform saves time, reduces reliance on printed copies, and preserves valuable research for future use.</p>
+            <h3><i class="fas fa-book me-2"></i>About CITAS Smart Archive Web System</h3>
+            <p>The CITAS Smart Archive Web System makes it easy for Samar College students to access past research online. Students can quickly search and read thesis summaries, while full documents are securely available to registered users. This platform saves time, reduces reliance on printed copies, and preserves valuable research for future use.</p>
             
             <h4 style="color: var(--primary-orange); margin-top: 1.5rem; margin-bottom: 0.75rem; font-weight: 600;">Key Features:</h4>
             <ul class="features-list">
@@ -1675,7 +1675,7 @@ if (is_logged_in()) {
         <!-- Development Team Section -->
         <section class="content-section">
             <h3><i class="fas fa-users me-2"></i>Development Team</h3>
-            <p>The Citas Smart Archive was developed by a dedicated team of IT professionals committed to creating a robust and user-friendly academic platform.</p>
+            <p>The CITAS Smart Archive was developed by a dedicated team of IT professionals committed to creating a robust and user-friendly academic platform.</p>
 
             <div class="developers-container">
                 <!-- System Developers Card (Both Kristoffer and Glenn) -->
@@ -1802,7 +1802,7 @@ if (is_logged_in()) {
 
        <section class="content-section">
             <h3><i class="fas fa-layer-group me-2"></i>Technology Used & Integrations</h3>
-            <p>The Citas Smart Archive is built on a comprehensive technology stack with powerful integrations designed for reliability, security, scalability, and intelligent functionality:</p>
+            <p>The CITAS Smart Archive is built on a comprehensive technology stack with powerful integrations designed for reliability, security, scalability, and intelligent functionality:</p>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
                 <div style="padding: 1rem; background: var(--light-cream); border-radius: 8px; border-left: 4px solid var(--primary-orange);">

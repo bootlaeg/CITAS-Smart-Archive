@@ -1,7 +1,7 @@
 <?php
 /**
  * Verify User Handler
- * Citas Smart Archive System
+ * CITAS Smart Archive System
  */
 
 header('Content-Type: application/json; charset=utf-8');

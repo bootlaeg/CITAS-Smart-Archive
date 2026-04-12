@@ -182,7 +182,7 @@ try {
         
         // Direct cURL request - use cloudflared tunnel URL (like admin page does)
         // Check for environment variable or use default cloudflared URL
-        $ollamaUrl = getenv('OLLAMA_BASE_URL') ?: 'https://ollama.citas-smart-archive.com';
+        $ollamaUrl = getenv('OLLAMA_BASE_URL') ?: 'https://ollama.CITAS-smart-archive.com';
         $url = $ollamaUrl . '/api/generate';
         $ch = curl_init($url);
         

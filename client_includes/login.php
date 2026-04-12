@@ -1,7 +1,7 @@
 <?php
 /**
  * User Login Handler
- * Citas Smart Archive System
+ * CITAS Smart Archive System
  */
 
 require_once __DIR__ . '/../db_includes/db_connect.php';

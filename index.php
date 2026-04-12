@@ -1,7 +1,7 @@
 <?php
 /**
  * Main Homepage - Redesigned
- * Citas Smart Archive System
+ * CITAS Smart Archive System
  */
 
 require_once 'db_includes/db_connect.php';
@@ -1041,7 +1041,7 @@ if (is_logged_in()) {
     <div class="header-container">
         <div class="logo">
             <i class="fas fa-book-open"></i>
-            <span>Citas Smart Archive</span>
+            <span>CITAS Smart Archive</span>
         </div>
         
         <!-- Desktop Navigation -->
@@ -1170,7 +1170,7 @@ if (is_logged_in()) {
     <main class="main-content">
         <!-- Featured Section -->
         <section class="featured-banner">
-            <h2>Welcome to Citas Smart Archive</h2>
+            <h2>Welcome to CITAS Smart Archive</h2>
             <p>Discover, share, and collaborate on academic research</p>
         </section>
 
@@ -1200,7 +1200,7 @@ if (is_logged_in()) {
 <div class="auth-modal-overlay" id="authModalOverlay">
     <div class="auth-modal-content">
         <div class="auth-modal-header">
-            <h2>Welcome to Citas Smart Archive</h2>
+            <h2>Welcome to CITAS Smart Archive</h2>
             <button type="button" class="auth-modal-close" onclick="closeAuthModal()">&times;</button>
         </div>
 

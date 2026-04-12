@@ -1,7 +1,7 @@
 <?php
 /**
  * View Thesis Details Page - Redesigned with Tabbed Interface
- * Citas Smart Archive System
+ * CITAS Smart Archive System
  */
 
 require_once 'db_includes/db_connect.php';
@@ -1411,7 +1411,7 @@ if (is_logged_in()) {
     <div class="header-container">
         <div class="logo">
             <i class="fas fa-book-open"></i>
-            <span>Citas Smart Archive</span>
+            <span>CITAS Smart Archive</span>
         </div>
         <nav class="nav-links">
             <?php if (is_logged_in()): ?>

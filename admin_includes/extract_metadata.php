@@ -40,7 +40,7 @@ if (!in_array($file_ext, $allowed_types)) {
 }
 
 // Create temp directory for processing
-$temp_dir = sys_get_temp_dir() . '/citas_extraction_' . uniqid();
+$temp_dir = sys_get_temp_dir() . '/CITAS_extraction_' . uniqid();
 if (!mkdir($temp_dir, 0755, true)) {
     echo json_encode(['success' => false, 'message' => 'Failed to create temp directory']);
     exit;

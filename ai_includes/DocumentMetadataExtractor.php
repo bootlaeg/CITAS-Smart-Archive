@@ -2,7 +2,7 @@
 /**
  * Enhanced Document Metadata Extractor
  * Extracts title, authors, year, and abstract from DOCX and PDF files
- * Citas Smart Archive System
+ * CITAS Smart Archive System
  */
 
 class DocumentMetadataExtractor {

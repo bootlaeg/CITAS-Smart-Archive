@@ -1,7 +1,7 @@
 <?php
 /**
  * Database Connection File
- * Citas Smart Archive System
+ * CITAS Smart Archive System
  */
 
 // Database configuration

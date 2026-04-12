@@ -1,7 +1,7 @@
 <?php
 /**
  * View Thesis Handler
- * Citas Smart Archive System
+ * CITAS Smart Archive System
  */
 
 require_once '../db_includes/db_connect.php';
