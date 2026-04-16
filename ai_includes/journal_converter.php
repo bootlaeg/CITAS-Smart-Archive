@@ -138,9 +138,9 @@ class JournalConverter {
      */
     private function summarizeWithOllama($text, $target_words, $prompt_hint) {
         try {
-            // Use Ollama via Cloudflare tunnel URL
-            $ollama_url = getenv('OLLAMA_BASE_URL') ?: 'https://ollama.CITAS-smart-archive.com';
-            $ollama_url = rtrim($ollama_url, '/') . '/api/generate';
+            // Try localhost first (server-side), then fallback to Cloudflare tunnel (client-side may need it)
+            // SERVER-SIDE: Use localhost directly since Ollama is running locally
+            $ollama_url = 'http://localhost:11434/api/generate';
             
             // Prepare the text (limit to reasonable size for context)
             $context_text = substr($text, 0, 6000);
@@ -167,20 +167,21 @@ class JournalConverter {
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 120);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For self-signed certs via tunnel
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10); // Quick fail if Ollama not running locally
             
-            error_log("[JournalConverter] Sending request to Ollama (via Cloudflare tunnel)...");
+            error_log("[JournalConverter] Sending request to Ollama at localhost:11434...");
             $response = curl_exec($ch);
             $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curl_error = curl_error($ch);
             curl_close($ch);
             
             if ($curl_error) {
+                error_log("[JournalConverter] Connection failed: $curl_error");
                 throw new Exception("Curl error: $curl_error");
             }
             
             if ($http_code !== 200) {
+                error_log("[JournalConverter] HTTP Error: Got $http_code instead of 200");
                 throw new Exception("HTTP $http_code response from Ollama. Response: " . substr($response, 0, 200));
             }
             
