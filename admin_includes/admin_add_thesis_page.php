@@ -1341,28 +1341,32 @@ function populateClassificationForm(classification) {
 function convertToIMRaD() {
     console.log('=== CONVERT TO IMRaD JOURNAL FORMAT ===');
     
+    // Clear auto-redirect timeout if still pending
+    if (window.redirectTimeout) {
+        clearTimeout(window.redirectTimeout);
+    }
+    
     const convertBtn = document.getElementById('convertToIMRaDBtn');
     const originalBtnHTML = convertBtn.innerHTML;
     
-    // Check prerequisites
-    if (!currentUploadedFile) {
-        showAlert('❌ Please upload a file first', 'danger');
+    // Check if we have a thesis_id from a recent save
+    const thesisId = window.currentThesisId;
+    const filePath = window.currentThesisFilePath;
+    
+    if (!thesisId) {
+        showAlert('❌ Please save the thesis first before converting', 'danger');
         return;
     }
     
-    if (!fileUploadedSuccessfully) {
-        showAlert('❌ File was not uploaded successfully. Please try uploading again.', 'danger');
+    if (!filePath) {
+        showAlert('❌ File path not found. Please upload and save again.', 'danger');
         return;
     }
     
     const thesisTitle = document.getElementById('thesisTitle').value;
-    if (!thesisTitle) {
-        showAlert('❌ Please fill in Thesis Title first', 'danger');
-        return;
-    }
-    
-    console.log('📄 File:', currentUploadedFile.name);
+    console.log('📄 File:', filePath);
     console.log('📝 Title:', thesisTitle);
+    console.log('📌 Thesis ID:', thesisId);
     
     // Disable button and show loading state
     convertBtn.disabled = true;
@@ -1371,12 +1375,11 @@ function convertToIMRaD() {
     showAlert('🔄 Converting document to IMRaD journal format... This may take 30-60 seconds.', 'info');
     
     console.log('📤 Sending conversion request to journal_converter.php');
-    console.log('   File path:', currentUploadedFileData.file_path);
-    console.log('   Title:', thesisTitle);
     
-    // Send JSON request with file path and metadata
+    // Send JSON request with thesis_id and file path
     const conversionData = {
-        file_path: currentUploadedFileData.file_path,
+        thesis_id: thesisId,
+        file_path: filePath,
         title: thesisTitle,
         author: document.getElementById('thesisAuthor').value || '',
         abstract: document.getElementById('thesisAbstract').value || '',
@@ -1413,6 +1416,11 @@ function convertToIMRaD() {
             showAlert('✅ Journal Format Generated Successfully! ✔️ ' + (data.journal_page_count || '10-20') + ' pages' , 'success');
             convertBtn.disabled = true;
             convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>IMRaD Conversion Complete';
+            
+            // Redirect to admin after 3 seconds
+            setTimeout(() => {
+                window.location.href = '../admin.php';
+            }, 3000);
         } else {
             throw new Error(data.error || 'Conversion failed');
         }
@@ -1658,19 +1666,28 @@ async function saveThesisToDatabase(thesisData) {
     if (data.success) {
         console.log('✅ Thesis saved with ID:', data.thesis_id);
         
-        // NOTE: Journal conversion is now done manually via the "IMRaD Conversion" button
-        // This keeps save and conversion as separate steps
+        // Store thesis_id globally so convertToIMRaD can use it
+        window.currentThesisId = data.thesis_id;
+        window.currentThesisFilePath = data.file_path;
         
         // Clear localStorage
         localStorage.removeItem('thesisFormData');
         console.log('✓ Form data cleared from localStorage');
         
-        showAlert('✅ Thesis saved successfully! ID: ' + data.thesis_id, 'success');
+        showAlert('✅ Thesis saved successfully! ID: ' + data.thesis_id + ' — Now click "IMRaD Conversion" to convert to journal format', 'success');
         
-        // Redirect after 2 seconds
-        setTimeout(() => {
+        // Enable the convert button so user can click it
+        const convertBtn = document.getElementById('convertToIMRaDBtn');
+        if (convertBtn) {
+            convertBtn.disabled = false;
+            convertBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Convert to IMRaD Journal (Now Available)';
+        }
+        
+        // Don't redirect immediately - let user convert if they want
+        // Redirect after 5 seconds OR when user clicks convert
+        window.redirectTimeout = setTimeout(() => {
             window.location.href = '../admin.php';
-        }, 2000);
+        }, 5000);
     } else {
         throw new Error(data.error || 'Unknown error occurred');
     }
