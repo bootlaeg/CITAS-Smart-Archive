@@ -428,8 +428,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Create database connection if we have a valid thesis_id (for DB updates after conversion)
         $conn = null;
         if ($thesis_id && is_numeric($thesis_id) && $thesis_id > 0) {
-            require_once 'config.php';
-            $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+            // Load database configuration
+            $db_config = [
+                'host' => 'localhost',
+                'user' => 'u965322812_CITAS_Smart',
+                'pass' => 'ErLv@g1e*',
+                'name' => 'u965322812_thesis_db'
+            ];
+            
+            $conn = new mysqli($db_config['host'], $db_config['user'], $db_config['pass'], $db_config['name']);
             
             if ($conn->connect_error) {
                 throw new Exception("Database connection failed: " . $conn->connect_error);
