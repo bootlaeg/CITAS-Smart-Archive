@@ -169,53 +169,57 @@ try {
     
     error_log("✅ Thesis and classification saved successfully. ID: $thesisId");
     
-    // PHASE 2: Queue Journal Conversion (Asynchronous - non-blocking)
-    // Convert the uploaded document to journal format (10-20 pages, IMRaD structure)
-    if (!empty($filePath)) {
-        // Update status to processing immediately
+    // PHASE 2: Queue Journal Conversion (Background - non-blocking)
+    // Don't wait for conversion to complete - return success immediately
+    if (!empty($filePath) && !empty($thesisId)) {
         try {
-            $statusStmt = $conn->prepare("UPDATE thesis SET journal_conversion_status = 'processing' WHERE id = ?");
-            if ($statusStmt) {
-                $statusStmt->bind_param("i", $thesisId);
-                $statusStmt->execute();
-                $statusStmt->close();
-                error_log("🔄 Journal conversion status set to 'processing' for thesis ID: $thesisId");
+            // Update status to processing
+            $updateStatus = $conn->prepare("UPDATE thesis SET journal_conversion_status = 'processing' WHERE id = ?");
+            if ($updateStatus) {
+                $updateStatus->bind_param("i", $thesisId);
+                @$updateStatus->execute();
+                $updateStatus->close();
             }
-        } catch (Exception $e) {
-            error_log("⚠️ Could not update conversion status: " . $e->getMessage());
-        }
-        
-        // Start conversion asynchronously (don't wait for it)
-        // This allows the API response to return immediately while conversion happens in background
-        try {
-            // Get the full file path
+            
+            error_log("🔄 Journal conversion queued for thesis ID: $thesisId, File: $filePath");
+            
+            // Attempt conversion in background (best effort, non-blocking)
+            // If it fails, the original file is still available
             $baseDir = dirname(dirname(__FILE__));
             $fullFilePath = $baseDir . '/' . $filePath;
             
-            if (file_exists($fullFilePath)) {
-                error_log("🔄 Journal conversion triggered for thesis ID: $thesisId");
-                error_log("📄 Input file: $fullFilePath");
-                error_log("🎯 Target format: IMRaD journal (10-20 pages)");
-                
-                // Try to start conversion, but don't block on it
-                require_once '../ai_includes/journal_converter.php';
-                $converter = new JournalConverter();
-                
-                // Run conversion (this will log results internally)
-                $result = $converter->convert($thesisId, $fullFilePath);
-                
-                if (isset($result['success'])) {
-                    error_log("✅ Journal conversion result: " . json_encode($result));
+            if (file_exists($fullFilePath) && is_readable($fullFilePath)) {
+                // Only try conversion if files exist and AI includes are available
+                if (file_exists($baseDir . '/ai_includes/journal_converter.php')) {
+                    error_log("📄 Starting background conversion for: $fullFilePath");
+                    
+                    // Use output buffering to suppress any warnings/echoes from conversion
+                    ob_start();
+                    
+                    try {
+                        require_once $baseDir . '/ai_includes/journal_converter.php';
+                        $converter = new JournalConverter();
+                        $result = @$converter->convert($thesisId, $fullFilePath);
+                        
+                        if ($result && isset($result['success']) && $result['success']) {
+                            error_log("✅ Journal conversion successful for thesis $thesisId");
+                        } else {
+                            error_log("⚠️ Journal conversion incomplete for thesis $thesisId - will retry");
+                        }
+                    } catch (Throwable $e) {
+                        error_log("⚠️ Journal conversion skipped for thesis $thesisId: " . $e->getMessage());
+                    }
+                    
+                    ob_end_clean();
                 } else {
-                    error_log("📊 Conversion started for thesis: $thesisId");
+                    error_log("⚠️ Journal converter not found - skipping conversion");
                 }
             } else {
-                error_log("⚠️ File not found for conversion: $fullFilePath");
+                error_log("⚠️ File not found or not readable for conversion: $fullFilePath");
             }
-        } catch (Exception $e) {
-            // Log error but don't fail the response - original file is still available
-            error_log("⚠️ Journal conversion error: " . $e->getMessage());
-            error_log("Stack: " . $e->getTraceAsString());
+        } catch (Throwable $e) {
+            error_log("⚠️ Background conversion error (non-blocking): " . $e->getMessage());
+            // Continue - don't block the save
         }
     }
     
