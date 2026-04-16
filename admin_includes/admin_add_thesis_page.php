@@ -1293,6 +1293,12 @@ function submitForm() {
         
         showAlert('💾 Uploading file and saving thesis...', 'info');
         console.log('🚀 Starting file upload...');
+        console.log('📄 File object:', {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified
+        });
         
         // First, upload the file
         const uploadFormData = new FormData();
@@ -1301,6 +1307,9 @@ function submitForm() {
         uploadFormData.append('author', getElementValue('thesisAuthor'));
         uploadFormData.append('course', getElementValue('thesisCourse'));
         uploadFormData.append('year', getElementValue('thesisYear'));
+
+        console.log('📦 FormData prepared with file');
+        console.log('📤 Sending to ../client_includes/upload_thesis_file.php');
 
         // Upload file to uploads directory
         fetch('../client_includes/upload_thesis_file.php', {
@@ -1328,18 +1337,26 @@ function submitForm() {
 }
 
 async function handleUploadResponse(response, getElementValue) {
-    console.log('📨 Upload response status:', response.status);
-    console.log('📨 Upload response headers:', {
-        'content-type': response.headers.get('content-type')
+    console.log('📨 Upload response received');
+    console.log('📨 Status:', response.status, response.statusText);
+    console.log('📨 Headers:', {
+        'content-type': response.headers.get('content-type'),
+        'content-length': response.headers.get('content-length')
     });
     
     const text = await response.text();
-    console.log('📨 Upload response text:', text);
     console.log('📨 Response text length:', text.length);
+    console.log('📨 Response text (first 500 chars):', text.substring(0, 500));
     
     // Log raw response for debugging
     if (text.length > 0) {
-        console.log('First 200 chars:', text.substring(0, 200));
+        try {
+            console.log('📨 Response as JSON:', JSON.parse(text));
+        } catch (e) {
+            console.warn('📨 Response is not valid JSON:', e.message);
+        }
+    } else {
+        console.warn('⚠️ Empty response from server!');
     }
     
     let uploadData;

@@ -45,6 +45,12 @@ try {
         $pageCount = intval($pageCount);
     }
 
+    // Log received file info
+    error_log("📄 File info: path=" . ($filePath ? 'YES' : 'NULL') . ", type=$fileType, size=$fileSize");
+    if (empty($filePath)) {
+        error_log("⚠️ WARNING: No file_path received! File upload may have failed");
+    }
+
     // Extract classification data
     $subjectCategory = $input['subject_category'] ?? '';
     $researchMethod = $input['research_method'] ?? '';
