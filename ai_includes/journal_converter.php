@@ -138,8 +138,9 @@ class JournalConverter {
      */
     private function summarizeWithOllama($text, $target_words, $prompt_hint) {
         try {
-            // Use Ollama with mistral model
-            $ollama_url = 'http://localhost:11434/api/generate';
+            // Use Ollama via Cloudflare tunnel URL
+            $ollama_url = getenv('OLLAMA_BASE_URL') ?: 'https://ollama.CITAS-smart-archive.com';
+            $ollama_url = rtrim($ollama_url, '/') . '/api/generate';
             
             // Prepare the text (limit to reasonable size for context)
             $context_text = substr($text, 0, 6000);
@@ -149,7 +150,7 @@ class JournalConverter {
             
             error_log("[JournalConverter] Calling Ollama at: $ollama_url");
             error_log("[JournalConverter] Using model: mistral");
-            error_log("[JournalConverter] Prompt: " . substr($prompt, 0, 100) . "...");
+            error_log("[JournalConverter] Prompt length: " . strlen($prompt));
             
             $request_body = [
                 'model' => 'mistral',
@@ -166,8 +167,10 @@ class JournalConverter {
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For self-signed certs via tunnel
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             
-            error_log("[JournalConverter] Sending request to Ollama...");
+            error_log("[JournalConverter] Sending request to Ollama (via Cloudflare tunnel)...");
             $response = curl_exec($ch);
             $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curl_error = curl_error($ch);
@@ -178,7 +181,7 @@ class JournalConverter {
             }
             
             if ($http_code !== 200) {
-                throw new Exception("HTTP $http_code response from Ollama");
+                throw new Exception("HTTP $http_code response from Ollama. Response: " . substr($response, 0, 200));
             }
             
             if (!$response) {
