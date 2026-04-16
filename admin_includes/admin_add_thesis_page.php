@@ -1658,18 +1658,9 @@ async function saveThesisToDatabase(thesisData) {
     if (data.success) {
         console.log('✅ Thesis saved with ID:', data.thesis_id);
         
-        // PHASE 2: Journal Conversion Debugger
-        console.group('🔄 PHASE 2: Journal Conversion Status');
-        console.log('📄 Document:', thesisData.title);
-        console.log('📁 File Type:', thesisData.file_type);
-        console.log('📊 File Size:', thesisData.file_size, 'bytes');
-        console.log('🎯 Conversion Target: IMRaD Journal Format (10-20 pages)');
-        console.log('⏱️ Status:', data.journal_conversion || 'starting');
-        console.log('🔗 API Endpoint:', `/api_includes/check_conversion_status.php?thesis_id=${data.thesis_id}`);
-        console.log('💡 Tip: Use the endpoint above to check conversion progress', 'GET request');
-        console.groupEnd();
-        
-        showAlert('✅ Thesis and classification saved successfully! Journal conversion started (Phase 2).', 'success');
+        // Now trigger journal conversion with the saved thesis_id
+        console.log('🔄 Starting journal conversion...');
+        await convertThesisToImradAfterSave(data.thesis_id, thesisData);
         
         // Clear localStorage
         localStorage.removeItem('thesisFormData');
@@ -1681,6 +1672,54 @@ async function saveThesisToDatabase(thesisData) {
         }, 2000);
     } else {
         throw new Error(data.error || 'Unknown error occurred');
+    }
+}
+
+/**
+ * Convert thesis to IMRaD format after it's been saved to database
+ * This ensures we have a valid thesis_id to link the journal file
+ */
+async function convertThesisToImradAfterSave(thesis_id, thesisData) {
+    console.log('📤 Converting thesis', thesis_id, 'to IMRaD format...');
+    
+    const conversionData = {
+        thesis_id: thesis_id,
+        file_path: thesisData.file_path,
+        title: thesisData.title,
+        author: thesisData.author,
+        abstract: thesisData.abstract,
+        year: thesisData.year
+    };
+    
+    try {
+        const response = await fetch('../ai_includes/journal_converter.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(conversionData)
+        });
+        
+        const text = await response.text();
+        
+        if (!response.ok) {
+            console.warn('⚠️ Conversion returned HTTP', response.status);
+            console.warn('Response:', text);
+            return; // Don't block save on conversion error
+        }
+        
+        const result = JSON.parse(text);
+        
+        if (result.success) {
+            console.log('✅ Journal conversion successful!');
+            console.log('   File:', result.journal_file_path);
+            showAlert('✅ Journal format created: ' + (result.journal_page_count || '10-20') + ' pages', 'info');
+        } else {
+            console.warn('⚠️ Conversion failed:', result.error);
+        }
+    } catch (error) {
+        console.warn('⚠️ Conversion error:', error.message);
+        // Don't block the save process if conversion fails
     }
 }
 

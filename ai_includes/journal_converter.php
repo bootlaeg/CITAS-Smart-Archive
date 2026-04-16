@@ -12,6 +12,7 @@ class JournalConverter {
     private $metadata;
     private $imrad_sections;
     private $conn;
+    private $journal_page_count = null;
     
     public function __construct($thesis_id, $document_text, $metadata, $conn = null) {
         $this->thesis_id = $thesis_id;
@@ -48,6 +49,7 @@ class JournalConverter {
                 'success' => true,
                 'thesis_id' => $this->thesis_id,
                 'journal_file_path' => $pdf_path,
+                'journal_page_count' => $this->journal_page_count,
                 'conversion_status' => 'completed',
                 'message' => 'Document successfully converted to journal format'
             ];
@@ -285,6 +287,9 @@ class JournalConverter {
             // Estimate page count (250 words per page)
             $word_count = str_word_count(strip_tags($journal_content));
             $page_count = ceil($word_count / 250);
+            
+            // Store for return value
+            $this->journal_page_count = $page_count;
         }
         
         $update_sql = "UPDATE thesis SET 
@@ -420,8 +425,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // For conversion without saving to DB, use NULL thesis_id as placeholder
         $thesis_id = isset($post_data['thesis_id']) ? (int)$post_data['thesis_id'] : null;
         
-        // If we need to load metadata from DB
-        if ($thesis_id && empty($post_data['title'])) {
+        // Create database connection if we have a valid thesis_id (for DB updates after conversion)
+        $conn = null;
+        if ($thesis_id && is_numeric($thesis_id) && $thesis_id > 0) {
             require_once 'config.php';
             $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
             
@@ -429,46 +435,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Database connection failed: " . $conn->connect_error);
             }
             
-            $metadata_sql = "SELECT id, title, author, abstract, year FROM thesis WHERE id = ?";
-            $stmt = $conn->prepare($metadata_sql);
+            error_log("[journal_converter.php] Database connection established for thesis_id: $thesis_id");
             
-            if (!$stmt) {
-                throw new Exception("Prepare failed: " . $conn->error);
+            // If metadata not provided, load from database
+            if (empty($post_data['title'])) {
+                $metadata_sql = "SELECT id, title, author, abstract, year FROM thesis WHERE id = ?";
+                $stmt = $conn->prepare($metadata_sql);
+                
+                if (!$stmt) {
+                    throw new Exception("Prepare failed: " . $conn->error);
+                }
+                
+                $stmt->bind_param("i", $thesis_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $thesis_row = $result->fetch_assoc();
+                $stmt->close();
+                
+                if ($thesis_row) {
+                    $metadata = [
+                        'title' => $thesis_row['title'],
+                        'author' => $thesis_row['author'],
+                        'abstract' => $thesis_row['abstract'],
+                        'year' => $thesis_row['year']
+                    ];
+                    
+                    error_log("[journal_converter.php] Metadata loaded from DB for thesis: " . $thesis_row['title']);
+                }
             }
-            
-            $stmt->bind_param("i", $thesis_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $thesis_row = $result->fetch_assoc();
-            $stmt->close();
-            
-            if (!$thesis_row) {
-                throw new Exception("Thesis not found with id: $thesis_id");
-            }
-            
-            $metadata = [
-                'title' => $thesis_row['title'],
-                'author' => $thesis_row['author'],
-                'abstract' => $thesis_row['abstract'],
-                'year' => $thesis_row['year']
-            ];
-            
-            error_log("[journal_converter.php] Metadata loaded from DB for thesis: " . $thesis_row['title']);
-        } elseif ($thesis_id) {
-            // thesis_id provided but no DB connection needed - use provided metadata
-            error_log("[journal_converter.php] Using provided metadata for thesis_id: $thesis_id");
         }
         
-        // Create converter with null DB connection (we'll update DB later if needed)
+        // Create converter with DB connection if available
         error_log("[journal_converter.php] Creating JournalConverter instance");
         
         try {
             error_log("[journal_converter.php] Instantiating converter...");
             
-            // Prepare connection variable for reference passing
-            $db_conn = $conn ?? null;
-            
-            $converter = new JournalConverter($thesis_id ?: 'unsaved', $document_text, $metadata, $db_conn);
+            $converter = new JournalConverter($thesis_id ?: 'unsaved', $document_text, $metadata, $conn);
             
             error_log("[journal_converter.php] Calling convert()...");
             $result = $converter->convert();
