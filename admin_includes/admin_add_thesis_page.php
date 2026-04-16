@@ -1658,13 +1658,14 @@ async function saveThesisToDatabase(thesisData) {
     if (data.success) {
         console.log('✅ Thesis saved with ID:', data.thesis_id);
         
-        // Now trigger journal conversion with the saved thesis_id
-        console.log('🔄 Starting journal conversion...');
-        await convertThesisToImradAfterSave(data.thesis_id, thesisData);
+        // NOTE: Journal conversion is now done manually via the "IMRaD Conversion" button
+        // This keeps save and conversion as separate steps
         
         // Clear localStorage
         localStorage.removeItem('thesisFormData');
         console.log('✓ Form data cleared from localStorage');
+        
+        showAlert('✅ Thesis saved successfully! ID: ' + data.thesis_id, 'success');
         
         // Redirect after 2 seconds
         setTimeout(() => {
