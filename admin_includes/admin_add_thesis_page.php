@@ -613,6 +613,7 @@ require_admin();
 // GLOBAL STATE
 // ============================================
 let currentUploadedFile = null;
+let currentUploadedFileData = null; // Store uploaded file info from server
 let classificationGenerated = false;  // Track if Generate Classification was clicked
 let fileUploadedSuccessfully = false; // Track if file was uploaded to server
 let classificationData = {
@@ -707,13 +708,84 @@ function handleFileUploadWithExtraction(event) {
         extractionStatus.querySelector('.extraction-success').style.display = 'inline-flex';
         extractionStatus.querySelector('.extraction-success').style.alignItems = 'center';
         
-        showAlert('✅ File processed! Metadata extracted. Select a course and click "Generate Classification".', 'success');
+        showAlert('✅ File processed! Metadata extracted. Now uploading file to server...', 'info');
+        
+        // ============================================
+        // UPLOAD FILE TO SERVER IMMEDIATELY
+        // ============================================
+        console.log('📤 UPLOADING FILE TO SERVER...');
+        uploadFileToServer(file);
     })
     .catch(error => {
         console.error('❌ Metadata extraction error:', error);
         console.error('Error Stack:', error.stack);
         extractionStatus.style.display = 'none';
         showAlert('❌ Error extracting metadata: ' + error.message, 'danger');
+    });
+}
+
+// ============================================
+// IMMEDIATE FILE UPLOAD (after metadata extraction)
+// ============================================
+function uploadFileToServer(file) {
+    console.log('📄 Starting file upload to server');
+    console.log('   File name:', file.name);
+    console.log('   File size:', file.size, 'bytes');
+    console.log('   File type:', file.type);
+    
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    uploadFormData.append('title', document.getElementById('thesisTitle').value || file.name);
+    uploadFormData.append('author', document.getElementById('thesisAuthor').value || '');
+    uploadFormData.append('course', document.getElementById('thesisCourse').value || '');
+    uploadFormData.append('year', document.getElementById('thesisYear').value || new Date().getFullYear());
+    
+    console.log('📦 FormData prepared');
+    console.log('📤 Sending to ../client_includes/upload_thesis_file.php');
+    
+    fetch('../client_includes/upload_thesis_file.php', {
+        method: 'POST',
+        body: uploadFormData
+    })
+    .then(response => {
+        console.log('📨 Upload response status:', response.status);
+        return response.text();
+    })
+    .then(text => {
+        console.log('📨 Upload response (first 500 chars):', text.substring(0, 500));
+        
+        const uploadData = JSON.parse(text);
+        
+        if (!uploadData.success) {
+            throw new Error(uploadData.error || 'File upload failed');
+        }
+        
+        console.log('✅ FILE UPLOADED SUCCESSFULLY to server!');
+        console.log('   Path:', uploadData.file_path);
+        console.log('   Type:', uploadData.file_type);
+        console.log('   Size:', uploadData.file_size);
+        
+        // ✅ STORE UPLOADED FILE DATA GLOBALLY
+        currentUploadedFileData = uploadData;
+        
+        // ✅ MARK FILE UPLOAD AS SUCCESSFUL
+        fileUploadedSuccessfully = true;
+        
+        // ✅ ENABLE "Convert to IMRaD" BUTTON
+        const convertBtn = document.getElementById('convertToIMRaDBtn');
+        if (convertBtn) {
+            convertBtn.disabled = false;
+            convertBtn.title = 'Click to convert this thesis to IMRaD journal format';
+            console.log('✓ "Convert to IMRaD" button ENABLED ✅');
+        }
+        
+        showAlert('✅ File uploaded to server! "Convert to IMRaD" button is now enabled.', 'success');
+    })
+    .catch(error => {
+        console.error('❌ FILE UPLOAD FAILED:', error.message);
+        console.error('Stack:', error.stack);
+        fileUploadedSuccessfully = false;
+        showAlert('❌ File upload failed: ' + error.message, 'danger');
     });
 }
 
@@ -1350,9 +1422,15 @@ function submitForm() {
             showAlert('❌ Please upload a thesis file first', 'danger');
             return;
         }
+        
+        // Check if file was successfully uploaded to server
+        if (!fileUploadedSuccessfully || !currentUploadedFileData) {
+            showAlert('❌ File was not successfully uploaded to server. Please reload and try again.', 'danger');
+            return;
+        }
 
-        console.log('=== SAVING THESIS & CLASSIFICATION ===');
-        console.log('File to upload:', file.name);
+        console.log('=== SAVING THESIS & CLASSIFICATION (File already uploaded) ===');
+        console.log('Using pre-uploaded file data:', currentUploadedFileData.file_path);
 
         // Helper function to safely get element value
         const getElementValue = (id, defaultValue = '') => {
@@ -1364,53 +1442,68 @@ function submitForm() {
             return element.value || defaultValue;
         };
 
-        // Note: documentType and pageCount removed - all files auto-convert to journal format (Phase 2)
-        // const documentType = getElementValue('documentType');
-        // const pageCount = getElementValue('pageCount');
+        showAlert('💾 Saving thesis and classification to database...', 'info');
+        console.log('🚀 Building thesis data from already-uploaded file...');
         
-        showAlert('💾 Uploading file and saving thesis...', 'info');
-        console.log('🚀 Starting file upload...');
-        console.log('📄 File object:', {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            lastModified: file.lastModified
-        });
+        // ✅ USE STORED UPLOADED FILE DATA (skip re-upload)
+        const thesisData = buildThesisData(getElementValue, currentUploadedFileData);
+        saveThesisToDatabase(thesisData);
         
-        // First, upload the file
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
-        uploadFormData.append('title', getElementValue('thesisTitle'));
-        uploadFormData.append('author', getElementValue('thesisAuthor'));
-        uploadFormData.append('course', getElementValue('thesisCourse'));
-        uploadFormData.append('year', getElementValue('thesisYear'));
-
-        console.log('📦 FormData prepared with file');
-        console.log('📤 Sending to ../client_includes/upload_thesis_file.php');
-
-        // Upload file to uploads directory
-        fetch('../client_includes/upload_thesis_file.php', {
-            method: 'POST',
-            body: uploadFormData
-        })
-        .then(uploadResponse => {
-            console.log('📨 Upload Response:', uploadResponse.status, uploadResponse.statusText);
-            if (!uploadResponse.ok) {
-                throw new Error(`Upload failed with status ${uploadResponse.status}`);
-            }
-            return uploadResponse;
-        })
-        .then(uploadResponse => handleUploadResponse(uploadResponse, getElementValue))
-        .then(thesisData => saveThesisToDatabase(thesisData))
-        .catch(error => {
-            console.error('❌ Upload/Save Error:', error);
-            console.error('Error Stack:', error.stack);
-            showAlert('❌ Error: ' + error.message, 'danger');
-        });
     } catch (error) {
         console.error('❌ Unexpected error in submitForm:', error);
         showAlert('❌ Unexpected error: ' + error.message, 'danger');
     }
+}
+
+function buildThesisData(getElementValue, uploadData) {
+    console.log('📝 Building thesis data object...');
+    
+    const thesisData = {
+        // Thesis Info
+        title: getElementValue('thesisTitle'),
+        author: getElementValue('thesisAuthor'),
+        course: getElementValue('thesisCourse'),
+        year: parseInt(getElementValue('thesisYear', '0')) || new Date().getFullYear(),
+        abstract: getElementValue('thesisAbstract'),
+        status: getElementValue('thesisStatus', 'approved'),
+        
+        // Document Info (from server upload response)
+        file_path: uploadData.file_path,
+        file_type: uploadData.file_type,
+        file_size: uploadData.file_size,
+        
+        // Classification Data
+        subject_category: getElementValue('classifSubjectCategory'),
+        research_method: getElementValue('classifResearchMethod'),
+        
+        // Keywords and Citations
+        keywords: getElementValue('classifKeywords', '')
+            .split(',')
+            .map(k => k.trim())
+            .filter(k => k.length > 0),
+        
+        citations: (() => {
+            try {
+                const citationsValue = getElementValue('classifReferences', '[]');
+                if (citationsValue && citationsValue.startsWith('[')) {
+                    return JSON.parse(citationsValue);
+                }
+                return [];
+            } catch (e) {
+                console.warn('Error parsing citations:', e);
+                return [];
+            }
+        })()
+    };
+
+    console.log('📤 Data to save:', thesisData);
+    
+    // Validate required fields
+    if (!thesisData.title || !thesisData.abstract || !thesisData.course) {
+        throw new Error('Please fill in Title, Abstract, and Course');
+    }
+    
+    return thesisData;
 }
 
 async function handleUploadResponse(response, getElementValue) {
