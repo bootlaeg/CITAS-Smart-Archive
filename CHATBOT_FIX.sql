@@ -30,7 +30,7 @@ SELECT 'chatbot_sessions' as table_name, COUNT(*) as total_records,
 FROM chatbot_sessions
 
 UNION ALL
-
+y
 SELECT 'chatbot_messages' as table_name, COUNT(*) as total_records,
        SUM(IF(id <= 0, 1, 0)) as invalid_ids
 FROM chatbot_messages
