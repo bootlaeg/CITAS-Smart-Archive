@@ -310,7 +310,7 @@ class JournalConverter {
         $is_converted = ($status === 'completed') ? 1 : 0;
         $imrad_json = json_encode($this->imrad_sections);
         
-        $stmt->bind_param("siisii", $pdf_path, $is_converted, $status, $page_count, $imrad_json, $this->thesis_id);
+        $stmt->bind_param("sisisi", $pdf_path, $is_converted, $status, $page_count, $imrad_json, $this->thesis_id);
         
         if (!$stmt->execute()) {
             throw new Exception("Execute failed: " . $stmt->error);
