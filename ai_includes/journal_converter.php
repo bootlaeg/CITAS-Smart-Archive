@@ -390,8 +390,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($ext === 'pdf') {
                 // Parse PDF
                 require_once 'document_parser.php';
-                $parser = new DocumentParser($file_path);
-                $document_text = $parser->extractText();
+                $parse_result = DocumentParser::extractText($file_path);
+                
+                if (!$parse_result['success']) {
+                    throw new Exception("PDF parsing failed: " . ($parse_result['error'] ?? 'Unknown error'));
+                }
+                
+                $document_text = $parse_result['text'];
             } else {
                 // Read plain text
                 $document_text = file_get_contents($file_path);
