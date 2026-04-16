@@ -5,7 +5,7 @@
  */
 
 // Database configuration
-define('DB_HOST', 'citas-smart-archive.com');
+define('DB_HOST', 'localhost');
 define('DB_USER', 'u965322812_CITAS_Smart');
 define('DB_PASS', 'ErLv@g1e*');
 define('DB_NAME', 'u965322812_thesis_db');
