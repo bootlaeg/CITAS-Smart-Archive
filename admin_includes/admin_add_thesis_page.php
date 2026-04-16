@@ -1423,17 +1423,30 @@ async function handleUploadResponse(response, getElementValue) {
     
     const text = await response.text();
     console.log('📨 Response text length:', text.length);
-    console.log('📨 Response text (first 500 chars):', text.substring(0, 500));
+    console.log('📨 Raw response (first 1000 chars):', text.substring(0, 1000));
     
     // Log raw response for debugging
     if (text.length > 0) {
         try {
-            console.log('📨 Response as JSON:', JSON.parse(text));
+            const parsed = JSON.parse(text);
+            console.log('📨 Response as JSON:', parsed);
+            
+            // Check if it's a success response
+            if (!parsed.success) {
+                console.error('❌ Upload returned success=false');
+                console.error('   Error:', parsed.error);
+                throw new Error(parsed.error || 'File upload failed (success flag is false)');
+            }
         } catch (e) {
+            if (e.message.includes('success')) {
+                throw e; // Re-throw the success check error
+            }
             console.warn('📨 Response is not valid JSON:', e.message);
+            throw new Error('Invalid JSON response from server: ' + text.substring(0, 200));
         }
     } else {
         console.warn('⚠️ Empty response from server!');
+        throw new Error('Server returned empty response');
     }
     
     let uploadData;
