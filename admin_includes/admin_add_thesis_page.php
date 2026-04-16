@@ -1395,7 +1395,10 @@ function convertToIMRaD() {
     .then(response => {
         console.log('📨 Conversion response status:', response.status);
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            return response.text().then(text => {
+                console.log('❌ Error response body:', text);
+                throw new Error(`HTTP ${response.status}: ${text}`);
+            });
         }
         return response.json();
     })
