@@ -1557,6 +1557,12 @@ if (is_logged_in()) {
                     <i class="fas fa-link"></i>
                     <span>Related Thesis</span>
                 </button>
+                <?php if (is_admin() || isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'instructor'): ?>
+                <button class="tab-button" onclick="switchTab('raw-document')">
+                    <i class="fas fa-file-download"></i>
+                    <span>Raw Document</span>
+                </button>
+                <?php endif; ?>
             </div>
 
             <!-- TAB 1: OVERVIEW -->
@@ -1797,6 +1803,41 @@ if (is_logged_in()) {
                     </div>
                 </div>
             </div>
+
+            <!-- TAB 5: RAW DOCUMENT (Instructor/Admin Only) -->
+            <?php if (is_admin() || isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'instructor'): ?>
+            <div id="raw-document" class="tab-content">
+                <div class="document-section">
+                    <div class="document-title">
+                        <i class="fas fa-file-download"></i>Original Unprocessed Document
+                    </div>
+                    <p style="color: var(--text-gray); margin-bottom: 1.5rem;">
+                        This is the original, unprocessed thesis file as uploaded by the author. For instructors and administrators only.
+                    </p>
+                    
+                    <?php if (!empty($thesis['file_path']) && !empty($thesis['file_type'])): ?>
+                        <div style="margin-bottom: 1.5rem;">
+                            <p style="margin-bottom: 0.75rem; font-weight: 600;">File Information:</p>
+                            <ul style="list-style: none; padding: 0;">
+                                <li><strong>File Type:</strong> <span style="color: var(--text-gray);"><?php echo strtoupper(htmlspecialchars($thesis['file_type'])); ?></span></li>
+                                <li><strong>File Name:</strong> <span style="color: var(--text-gray);"><?php echo htmlspecialchars(basename($thesis['file_path'])); ?></span></li>
+                                <li><strong>Upload Date:</strong> <span style="color: var(--text-gray);"><?php echo date('F j, Y', strtotime($thesis['created_at'])); ?></span></li>
+                                <li><strong>Page Count:</strong> <span style="color: var(--text-gray);"><?php echo intval($thesis['page_count']) > 0 ? $thesis['page_count'] . ' pages' : 'Not extracted'; ?></span></li>
+                            </ul>
+                        </div>
+
+                        <button class="btn-access btn-access-primary" onclick="openThesisViewer('<?php echo htmlspecialchars($thesis['file_path']); ?>', '<?php echo htmlspecialchars($thesis['file_type']); ?>')">
+                            <i class="fas fa-file-pdf"></i>View Original Document
+                        </button>
+                    <?php else: ?>
+                        <div style="padding: 1.5rem; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; color: #856404;">
+                            <i class="fas fa-info-circle"></i>
+                            <small>No original file uploaded for this thesis yet.</small>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
