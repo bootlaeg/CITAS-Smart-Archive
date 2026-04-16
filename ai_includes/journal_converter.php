@@ -138,24 +138,72 @@ class JournalConverter {
      */
     private function summarizeWithOllama($text, $target_words, $prompt_hint) {
         try {
-            require_once 'huggingface_service.php';
+            // Use Ollama with mistral model
+            $ollama_url = 'http://localhost:11434/api/generate';
             
-            $hf_service = new HuggingFaceService();
+            // Prepare the text (limit to reasonable size for context)
+            $context_text = substr($text, 0, 6000);
             
-            // Prepare text for API (HF doesn't need the prompt_hint in same way)
-            $text_to_summarize = substr($text, 0, 4000); // Limit context size
+            // Create a focused prompt for summarization
+            $prompt = "Summarize the following section in approximately $target_words words. Focus on: $prompt_hint\n\nText:\n$context_text\n\nSummary:";
             
-            // Call Hugging Face API
-            $result = $hf_service->summarize($text_to_summarize, $target_words);
+            error_log("[JournalConverter] Calling Ollama at: $ollama_url");
+            error_log("[JournalConverter] Using model: mistral");
+            error_log("[JournalConverter] Prompt: " . substr($prompt, 0, 100) . "...");
             
-            if ($result['success'] && !empty($result['summary'])) {
-                error_log("[JournalConverter] Hugging Face summarization successful (method: " . ($result['method'] ?? 'api') . ")");
-                return trim($result['summary']);
+            $request_body = [
+                'model' => 'mistral',
+                'prompt' => $prompt,
+                'stream' => false,
+                'temperature' => 0.3,
+                'num_predict' => ceil($target_words * 1.3) // Word estimate to token estimate
+            ];
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $ollama_url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($request_body));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            
+            error_log("[JournalConverter] Sending request to Ollama...");
+            $response = curl_exec($ch);
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curl_error = curl_error($ch);
+            curl_close($ch);
+            
+            if ($curl_error) {
+                throw new Exception("Curl error: $curl_error");
+            }
+            
+            if ($http_code !== 200) {
+                throw new Exception("HTTP $http_code response from Ollama");
+            }
+            
+            if (!$response) {
+                throw new Exception("Empty response from Ollama");
+            }
+            
+            error_log("[JournalConverter] Ollama response received (" . strlen($response) . " bytes)");
+            
+            $result = json_decode($response, true);
+            
+            if (!$result || !isset($result['response'])) {
+                error_log("[JournalConverter] Invalid Ollama response: " . substr($response, 0, 200));
+                throw new Exception("Invalid response format from Ollama");
+            }
+            
+            $summary = trim($result['response']);
+            
+            if (!empty($summary)) {
+                error_log("[JournalConverter] Ollama summarization successful (" . str_word_count($summary) . " words)");
+                return $summary;
             } else {
-                error_log("[JournalConverter] Hugging Face API returned: " . ($result['error'] ?? 'unknown error'));
+                error_log("[JournalConverter] Ollama returned empty summary");
             }
         } catch (Exception $e) {
-            error_log("[JournalConverter] Hugging Face service error: " . $e->getMessage());
+            error_log("[JournalConverter] Ollama service error: " . $e->getMessage());
         }
         
         return null;
