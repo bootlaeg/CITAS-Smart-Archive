@@ -594,6 +594,9 @@ require_admin();
             <button type="button" class="btn btn-info" id="generateClassificationBtn" onclick="generateClassification()">
                 <i class="fas fa-brain me-2"></i>Generate Classification
             </button>
+            <button type="button" class="btn btn-success" id="convertToIMRaDBtn" onclick="convertToIMRaD()" disabled title="Upload file and generate classification first">
+                <i class="fas fa-wand-magic-sparkles me-2"></i>Convert to IMRaD (Phase 2)
+            </button>
             <button type="button" class="btn btn-primary" onclick="submitForm()">
                 <i class="fas fa-save me-2"></i>Save Thesis & Classification
             </button>
@@ -611,6 +614,7 @@ require_admin();
 // ============================================
 let currentUploadedFile = null;
 let classificationGenerated = false;  // Track if Generate Classification was clicked
+let fileUploadedSuccessfully = false; // Track if file was uploaded to server
 let classificationData = {
     keywords: [],
     citations: []
@@ -1259,6 +1263,79 @@ function populateClassificationForm(classification) {
     }
 }
 
+// ============================================
+// PHASE 2: Convert to IMRaD Journal Format
+// ============================================
+function convertToIMRaD() {
+    console.log('=== CONVERT TO IMRaD JOURNAL FORMAT ===');
+    
+    const convertBtn = document.getElementById('convertToIMRaDBtn');
+    const originalBtnHTML = convertBtn.innerHTML;
+    
+    // Check prerequisites
+    if (!currentUploadedFile) {
+        showAlert('❌ Please upload a file first', 'danger');
+        return;
+    }
+    
+    if (!fileUploadedSuccessfully) {
+        showAlert('❌ File was not uploaded successfully. Please try uploading again.', 'danger');
+        return;
+    }
+    
+    const thesisTitle = document.getElementById('thesisTitle').value;
+    if (!thesisTitle) {
+        showAlert('❌ Please fill in Thesis Title first', 'danger');
+        return;
+    }
+    
+    console.log('📄 File:', currentUploadedFile.name);
+    console.log('📝 Title:', thesisTitle);
+    
+    // Disable button and show loading state
+    convertBtn.disabled = true;
+    convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Converting to IMRaD (30-60 seconds)...';
+    
+    showAlert('🔄 Converting document to IMRaD journal format... This may take 30-60 seconds.', 'info');
+    
+    // Prepare file for conversion
+    const conversionFormData = new FormData();
+    conversionFormData.append('file', currentUploadedFile);
+    conversionFormData.append('title', thesisTitle);
+    
+    console.log('📤 Sending to journal_converter.php');
+    
+    fetch('../ai_includes/journal_converter.php', {
+        method: 'POST',
+        body: conversionFormData
+    })
+    .then(response => {
+        console.log('📨 Conversion response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('📨 Conversion result:', data);
+        
+        if (data.success) {
+            console.log('✅ Journal conversion successful!');
+            console.log('   Pages:', data.page_count);
+            console.log('   File:', data.journal_file_path);
+            
+            showAlert('✅ Journal Format Generated Successfully! ✔️ ' + data.page_count + ' pages' , 'success');
+            convertBtn.disabled = true;
+            convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>IMRaD Conversion Complete';
+        } else {
+            throw new Error(data.error || 'Conversion failed');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Conversion error:', error);
+        convertBtn.disabled = false;
+        convertBtn.innerHTML = originalBtnHTML;
+        showAlert('❌ Conversion error: ' + error.message, 'danger');
+    });
+}
+
 function submitForm() {
     try {
         // Check if classification has been generated
@@ -1371,6 +1448,15 @@ async function handleUploadResponse(response, getElementValue) {
     }
     
     console.log('✅ File uploaded successfully:', uploadData.file_path);
+    
+    // ✅ ENABLE "Convert to IMRaD" button after successful upload
+    fileUploadedSuccessfully = true;
+    const convertBtn = document.getElementById('convertToIMRaDBtn');
+    if (convertBtn) {
+        convertBtn.disabled = false;
+        convertBtn.title = 'Click to convert this thesis to IMRaD journal format';
+        console.log('✓ "Convert to IMRaD" button ENABLED after successful file upload');
+    }
     
     const thesisData = {
         // Thesis Info
