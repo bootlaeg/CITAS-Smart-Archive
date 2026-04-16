@@ -1577,26 +1577,32 @@ if (is_logged_in()) {
                     </p>
                 </div>
 
-                <!-- Document Section -->
-                <div class="document-section">
-                    <div class="document-title">
-                        <i class="fas fa-file-pdf"></i>Full Thesis Document
-                    </div>
-                    
-                    <!-- Phase 2: Journal Version Display -->
-                    <?php if (!empty($thesis['is_journal_converted']) && !empty($thesis['journal_file_path'])): ?>
+                <!-- PRIMARY: Journal Format Display (if available) -->
+                <?php if (!empty($thesis['is_journal_converted']) && !empty($thesis['journal_file_path'])): ?>
+                    <div class="document-section">
+                        <div class="document-title">
+                            <i class="fas fa-file-pdf"></i>Journal Converted Version (<?php echo intval($thesis['journal_page_count']); ?> pages)
+                        </div>
+                        
                         <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 8px;">
                             <h4 style="color: #27AE60; margin-bottom: 0.5rem;">
-                                <i class="fas fa-check-circle"></i> Journal Format Available
+                                <i class="fas fa-check-circle"></i> Optimized Journal Format
                             </h4>
                             <p style="color: #27AE60; margin-bottom: 0.75rem; font-size: 0.95rem;">
-                                This thesis is available in a condensed journal format (<?php echo intval($thesis['journal_page_count']); ?> pages) optimized for quick reading. Converted on <?php echo date('F j, Y', strtotime($thesis['journal_converted_at'])); ?>.
+                                This is the condensed journal version of the thesis, converted to IMRaD format (Introduction, Methods, Results, Analysis, Discussion) for quick and efficient reading. Converted on <?php echo date('F j, Y', strtotime($thesis['journal_converted_at'])); ?>.
                             </p>
                             <button class="btn-access btn-access-primary" onclick="openThesisViewer('<?php echo htmlspecialchars($thesis['journal_file_path']); ?>', 'pdf')">
                                 <i class="fas fa-file-pdf"></i> View Journal Format (<?php echo intval($thesis['journal_page_count']); ?> pages)
                             </button>
                         </div>
-                    <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+                <!-- SECONDARY: Full Thesis Document Section -->
+                <div class="document-section">
+                    <div class="document-title">
+                        <i class="fas fa-file-pdf"></i>Full Thesis Document
+                    </div>
                     
                     <div id="accessSection">
                         <?php if (!is_logged_in()): ?>
@@ -1606,7 +1612,7 @@ if (is_logged_in()) {
                                     <i class="fas fa-lock"></i>
                                 </div>
                                 <h3>Full Access Requires Login</h3>
-                                <p>To view complete thesis details and access full content, please log in or create an account.</p>
+                                <p>To view the complete original thesis document and access full content, please log in or create an account.</p>
                                 <a href="index.php" class="btn-access btn-access-primary">
                                     <i class="fas fa-sign-in-alt"></i>Login to Continue
                                 </a>
@@ -1619,7 +1625,7 @@ if (is_logged_in()) {
                                     <i class="fas fa-key"></i>
                                 </div>
                                 <h3>Access Code Required</h3>
-                                <p>You are verified, but you need to request an access code to view the full thesis details. Your request will be reviewed by administrators.</p>
+                                <p>You are verified, but you need to request an access code to view the full thesis document. Your request will be reviewed by administrators.</p>
                                 <button class="btn-access btn-access-warning" onclick="requestAccessCode(<?php echo $thesis_id; ?>)">
                                     <i class="fas fa-paper-plane"></i>Request Access Code
                                 </button>
@@ -1632,7 +1638,7 @@ if (is_logged_in()) {
                                     <i class="fas fa-check-circle"></i>
                                 </div>
                                 <h3>Full Access Granted</h3>
-                                <p>You have approved access to view the complete thesis details. All content is protected and monitored.</p>
+                                <p>You have approved access to view the complete original thesis document. All content is protected and monitored.</p>
                                 <div style="margin-top: 1rem; margin-bottom: 1.5rem;">
                                     <i class="fas fa-shield-alt"></i>
                                     <small>Content is protected. Screenshots and copying are monitored and disabled.</small>
