@@ -320,6 +320,29 @@ class JournalConverter {
 // ============================================
 // REQUEST HANDLER (Endpoint for POST requests)
 // ============================================
+
+// Set up error handler to catch all errors
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    error_log("[journal_converter.php] PHP ERROR ($errno): $errstr in $errfile:$errline");
+    throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+});
+
+// Set up exception handler
+set_exception_handler(function($e) {
+    error_log("[journal_converter.php] UNCAUGHT EXCEPTION: " . $e->getMessage());
+    error_log("[journal_converter.php] Trace: " . $e->getTraceAsString());
+    
+    header('Content-Type: application/json');
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ]);
+    exit;
+});
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     error_log("[journal_converter.php] Received POST request");
     
@@ -432,12 +455,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Create converter with null DB connection (we'll update DB later if needed)
-        $converter = new JournalConverter($thesis_id ?: 'unsaved', $document_text, $metadata, $conn ?? null);
-        $result = $converter->convert();
+        error_log("[journal_converter.php] Creating JournalConverter instance");
         
-        // Return JSON response
-        echo json_encode($result);
-        
+        try {
+            error_log("[journal_converter.php] Instantiating converter...");
+            $converter = new JournalConverter($thesis_id ?: 'unsaved', $document_text, $metadata, $conn ?? null);
+            
+            error_log("[journal_converter.php] Calling convert()...");
+            $result = $converter->convert();
+            
+            error_log("[journal_converter.php] Conversion completed, returning result");
+            
+            // Return JSON response
+            echo json_encode($result);
+        } catch (Throwable $convertError) {
+            error_log("[journal_converter.php] CONVERSION ERROR: " . $convertError->getMessage());
+            error_log("[journal_converter.php] Error code: " . $convertError->getCode());
+            error_log("[journal_converter.php] Trace: " . $convertError->getTraceAsString());
+            
+            throw new Exception("Conversion failed: " . $convertError->getMessage());
+        }
     } catch (Exception $e) {
         error_log("[journal_converter.php] ERROR: " . $e->getMessage());
         
