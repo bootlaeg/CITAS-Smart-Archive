@@ -60,7 +60,7 @@ if (file_exists('ai_includes/journal_converter.php')) {
 // Test 6: Check database columns for Phase 2
 echo "6. Database Columns: ";
 try {
-    $result = $conn->query("DESCRIBE thesis COLUMNS");
+    $result = $conn->query("DESCRIBE thesis");
     $columns = [];
     if ($result) {
         while($row = $result->fetch_assoc()) {
@@ -69,7 +69,7 @@ try {
     }
     
     // Check for Phase 2 columns
-    $phase2_cols = ['is_journal_converted', 'journal_conversion_status'];
+    $phase2_cols = ['is_journal_converted', 'journal_conversion_status', 'journal_file_path', 'journal_page_count', 'journal_converted_at'];
     $missing = [];
     foreach ($phase2_cols as $col) {
         if (!in_array($col, $columns)) {
@@ -81,6 +81,7 @@ try {
         echo "✓ ALL PHASE 2 COLUMNS EXIST\n";
     } else {
         echo "⚠ MISSING: " . implode(', ', $missing) . " (Run PHASE2_MIGRATION.sql)\n";
+        echo "   Found columns: " . implode(', ', array_filter($columns, function($c) { return strpos($c, 'journal') !== false; })) . "\n";
     }
 } catch (Exception $e) {
     echo "❌ " . $e->getMessage() . "\n";
