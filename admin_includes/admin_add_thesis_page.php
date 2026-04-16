@@ -1307,10 +1307,18 @@ function submitForm() {
             method: 'POST',
             body: uploadFormData
         })
+        .then(uploadResponse => {
+            console.log('📨 Upload Response:', uploadResponse.status, uploadResponse.statusText);
+            if (!uploadResponse.ok) {
+                throw new Error(`Upload failed with status ${uploadResponse.status}`);
+            }
+            return uploadResponse;
+        })
         .then(uploadResponse => handleUploadResponse(uploadResponse, getElementValue))
         .then(thesisData => saveThesisToDatabase(thesisData))
         .catch(error => {
-            console.error('❌ Error:', error);
+            console.error('❌ Upload/Save Error:', error);
+            console.error('Error Stack:', error.stack);
             showAlert('❌ Error: ' + error.message, 'danger');
         });
     } catch (error) {
@@ -1321,9 +1329,18 @@ function submitForm() {
 
 async function handleUploadResponse(response, getElementValue) {
     console.log('📨 Upload response status:', response.status);
+    console.log('📨 Upload response headers:', {
+        'content-type': response.headers.get('content-type')
+    });
     
     const text = await response.text();
     console.log('📨 Upload response text:', text);
+    console.log('📨 Response text length:', text.length);
+    
+    // Log raw response for debugging
+    if (text.length > 0) {
+        console.log('First 200 chars:', text.substring(0, 200));
+    }
     
     let uploadData;
     try {
