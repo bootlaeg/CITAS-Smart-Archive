@@ -15,7 +15,7 @@ if ($conn->connect_error) {
     $db_host_hostinger = 'localhost';
     $db_user_hostinger = 'u965322812_CITAS_Smart';
     $db_pass_hostinger = 'SmartArchive2026!';
-    $db_name_hostinger = 'u965322812_thesis_db';
+    $db_name_hostinger = 'u965322812_citas_smart_archive';
     
     $conn = new mysqli($db_host_hostinger, $db_user_hostinger, $db_pass_hostinger, $db_name_hostinger);
     
