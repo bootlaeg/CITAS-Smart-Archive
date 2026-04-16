@@ -13,7 +13,7 @@ class JournalConverter {
     private $imrad_sections;
     private $conn;
     
-    public function __construct($thesis_id, $document_text, $metadata, &$conn) {
+    public function __construct($thesis_id, $document_text, $metadata, $conn = null) {
         $this->thesis_id = $thesis_id;
         $this->document_text = $document_text;
         $this->metadata = $metadata;
@@ -464,7 +464,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         try {
             error_log("[journal_converter.php] Instantiating converter...");
-            $converter = new JournalConverter($thesis_id ?: 'unsaved', $document_text, $metadata, $conn ?? null);
+            
+            // Prepare connection variable for reference passing
+            $db_conn = $conn ?? null;
+            
+            $converter = new JournalConverter($thesis_id ?: 'unsaved', $document_text, $metadata, $db_conn);
             
             error_log("[journal_converter.php] Calling convert()...");
             $result = $converter->convert();
