@@ -525,23 +525,7 @@ require_admin();
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label"><strong>Document Type <span style="color: red;">*</span></strong></label>
-                    <select class="form-select" id="documentType" name="document_type" disabled required>
-                        <option value="">Select Document Type</option>
-                        <option value="journal">Journal (10-20 pages)</option>
-                        <option value="book">Book</option>
-                        <option value="thesis">Thesis</option>
-                        <option value="report">Report</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label"><strong>Page Count</strong></label>
-                    <input type="number" class="form-control" id="pageCount" name="page_count" placeholder="Auto-detected from file" disabled readonly>
-                    <small class="text-muted d-block mt-1" id="pageCountWarning" style="display:none; color: #e74c3c;"></small>
-                </div>
-            </div>
+            <!-- Document Type field removed - all files automatically converted to journal format (Phase 2) -->
 
             <div class="mb-3">
                 <label class="form-label"><strong>Abstract / Description</strong></label>
@@ -1359,9 +1343,7 @@ async function handleUploadResponse(response, getElementValue, documentType, pag
         abstract: getElementValue('thesisAbstract'),
         status: getElementValue('thesisStatus', 'approved'),
         
-        // Document Info
-        document_type: documentType,
-        page_count: pageCount ? parseInt(pageCount) : null,
+        // Document Info (Phase 2: Auto-convert to journal format)
         file_path: uploadData.file_path,
         file_type: uploadData.file_type,
         file_size: uploadData.file_size,
@@ -1397,17 +1379,8 @@ async function handleUploadResponse(response, getElementValue, documentType, pag
         throw new Error('Please fill in Title, Abstract, and Course');
     }
     
-    // Validate document type
-    if (!documentType) {
-        throw new Error('Please select a Document Type');
-    }
-    
-    // Validate page count for journals
-    if (documentType === 'journal') {
-        if (!pageCount || pageCount < 10 || pageCount > 20) {
-            throw new Error('Journal documents must be between 10-20 pages. Current: ' + (pageCount || 'Not specified'));
-        }
-    }
+    // Note: All documents are automatically converted to journal format (Phase 2)
+    // No document type selection needed - the system handles conversion post-upload
     
     return thesisData;
 }
@@ -1437,7 +1410,19 @@ async function saveThesisToDatabase(thesisData) {
     
     if (data.success) {
         console.log('✅ Thesis saved with ID:', data.thesis_id);
-        showAlert('✅ Thesis and classification saved successfully!', 'success');
+        
+        // PHASE 2: Journal Conversion Debugger
+        console.group('🔄 PHASE 2: Journal Conversion Status');
+        console.log('📄 Document:', thesisData.title);
+        console.log('📁 File Type:', thesisData.file_type);
+        console.log('📊 File Size:', thesisData.file_size, 'bytes');
+        console.log('🎯 Conversion Target: IMRaD Journal Format (10-20 pages)');
+        console.log('⏱️ Status:', data.journal_conversion || 'starting');
+        console.log('🔗 API Endpoint:', `/api_includes/check_conversion_status.php?thesis_id=${data.thesis_id}`);
+        console.log('💡 Tip: Use the endpoint above to check conversion progress', 'GET request');
+        console.groupEnd();
+        
+        showAlert('✅ Thesis and classification saved successfully! Journal conversion started (Phase 2).', 'success');
         
         // Clear localStorage
         localStorage.removeItem('thesisFormData');

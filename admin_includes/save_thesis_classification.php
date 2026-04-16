@@ -53,8 +53,6 @@ try {
     $citations = $input['citations'] ?? [];
 
     error_log("Thesis title: $title");
-    error_log("Document type: $documentType");
-    error_log("Page count: $pageCount");
     error_log("File path: $filePath");
     error_log("File type: $fileType");
     error_log("Subject category: $subjectCategory");
@@ -62,6 +60,7 @@ try {
     error_log("Complexity level: $complexityLevel");
     error_log("Keywords count: " . count($keywords));
     error_log("Citations count: " . count($citations));
+    error_log("--- PHASE 2: Auto-converting to journal format post-upload ---");
 
     // Start transaction
     $conn->begin_transaction();
@@ -97,11 +96,11 @@ try {
         }
         
         $insertStmt = $conn->prepare("
-            INSERT INTO thesis (title, author, course, year, abstract, file_path, file_type, file_size, document_type, page_count, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO thesis (title, author, course, year, abstract, file_path, file_type, file_size, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
-        $insertStmt->bind_param("sssisssisis", $title, $author, $course, $year, $abstract, $filePath, $fileType, $fileSize, $documentType, $pageCount, $status);
+        $insertStmt->bind_param("sssisssss", $title, $author, $course, $year, $abstract, $filePath, $fileType, $fileSize, $status);
         
         if (!$insertStmt->execute()) {
             throw new Exception("Failed to insert thesis: " . $insertStmt->error);
@@ -170,10 +169,43 @@ try {
     
     error_log("✅ Thesis and classification saved successfully. ID: $thesisId");
     
+    // PHASE 2: Trigger Journal Conversion (Asynchronous)
+    // Convert the uploaded document to journal format (10-20 pages, IMRaD structure)
+    if (!empty($filePath)) {
+        try {
+            require_once '../ai_includes/journal_converter.php';
+            $converter = new JournalConverter();
+            
+            // Update conversion status to processing
+            $statusStmt = $conn->prepare("UPDATE thesis SET journal_conversion_status = 'processing' WHERE id = ?");
+            $statusStmt->bind_param("i", $thesisId);
+            $statusStmt->execute();
+            $statusStmt->close();
+            
+            error_log("🔄 Journal conversion triggered for thesis ID: $thesisId");
+            error_log("📄 Input file: $filePath");
+            error_log("🎯 Target format: IMRaD journal (10-20 pages)");
+            
+            // Start conversion (non-blocking)
+            $result = $converter->convert($thesisId, $filePath);
+            
+            if ($result['success']) {
+                error_log("✅ Journal conversion completed successfully!");
+                error_log("📊 Result: " . json_encode($result));
+            } else {
+                error_log("⚠️ Journal conversion encountered issue: " . ($result['error'] ?? 'Unknown'));
+            }
+        } catch (Exception $e) {
+            error_log("⚠️ Could not start journal conversion: " . $e->getMessage());
+            // Continue anyway - original file is still available
+        }
+    }
+    
     echo json_encode([
         'success' => true,
         'thesis_id' => $thesisId,
-        'message' => 'Thesis and classification saved successfully'
+        'message' => 'Thesis and classification saved successfully. Journal conversion started (Phase 2).',
+        'journal_conversion' => 'processing'
     ]);
     
 } catch (Exception $e) {
