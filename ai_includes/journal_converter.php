@@ -268,6 +268,17 @@ class JournalConverter {
      * Update database with conversion results
      */
     private function updateDatabase($pdf_path, $journal_content, $status = 'completed') {
+        // Skip database update if thesis_id is not set or is 'unsaved' placeholder
+        if (!$this->thesis_id || $this->thesis_id === 'unsaved') {
+            error_log("[JournalConverter] Skipping database update - thesis not yet saved");
+            return;
+        }
+        
+        if (!$this->conn) {
+            error_log("[JournalConverter] No database connection - skipping database update");
+            return;
+        }
+        
         $page_count = null;
         
         if ($journal_content) {
@@ -306,4 +317,137 @@ class JournalConverter {
     }
 }
 
-?>
+// ============================================
+// REQUEST HANDLER (Endpoint for POST requests)
+// ============================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    error_log("[journal_converter.php] Received POST request");
+    
+    header('Content-Type: application/json');
+    
+    try {
+        // Get POST data
+        $input = file_get_contents('php://input');
+        error_log("[journal_converter.php] Raw input: " . substr($input, 0, 200));
+        
+        $post_data = json_decode($input, true);
+        
+        if (!$post_data) {
+            $post_data = $_POST;
+        }
+        
+        error_log("[journal_converter.php] Parsed data: " . json_encode(array_keys($post_data)));
+        
+        if (!isset($post_data['file_path']) && !isset($post_data['document_text'])) {
+            throw new Exception("Missing file_path or document_text parameter");
+        }
+        
+        // Get file content
+        $document_text = null;
+        if (isset($post_data['document_text'])) {
+            $document_text = $post_data['document_text'];
+            error_log("[journal_converter.php] Using provided document_text");
+        } else {
+            $file_path = $post_data['file_path'];
+            
+            // Resolve relative path
+            if (!file_exists($file_path)) {
+                $file_path = __DIR__ . '/../' . $file_path;
+            }
+            
+            if (!file_exists($file_path)) {
+                throw new Exception("File not found: " . $file_path);
+            }
+            
+            error_log("[journal_converter.php] Reading file: $file_path");
+            
+            // Read file based on type
+            $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
+            
+            if ($ext === 'pdf') {
+                // Parse PDF
+                require_once 'document_parser.php';
+                $parser = new DocumentParser($file_path);
+                $document_text = $parser->extractText();
+            } else {
+                // Read plain text
+                $document_text = file_get_contents($file_path);
+            }
+            
+            if (!$document_text) {
+                throw new Exception("Failed to extract text from file");
+            }
+        }
+        
+        // Build metadata from POST data (may not have all fields)
+        $metadata = [
+            'title' => $post_data['title'] ?? 'Research Paper',
+            'author' => $post_data['author'] ?? '',
+            'abstract' => $post_data['abstract'] ?? '',
+            'year' => $post_data['year'] ?? date('Y')
+        ];
+        
+        error_log("[journal_converter.php] Metadata: " . json_encode($metadata));
+        
+        // For conversion without saving to DB, use NULL thesis_id as placeholder
+        $thesis_id = isset($post_data['thesis_id']) ? (int)$post_data['thesis_id'] : null;
+        
+        // If we need to load metadata from DB
+        if ($thesis_id && empty($post_data['title'])) {
+            require_once 'config.php';
+            $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+            
+            if ($conn->connect_error) {
+                throw new Exception("Database connection failed: " . $conn->connect_error);
+            }
+            
+            $metadata_sql = "SELECT id, title, author, abstract, year FROM thesis WHERE id = ?";
+            $stmt = $conn->prepare($metadata_sql);
+            
+            if (!$stmt) {
+                throw new Exception("Prepare failed: " . $conn->error);
+            }
+            
+            $stmt->bind_param("i", $thesis_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $thesis_row = $result->fetch_assoc();
+            $stmt->close();
+            
+            if (!$thesis_row) {
+                throw new Exception("Thesis not found with id: $thesis_id");
+            }
+            
+            $metadata = [
+                'title' => $thesis_row['title'],
+                'author' => $thesis_row['author'],
+                'abstract' => $thesis_row['abstract'],
+                'year' => $thesis_row['year']
+            ];
+            
+            error_log("[journal_converter.php] Metadata loaded from DB for thesis: " . $thesis_row['title']);
+        } elseif ($thesis_id) {
+            // thesis_id provided but no DB connection needed - use provided metadata
+            error_log("[journal_converter.php] Using provided metadata for thesis_id: $thesis_id");
+        }
+        
+        // Create converter with null DB connection (we'll update DB later if needed)
+        $converter = new JournalConverter($thesis_id ?: 'unsaved', $document_text, $metadata, $conn ?? null);
+        $result = $converter->convert();
+        
+        // Return JSON response
+        echo json_encode($result);
+        
+    } catch (Exception $e) {
+        error_log("[journal_converter.php] ERROR: " . $e->getMessage());
+        
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
+    
+    exit;
+}
+

@@ -1370,19 +1370,33 @@ function convertToIMRaD() {
     
     showAlert('🔄 Converting document to IMRaD journal format... This may take 30-60 seconds.', 'info');
     
-    // Prepare file for conversion
-    const conversionFormData = new FormData();
-    conversionFormData.append('file', currentUploadedFile);
-    conversionFormData.append('title', thesisTitle);
+    console.log('📤 Sending conversion request to journal_converter.php');
+    console.log('   File path:', currentUploadedFileData.file_path);
+    console.log('   Title:', thesisTitle);
     
-    console.log('📤 Sending to journal_converter.php');
+    // Send JSON request with file path and metadata
+    const conversionData = {
+        file_path: currentUploadedFileData.file_path,
+        title: thesisTitle,
+        author: document.getElementById('thesisAuthor').value || '',
+        abstract: document.getElementById('thesisAbstract').value || '',
+        year: parseInt(document.getElementById('thesisYear').value) || new Date().getFullYear()
+    };
+    
+    console.log('📦 Sending conversion data:', conversionData);
     
     fetch('../ai_includes/journal_converter.php', {
         method: 'POST',
-        body: conversionFormData
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(conversionData)
     })
     .then(response => {
         console.log('📨 Conversion response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
         return response.json();
     })
     .then(data => {
@@ -1390,10 +1404,10 @@ function convertToIMRaD() {
         
         if (data.success) {
             console.log('✅ Journal conversion successful!');
-            console.log('   Pages:', data.page_count);
+            console.log('   Pages:', data.journal_page_count);
             console.log('   File:', data.journal_file_path);
             
-            showAlert('✅ Journal Format Generated Successfully! ✔️ ' + data.page_count + ' pages' , 'success');
+            showAlert('✅ Journal Format Generated Successfully! ✔️ ' + (data.journal_page_count || '10-20') + ' pages' , 'success');
             convertBtn.disabled = true;
             convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>IMRaD Conversion Complete';
         } else {
