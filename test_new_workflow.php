@@ -1,27 +1,12 @@
 <?php
 // Quick test to verify the new workflow
-// Uses local database credentials instead of Hostinger
 
-// Hardcode local DB credentials
-$db_host = 'localhost';
-$db_user = 'root';
-$db_pass = '';  // No password for local development
-$db_name = 'citas_smart_archive';
+require_once 'ai_includes/config.php';
 
-$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 if ($conn->connect_error) {
-    // Try Hostinger credentials if local fails
-    $db_host_hostinger = 'localhost';
-    $db_user_hostinger = 'u965322812_CITAS_Smart';
-    $db_pass_hostinger = 'ErLv@g1e*';
-    $db_name_hostinger = 'u965322812_thesis_db';
-    
-    $conn = new mysqli($db_host_hostinger, $db_user_hostinger, $db_pass_hostinger, $db_name_hostinger);
-    
-    if ($conn->connect_error) {
-        die("<h2>❌ Connection Error</h2><p>Local error: " . $conn->connect_error . "</p>");
-    }
+    die("Connection error: " . $conn->connect_error);
 }
 
 echo "<h2>Thesis Database Status Check</h2>";
