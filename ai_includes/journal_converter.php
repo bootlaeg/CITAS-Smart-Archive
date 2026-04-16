@@ -132,28 +132,28 @@ class JournalConverter {
     }
     
     /**
-     * Use Ollama to create intelligent summaries
+     * Use Hugging Face API to create intelligent summaries
      */
     private function summarizeWithOllama($text, $target_words, $prompt_hint) {
         try {
-            require_once 'ollama_service.php';
+            require_once 'huggingface_service.php';
             
-            $ollama = new OllamaService();
+            $hf_service = new HuggingFaceService();
             
-            $prompt = "Summarize the following text in approximately {$target_words} words for a journal article section. " .
-                      $prompt_hint . "\n\nText:\n" . substr($text, 0, 3000);
+            // Prepare text for API (HF doesn't need the prompt_hint in same way)
+            $text_to_summarize = substr($text, 0, 4000); // Limit context size
             
-            $summary = $ollama->generateText($prompt, [
-                'temperature' => 0.3, // Low temperature for factual summarization
-                'num_predict' => $target_words + 100
-            ]);
+            // Call Hugging Face API
+            $result = $hf_service->summarize($text_to_summarize, $target_words);
             
-            if ($summary) {
-                error_log("[JournalConverter] Ollama summarization successful");
-                return trim($summary);
+            if ($result['success'] && !empty($result['summary'])) {
+                error_log("[JournalConverter] Hugging Face summarization successful (method: " . ($result['method'] ?? 'api') . ")");
+                return trim($result['summary']);
+            } else {
+                error_log("[JournalConverter] Hugging Face API returned: " . ($result['error'] ?? 'unknown error'));
             }
         } catch (Exception $e) {
-            error_log("[JournalConverter] Ollama unavailable: " . $e->getMessage());
+            error_log("[JournalConverter] Hugging Face service error: " . $e->getMessage());
         }
         
         return null;
