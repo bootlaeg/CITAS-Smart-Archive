@@ -1582,6 +1582,22 @@ if (is_logged_in()) {
                     <div class="document-title">
                         <i class="fas fa-file-pdf"></i>Full Thesis Document
                     </div>
+                    
+                    <!-- Phase 2: Journal Version Display -->
+                    <?php if (!empty($thesis['is_journal_converted']) && !empty($thesis['journal_file_path'])): ?>
+                        <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: #D5F4E6; border: 2px solid #27AE60; border-radius: 8px;">
+                            <h4 style="color: #27AE60; margin-bottom: 0.5rem;">
+                                <i class="fas fa-check-circle"></i> Journal Format Available
+                            </h4>
+                            <p style="color: #27AE60; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                                This thesis is available in a condensed journal format (<?php echo intval($thesis['journal_page_count']); ?> pages) optimized for quick reading. Converted on <?php echo date('F j, Y', strtotime($thesis['journal_converted_at'])); ?>.
+                            </p>
+                            <button class="btn-access btn-access-primary" onclick="openThesisViewer('<?php echo htmlspecialchars($thesis['journal_file_path']); ?>', 'pdf')">
+                                <i class="fas fa-file-pdf"></i> View Journal Format (<?php echo intval($thesis['journal_page_count']); ?> pages)
+                            </button>
+                        </div>
+                    <?php endif; ?>
+                    
                     <div id="accessSection">
                         <?php if (!is_logged_in()): ?>
                             <!-- Not Logged In -->

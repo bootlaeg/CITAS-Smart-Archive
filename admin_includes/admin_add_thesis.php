@@ -42,6 +42,52 @@ function get_pdf_page_count($file_path) {
     }
 }
 
+/**
+ * Trigger journal conversion for newly uploaded thesis
+ * Runs asynchronously to not block the upload response
+ * @param int $thesis_id ID of thesis to convert
+ * @param string $file_path Path to thesis file
+ * @return void
+ */
+function trigger_journal_conversion($thesis_id, $file_path) {
+    global $conn;
+    
+    try {
+        // Load journal converter
+        require_once __DIR__ . '/../ai_includes/journal_converter.php';
+        
+        // Update status to processing
+        $update_stmt = $conn->prepare("UPDATE thesis SET journal_conversion_status = 'processing' WHERE id = ?");
+        if ($update_stmt) {
+            $update_stmt->bind_param("i", $thesis_id);
+            $update_stmt->execute();
+            $update_stmt->close();
+        }
+        
+        error_log("Journal conversion started for thesis ID: $thesis_id");
+        
+        // Attempt conversion (non-blocking)
+        $converter = new JournalConverter();
+        $result = $converter->convert($thesis_id, $file_path);
+        
+        if ($result['success']) {
+            error_log("Journal conversion completed for thesis ID: $thesis_id");
+        } else {
+            error_log("Journal conversion failed for thesis ID: $thesis_id - " . ($result['error'] ?? 'Unknown error'));
+        }
+    } catch (Exception $e) {
+        error_log("Error in trigger_journal_conversion: " . $e->getMessage());
+        
+        // Update status to failed
+        $update_stmt = $conn->prepare("UPDATE thesis SET journal_conversion_status = 'failed' WHERE id = ?");
+        if ($update_stmt) {
+            $update_stmt->bind_param("i", $thesis_id);
+            $update_stmt->execute();
+            $update_stmt->close();
+        }
+    }
+}
+
 // Check if request is POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method']);
@@ -183,6 +229,11 @@ if (isset($_FILES['thesis_file']) && $_FILES['thesis_file']['error'] === UPLOAD_
         $thesis_id = $stmt->insert_id;
         $stmt->close();
         
+        // TRIGGER JOURNAL CONVERSION (Phase 2)
+        // This converts the uploaded thesis to journal format asynchronously
+        $full_path = dirname(__DIR__) . '/uploads/thesis_files/' . basename($file_path);
+        trigger_journal_conversion($thesis_id, $full_path);
+        
         // Save classification data if provided
         $subject_category = sanitize_input($_POST['subject_category'] ?? '');
         $subject_confidence = floatval($_POST['subject_confidence'] ?? 100);
@@ -280,8 +331,9 @@ if (isset($_FILES['thesis_file']) && $_FILES['thesis_file']['error'] === UPLOAD_
         
         echo json_encode([
             'success' => true,
-            'message' => 'Thesis added successfully with classification',
-            'thesis_id' => $thesis_id
+            'message' => 'Thesis added successfully. Journal conversion started (Phase 2).',
+            'thesis_id' => $thesis_id,
+            'journal_conversion' => 'processing'
         ]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to add thesis: ' . $stmt->error]);
