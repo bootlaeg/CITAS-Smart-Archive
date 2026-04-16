@@ -665,7 +665,11 @@ function handleFileUploadWithExtraction(event) {
         document.getElementById('thesisAuthor').value = metadata.author || '';
         document.getElementById('thesisYear').value = metadata.year || '';
         document.getElementById('thesisAbstract').value = metadata.abstract || '';
-        document.getElementById('pageCount').value = metadata.page_count || '';
+        
+        // Note: pageCount and documentType fields removed - all files auto-convert to journal format (Phase 2)
+        // if (document.getElementById('pageCount')) {
+        //     document.getElementById('pageCount').value = metadata.page_count || '';
+        // }
         
         // Auto-populate course based on extracted degree
         if (metadata.degree) {
@@ -684,9 +688,9 @@ function handleFileUploadWithExtraction(event) {
         
         console.log('✓ Fields populated with extracted data');
         
-        // If page count extracted, show it
+        // If page count extracted, log it (but don't require it for validation)
         if (metadata.page_count) {
-            console.log('✓ Page count detected:', metadata.page_count);
+            console.log('✓ Page count detected:', metadata.page_count, '(will be converted to 10-20 page journal)');
         }
         
         // Enable thesis section
@@ -1283,9 +1287,9 @@ function submitForm() {
             return element.value || defaultValue;
         };
 
-        // Collect thesis data
-        const documentType = getElementValue('documentType');
-        const pageCount = getElementValue('pageCount');
+        // Note: documentType and pageCount removed - all files auto-convert to journal format (Phase 2)
+        // const documentType = getElementValue('documentType');
+        // const pageCount = getElementValue('pageCount');
         
         showAlert('💾 Uploading file and saving thesis...', 'info');
         console.log('🚀 Starting file upload...');
@@ -1303,7 +1307,7 @@ function submitForm() {
             method: 'POST',
             body: uploadFormData
         })
-        .then(uploadResponse => handleUploadResponse(uploadResponse, getElementValue, documentType, pageCount))
+        .then(uploadResponse => handleUploadResponse(uploadResponse, getElementValue))
         .then(thesisData => saveThesisToDatabase(thesisData))
         .catch(error => {
             console.error('❌ Error:', error);
@@ -1315,7 +1319,7 @@ function submitForm() {
     }
 }
 
-async function handleUploadResponse(response, getElementValue, documentType, pageCount) {
+async function handleUploadResponse(response, getElementValue) {
     console.log('📨 Upload response status:', response.status);
     
     const text = await response.text();
@@ -1577,37 +1581,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Add validation for document type and page count
-    const documentTypeSelect = document.getElementById('documentType');
-    const pageCountInput = document.getElementById('pageCount');
-    const pageCountWarning = document.getElementById('pageCountWarning');
-    
-    function validateJournalPageCount() {
-        const docType = documentTypeSelect.value;
-        const pageCount = pageCountInput.value;
-        
-        if (docType === 'journal') {
-            if (!pageCount) {
-                pageCountWarning.textContent = '⚠️ Page count required for journals';
-                pageCountWarning.style.display = 'block';
-            } else if (pageCount < 10 || pageCount > 20) {
-                pageCountWarning.textContent = `⚠️ Journal must be 10-20 pages (current: ${pageCount})`;
-                pageCountWarning.style.display = 'block';
-            } else {
-                pageCountWarning.style.display = 'none';
-            }
-        } else {
-            pageCountWarning.style.display = 'none';
-        }
-    }
-    
-    if (documentTypeSelect) {
-        documentTypeSelect.addEventListener('change', validateJournalPageCount);
-    }
-    if (pageCountInput) {
-        pageCountInput.addEventListener('change', validateJournalPageCount);
-        pageCountInput.addEventListener('input', validateJournalPageCount);
-    }
+    // Note: Document type and page count validation removed - all files auto-converted to journal format (Phase 2)
+    // const documentTypeSelect = document.getElementById('documentType');
+    // const pageCountInput = document.getElementById('pageCount');
+    // const pageCountWarning = document.getElementById('pageCountWarning');
     
     // Add file upload handler for automatic extraction
     const fileInput = document.getElementById('thesisFile');
