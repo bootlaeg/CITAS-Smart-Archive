@@ -7,7 +7,7 @@
  */
 
 // Hugging Face API Settings
-define('HUGGING_FACE_API_KEY', getenv('HUGGING_FACE_API_KEY') ?: '');
+define('HUGGING_FACE_API_KEY', getenv('HUGGING_FhACE_API_KEY') ?: '');
 define('HUGGING_FACE_API_URL', 'https://api-inference.huggingface.co/models');
 
 // Model Configuration
