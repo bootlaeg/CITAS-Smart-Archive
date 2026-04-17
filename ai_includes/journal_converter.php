@@ -127,7 +127,7 @@ class JournalConverter {
      * Extract and summarize a section
      */
     private function extractSummary($section_type, $target_words, $prompt_hint) {
-        // Find the section
+        // First try: Find the section in analyzed IMRAD sections
         $section_content = '';
         foreach ($this->imrad_sections as $section) {
             if ($section['type'] === $section_type) {
@@ -136,20 +136,88 @@ class JournalConverter {
             }
         }
         
+        // Second try: If not found in analysis, search document directly for section keywords
         if (empty($section_content)) {
-            // Section not found, create placeholder
-            return $prompt_hint . "\n\n[Content to be extracted from original document]";
+            error_log("[JournalConverter] Section '$section_type' not found in analysis, searching document...");
+            $section_content = $this->extractSectionFromDocument($section_type);
         }
         
-        // Use Ollama to summarize if available
+        if (empty($section_content)) {
+            // Last resort: return placeholder if truly not found
+            error_log("[JournalConverter] Section '$section_type' not found anywhere in document");
+            return $prompt_hint . "\n\n[Section not found in original document]";
+        }
+        
+        error_log("[JournalConverter] Extracted section '$section_type' with " . strlen($section_content) . " characters");
+        
+        // Use Ollama to summarize
         $summary = $this->summarizeWithOllama($section_content, $target_words, $prompt_hint);
         
         if ($summary) {
             return $summary;
         }
         
-        // Fallback: Simple truncation and keyword extraction
+        // Fallback: Simple extraction and truncation
         return $this->simpleSummarize($section_content, $target_words);
+    }
+    
+    /**
+     * Extract section content directly from document text
+     * Searches for common section headers and extracts content
+     */
+    private function extractSectionFromDocument($section_type) {
+        $patterns = [];
+        
+        switch($section_type) {
+            case 'introduction':
+                $patterns = [
+                    '/1\.\s*introductions?\b(.+?)(?=\n\d+\.|$)/ims',
+                    '/introductions?\b(.+?)(?=\n(?:Methods|Methods|2\.|$))/ims',
+                    '/^(?:introduction|introduction section)(.+?)(?=methods|2\.|$)/ims'
+                ];
+                break;
+            case 'methods':
+                $patterns = [
+                    '/2\.\s*methods?\b(.+?)(?=\n3\.|\nresults|$)/ims',
+                    '/methods?\b(.+?)(?=\n(?:Results|3\.|$))/ims',
+                    '/^(?:methodology|methods)(.+?)(?=results|3\.|$)/ims'
+                ];
+                break;
+            case 'results':
+                $patterns = [
+                    '/3\.\s*results?\b(.+?)(?=\n4\.|\ndiscussion|$)/ims',
+                    '/results?\b(.+?)(?=\n(?:Discussion|4\.|$))/ims',
+                    '/^(?:findings|results)(.+?)(?=discussion|4\.|$)/ims'
+                ];
+                break;
+            case 'discussion':
+                $patterns = [
+                    '/4\.\s*discussions?\b(.+?)(?=\n5\.|\nconclusions?|$)/ims',
+                    '/discussions?\b(.+?)(?=\n(?:Conclusion|5\.|$))/ims',
+                    '/^(?:discussion)(.+?)(?=conclusion|5\.|$)/ims'
+                ];
+                break;
+            case 'conclusions':
+            case 'conclusion':
+                $patterns = [
+                    '/5\.\s*conclusions?\b(.+?)(?=\n|$)/ims',
+                    '/conclusions?\b(.+?)(?=\n(?:References|$))/ims',
+                    '/^(?:conclusions|conclusion)(.+?)(?=references|$)/ims'
+                ];
+                break;
+        }
+        
+        // Try each pattern
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $this->document_text, $matches)) {
+                $content = trim($matches[1]);
+                if (strlen($content) > 100) { // Only accept if substantial content found
+                    return $content;
+                }
+            }
+        }
+        
+        return '';
     }
     
     /**
