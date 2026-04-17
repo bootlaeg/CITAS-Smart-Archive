@@ -1591,73 +1591,12 @@ if (is_logged_in()) {
                             <p style="color: #27AE60; margin-bottom: 0.75rem; font-size: 0.95rem;">
                                 This is the condensed journal version of the thesis, converted to IMRaD format (Introduction, Methods, Results, Analysis, Discussion) for quick and efficient reading. Converted on <?php echo date('F j, Y', strtotime($thesis['journal_converted_at'])); ?>.
                             </p>
-                            <button class="btn-access btn-access-primary" onclick="openThesisViewer('<?php echo htmlspecialchars($thesis['journal_file_path']); ?>', 'pdf')">
+                            <button class="btn-access btn-access-primary" onclick="openThesisViewer('<?php echo htmlspecialchars($thesis['journal_file_path']); ?>', 'html')">
                                 <i class="fas fa-file-pdf"></i> View Journal Format (<?php echo intval($thesis['journal_page_count']); ?> pages)
                             </button>
                         </div>
                     </div>
                 <?php endif; ?>
-
-                <!-- SECONDARY: Full Thesis Document Section -->
-                <div class="document-section">
-                    <div class="document-title">
-                        <i class="fas fa-file-pdf"></i>Full Thesis Document
-                    </div>
-                    
-                    <div id="accessSection">
-                        <?php if (!is_logged_in()): ?>
-                            <!-- Not Logged In -->
-                            <div class="access-section access-locked">
-                                <div class="access-locked-icon">
-                                    <i class="fas fa-lock"></i>
-                                </div>
-                                <h3>Full Access Requires Login</h3>
-                                <p>To view the complete original thesis document and access full content, please log in or create an account.</p>
-                                <a href="index.php" class="btn-access btn-access-primary">
-                                    <i class="fas fa-sign-in-alt"></i>Login to Continue
-                                </a>
-                            </div>
-
-                        <?php elseif (!$has_access_code): ?>
-                            <!-- Logged In but No Access Code -->
-                            <div class="access-section access-locked">
-                                <div class="access-locked-icon">
-                                    <i class="fas fa-key"></i>
-                                </div>
-                                <h3>Access Code Required</h3>
-                                <p>You are verified, but you need to request an access code to view the full thesis document. Your request will be reviewed by administrators.</p>
-                                <button class="btn-access btn-access-warning" onclick="requestAccessCode(<?php echo $thesis_id; ?>)">
-                                    <i class="fas fa-paper-plane"></i>Request Access Code
-                                </button>
-                            </div>
-
-                        <?php else: ?>
-                            <!-- Has Access Code -->
-                            <div class="access-section access-granted">
-                                <div class="access-granted-icon">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <h3>Full Access Granted</h3>
-                                <p>You have approved access to view the complete original thesis document. All content is protected and monitored.</p>
-                                <div style="margin-top: 1rem; margin-bottom: 1.5rem;">
-                                    <i class="fas fa-shield-alt"></i>
-                                    <small>Content is protected. Screenshots and copying are monitored and disabled.</small>
-                                </div>
-                                
-                                <?php if (!empty($thesis['file_path']) && !empty($thesis['file_type'])): ?>
-                                    <button class="btn-access btn-access-primary" onclick="openThesisViewer('<?php echo htmlspecialchars($thesis['file_path']); ?>', '<?php echo htmlspecialchars($thesis['file_type']); ?>')">
-                                        <i class="fas fa-file-pdf"></i>View Full Thesis Document
-                                    </button>
-                                <?php else: ?>
-                                    <div style="margin-top: 1.5rem; padding: 1rem; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px;">
-                                        <i class="fas fa-info-circle"></i>
-                                        <small style="color: #856404;">No file uploaded for this thesis yet.</small>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
             </div>
 
             <!-- TAB 2: THESIS INFO -->
@@ -1997,6 +1936,34 @@ function loadPdfViewer(fileUrl, container) {
         container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c; padding: 2rem; text-align: center;"><div><strong>Error loading PDF:</strong><br>' + error.message + '</div></div>';
     });
 }
+
+/**
+ * Load document viewer for non-PDF files (HTML, DOCX, etc.)
+ */
+function loadDocViewer(fileUrl, container, fileType) {
+    if (fileType === 'html') {
+        // For HTML files, load directly in iframe
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; height: 100%; background: #f5f5f5;">
+                <div style="background: #fff; border-bottom: 1px solid #ddd; padding: 1rem; text-align: center; flex-shrink: 0;">
+                    <span style="color: #666;">HTML Document</span>
+                </div>
+                <iframe src="${fileUrl}" style="flex: 1; border: none; width: 100%; background: white;" onload="this.style.display='block';" onerror="this.parentElement.innerHTML='<div style=\"display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c; padding: 2rem; text-align: center;\"><div><strong>Error loading document</strong></div></div>';" sandbox="allow-same-origin allow-scripts"></iframe>
+            </div>
+        `;
+    } else {
+        // For other document types, try to load as iframe
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; height: 100%; background: #f5f5f5;">
+                <div style="background: #fff; border-bottom: 1px solid #ddd; padding: 1rem; text-align: center; flex-shrink: 0;">
+                    <span style="color: #666;">Document (${fileType.toUpperCase()})</span>
+                </div>
+                <iframe src="${fileUrl}" style="flex: 1; border: none; width: 100%; background: white;" onload="this.style.display='block';" onerror="this.parentElement.innerHTML='<div style=\"display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c; padding: 2rem; text-align: center;\"><div><strong>Error loading document</strong></div></div>';" sandbox="allow-same-origin allow-scripts"></iframe>
+            </div>
+        `;
+    }
+}
+
 
 window.renderPage = function(pageNum) {
     if (!window.pdfDoc) return;
