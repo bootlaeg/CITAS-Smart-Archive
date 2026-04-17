@@ -2082,7 +2082,7 @@ if (hamburgerMenu) {
 
 <!-- Floating Chat Bubble -->
 <button class="chatbot-bubble" id="chatbotBubble" title="Open AI Chatbot">
-    <i class="fas fa-comments"></i>
+    <i class="fas fa-robot"></i>
 </button>
 
 <!-- Chatbot Panel -->
