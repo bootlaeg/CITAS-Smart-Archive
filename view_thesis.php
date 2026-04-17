@@ -2435,7 +2435,9 @@ function checkChatbotAccessStatus() {
     
     accessCheckInProgress = true;
     
-    fetch('chatbot_includes/check_chatbot_access.php?thesis_id=' + thesisId)
+    fetch('chatbot_includes/check_chatbot_access.php?thesis_id=' + thesisId, {
+        credentials: 'include'  // Include cookies/session
+    })
         .then(response => response.json())
         .then(data => {
             accessCheckInProgress = false;
