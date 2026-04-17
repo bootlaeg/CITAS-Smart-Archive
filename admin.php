@@ -28,14 +28,14 @@ $users_result = $conn->query("SELECT * FROM users ORDER BY created_at DESC LIMIT
 
 // Get pending access requests
 $access_result = $conn->query("
-    SELECT ta.id, ta.user_id, ta.thesis_id, ta.requested_at,
+    SELECT car.id, car.user_id, car.thesis_id, car.requested_at, car.status,
            u.full_name, u.student_id,
            t.title
-    FROM thesis_access ta
-    JOIN users u ON ta.user_id = u.id
-    JOIN thesis t ON ta.thesis_id = t.id
-    WHERE ta.status = 'pending'
-    ORDER BY ta.requested_at DESC
+    FROM chatbot_access_requests car
+    JOIN users u ON car.user_id = u.id
+    JOIN thesis t ON car.thesis_id = t.id
+    WHERE car.status = 'pending'
+    ORDER BY car.requested_at DESC
     LIMIT 20
 ");
 ?>

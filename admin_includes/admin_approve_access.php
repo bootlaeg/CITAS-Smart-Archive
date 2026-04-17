@@ -27,7 +27,7 @@ if (empty($request_id) || empty($user_id) || empty($thesis_id)) {
 }
 
 // Verify the access request exists
-$stmt = $conn->prepare("SELECT id FROM thesis_access WHERE id = ? AND user_id = ? AND thesis_id = ?");
+$stmt = $conn->prepare("SELECT id FROM chatbot_access_requests WHERE id = ? AND user_id = ? AND thesis_id = ?");
 
 if (!$stmt) {
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
@@ -45,7 +45,7 @@ if ($result->num_rows === 0) {
 $stmt->close();
 
 // Update the access request status to 'approved'
-$stmt = $conn->prepare("UPDATE thesis_access SET status = 'approved' WHERE id = ?");
+$stmt = $conn->prepare("UPDATE chatbot_access_requests SET status = 'approved', approved_at = NOW() WHERE id = ?");
 
 if (!$stmt) {
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);

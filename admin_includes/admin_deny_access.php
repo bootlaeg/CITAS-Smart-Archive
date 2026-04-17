@@ -24,7 +24,7 @@ if (empty($request_id)) {
 }
 
 // Verify the access request exists
-$stmt = $conn->prepare("SELECT id FROM thesis_access WHERE id = ?");
+$stmt = $conn->prepare("SELECT id FROM chatbot_access_requests WHERE id = ?");
 
 if (!$stmt) {
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
@@ -42,7 +42,7 @@ if ($result->num_rows === 0) {
 $stmt->close();
 
 // Update the access request status to 'denied'
-$stmt = $conn->prepare("UPDATE thesis_access SET status = 'denied' WHERE id = ?");
+$stmt = $conn->prepare("UPDATE chatbot_access_requests SET status = 'denied', denied_at = NOW() WHERE id = ?");
 
 if (!$stmt) {
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
