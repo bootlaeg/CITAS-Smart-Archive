@@ -4,6 +4,7 @@
  * Allows users to request access to the chatbot for a specific thesis
  */
 
+session_start();
 header('Content-Type: application/json');
 
 try {
