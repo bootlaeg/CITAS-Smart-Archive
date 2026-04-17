@@ -333,28 +333,6 @@ class JournalConverter {
             return;
         }
         
-        // CRITICAL FIX: Check if connection is still alive after long Ollama processing
-        // Hostinger may close the connection during the 60-90 second wait
-        if (!$this->conn->ping()) {
-            error_log("[JournalConverter] Database connection lost during processing - reconnecting");
-            
-            // Reconnect
-            $db_config = [
-                'host' => 'localhost',
-                'user' => 'u965322812_CITAS_Smart',
-                'pass' => 'ErLv@g1e*',
-                'name' => 'u965322812_thesis_db'
-            ];
-            
-            $this->conn = new mysqli($db_config['host'], $db_config['user'], $db_config['pass'], $db_config['name']);
-            
-            if ($this->conn->connect_error) {
-                throw new Exception("Reconnection failed: " . $this->conn->connect_error);
-            }
-            
-            error_log("[JournalConverter] Reconnected to database successfully");
-        }
-        
         $page_count = null;
         
         if ($journal_content) {
@@ -375,24 +353,78 @@ class JournalConverter {
             journal_imrad_sections = ?
             WHERE id = ?";
         
-        $stmt = $this->conn->prepare($update_sql);
-        
-        if (!$stmt) {
-            throw new Exception("Prepare failed: " . $this->conn->error);
-        }
-        
         $is_converted = ($status === 'completed') ? 1 : 0;
         $imrad_json = json_encode($this->imrad_sections);
         
-        $stmt->bind_param("sisisi", $pdf_path, $is_converted, $status, $page_count, $imrad_json, $this->thesis_id);
+        // TRY UPDATE - WITH AUTOMATIC RECONNECT ON FAILURE
+        try {
+            $stmt = $this->conn->prepare($update_sql);
+            
+            if (!$stmt) {
+                // Connection might be lost - try to reconnect
+                error_log("[JournalConverter] Prepare failed: " . $this->conn->error . " - attempting reconnect");
+                $this->reconnectDatabase();
+                
+                $stmt = $this->conn->prepare($update_sql);
+                if (!$stmt) {
+                    throw new Exception("Prepare failed after reconnect: " . $this->conn->error);
+                }
+            }
+            
+            $stmt->bind_param("sisisi", $pdf_path, $is_converted, $status, $page_count, $imrad_json, $this->thesis_id);
+            
+            if (!$stmt->execute()) {
+                error_log("[JournalConverter] Execute failed: " . $stmt->error . " - attempting reconnect and retry");
+                $stmt->close();
+                
+                // Reconnect and retry
+                $this->reconnectDatabase();
+                
+                $stmt = $this->conn->prepare($update_sql);
+                if (!$stmt) {
+                    throw new Exception("Prepare failed on retry: " . $this->conn->error);
+                }
+                
+                $stmt->bind_param("sisisi", $pdf_path, $is_converted, $status, $page_count, $imrad_json, $this->thesis_id);
+                
+                if (!$stmt->execute()) {
+                    throw new Exception("Execute failed on retry: " . $stmt->error);
+                }
+            }
+            
+            $stmt->close();
+            error_log("[JournalConverter] Database updated successfully");
+            
+        } catch (Exception $e) {
+            error_log("[JournalConverter] Database update error: " . $e->getMessage());
+            throw $e;
+        }
+    }
+    
+    /**
+     * Reconnect to database
+     */
+    private function reconnectDatabase() {
+        error_log("[JournalConverter] Reconnecting to database...");
         
-        if (!$stmt->execute()) {
-            throw new Exception("Execute failed: " . $stmt->error);
+        if ($this->conn) {
+            @$this->conn->close();
         }
         
-        $stmt->close();
+        $db_config = [
+            'host' => 'localhost',
+            'user' => 'u965322812_CITAS_Smart',
+            'pass' => 'ErLv@g1e*',
+            'name' => 'u965322812_thesis_db'
+        ];
         
-        error_log("[JournalConverter] Database updated successfully");
+        $this->conn = new mysqli($db_config['host'], $db_config['user'], $db_config['pass'], $db_config['name']);
+        
+        if ($this->conn->connect_error) {
+            throw new Exception("Reconnection failed: " . $this->conn->connect_error);
+        }
+        
+        error_log("[JournalConverter] Reconnected to database successfully");
     }
 }
 
