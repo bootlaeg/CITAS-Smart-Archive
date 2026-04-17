@@ -1,4 +1,9 @@
 <?php
+// Disable execution timeout for long Ollama processing
+set_time_limit(0);
+ini_set('default_socket_timeout', 300);
+ini_set('max_execution_time', 300);
+
 /**
  * Journal Converter
  * Converts raw documents to journal format (10-20 pages, IMRaD structure)
@@ -252,7 +257,7 @@ class JournalConverter {
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($request_body));
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 300); // Allow up to 5 minutes for Ollama processing + tunnel latency
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For tunnel self-signed certs
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             
