@@ -333,6 +333,28 @@ class JournalConverter {
             return;
         }
         
+        // CRITICAL FIX: Check if connection is still alive after long Ollama processing
+        // Hostinger may close the connection during the 60-90 second wait
+        if (!$this->conn->ping()) {
+            error_log("[JournalConverter] Database connection lost during processing - reconnecting");
+            
+            // Reconnect
+            $db_config = [
+                'host' => 'localhost',
+                'user' => 'u965322812_CITAS_Smart',
+                'pass' => 'ErLv@g1e*',
+                'name' => 'u965322812_thesis_db'
+            ];
+            
+            $this->conn = new mysqli($db_config['host'], $db_config['user'], $db_config['pass'], $db_config['name']);
+            
+            if ($this->conn->connect_error) {
+                throw new Exception("Reconnection failed: " . $this->conn->connect_error);
+            }
+            
+            error_log("[JournalConverter] Reconnected to database successfully");
+        }
+        
         $page_count = null;
         
         if ($journal_content) {
