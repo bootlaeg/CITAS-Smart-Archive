@@ -679,10 +679,8 @@ set_exception_handler(function($e) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     error_log("[journal_converter.php] Received POST request");
     
-    header('Content-Type: application/json');
-    
     try {
-        // Get POST data
+        // Get POST data IMMEDIATELY
         $input = file_get_contents('php://input');
         error_log("[journal_converter.php] Raw input: " . substr($input, 0, 200));
         
@@ -693,6 +691,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         error_log("[journal_converter.php] Parsed data: " . json_encode(array_keys($post_data)));
+        
+        // Extract thesis_id FIRST, before validation
+        $thesis_id = isset($post_data['thesis_id']) ? (int)$post_data['thesis_id'] : null;
+        error_log("[journal_converter.php] Thesis ID: $thesis_id");
+        
+        // Send IMMEDIATE async response (before any file operations)
+        $immediate_response = [
+            'success' => true,
+            'status' => 'processing',
+            'thesis_id' => $thesis_id,
+            'message' => 'Conversion started in background. Processing will continue...'
+        ];
+        
+        error_log("[journal_converter.php] Sending immediate response to close connection");
+        closeConnectionAndContinue($immediate_response);
+        
+        // ============================================================
+        // EVERYTHING BELOW THIS RUNS IN BACKGROUND (connection closed)
+        // ============================================================
         
         if (!isset($post_data['file_path']) && !isset($post_data['document_text'])) {
             throw new Exception("Missing file_path or document_text parameter");
