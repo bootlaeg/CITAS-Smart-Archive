@@ -1374,7 +1374,7 @@ function convertToIMRaD() {
     
     showAlert('🔄 Converting document to IMRaD journal format... This may take 60-90 seconds. Processing in background.', 'info');
     
-    console.log('📤 Sending conversion request to journal_converter.php');
+    console.log('📤 Sending conversion request to queue_converter.php');
     
     // Send JSON request with thesis_id and file path
     const conversionData = {
@@ -1388,18 +1388,16 @@ function convertToIMRaD() {
     
     console.log('📦 Sending conversion data:', conversionData);
     
-    // Submit conversion request
-    fetch('../ai_includes/journal_converter.php', {
+    // Submit conversion request to QUEUE (returns immediately)
+    fetch('../ai_includes/queue_converter.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(conversionData),
-        timeout: 5000  // Only wait 5 seconds for initial response
+        body: JSON.stringify(conversionData)
     })
     .then(response => {
-        console.log('📨 Initial response status:', response.status);
-        console.log('📨 Response headers:', response.headers);
+        console.log('📨 Queue response status:', response.status);
         
         if (!response.ok) {
             return response.text().then(text => {
@@ -1410,27 +1408,27 @@ function convertToIMRaD() {
         return response.json();
     })
     .then(data => {
-        console.log('📨 Parsed server response:', JSON.stringify(data, null, 2));
+        console.log('📨 Parsed queue response:', JSON.stringify(data, null, 2));
         
         if (!data) {
             throw new Error('No response data received');
         }
         
-        if (data.status === 'processing') {
-            console.log('⏳ Conversion started. Polling for completion...');
-            showAlert('⏳ Conversion started in background. Monitoring progress...', 'info');
+        if (data.status === 'queued' || data.status === 'processing') {
+            console.log('⏳ Conversion queued. Polling for completion...');
+            showAlert('⏳ Conversion queued and will process soon. Monitoring progress...', 'info');
             
-            // Start polling for completion
+            // Start polling for completion (status checks database)
             pollConversionStatus(thesisId, convertBtn, originalBtnHTML, 0);
         } else {
             throw new Error(data.error || 'Unexpected response from server');
         }
     })
     .catch(error => {
-        console.error('❌ Conversion error:', error);
+        console.error('❌ Queue error:', error);
         convertBtn.disabled = false;
         convertBtn.innerHTML = originalBtnHTML;
-        showAlert('❌ Conversion failed: ' + error.message, 'danger');
+        showAlert('❌ Failed to queue conversion: ' + error.message, 'danger');
     });
 }
 
