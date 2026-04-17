@@ -1674,20 +1674,18 @@ async function saveThesisToDatabase(thesisData) {
         localStorage.removeItem('thesisFormData');
         console.log('✓ Form data cleared from localStorage');
         
-        showAlert('✅ Thesis saved successfully! ID: ' + data.thesis_id + ' — Now click "IMRaD Conversion" to convert to journal format', 'success');
+        showAlert('✅ Thesis saved successfully! ID: ' + data.thesis_id + ' — Now click "Convert to IMRaD (Phase 2)" to convert to journal format', 'success');
         
         // Enable the convert button so user can click it
         const convertBtn = document.getElementById('convertToIMRaDBtn');
         if (convertBtn) {
             convertBtn.disabled = false;
-            convertBtn.innerHTML = '<i class="fas fa-magic me-2"></i>Convert to IMRaD Journal (Now Available)';
+            convertBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles me-2"></i>Convert to IMRaD (Phase 2)';
         }
         
-        // Don't redirect immediately - let user convert if they want
-        // Redirect after 5 seconds OR when user clicks convert
-        window.redirectTimeout = setTimeout(() => {
-            window.location.href = '../admin.php';
-        }, 5000);
+        // NOTE: Do NOT redirect here - let user click "Convert to IMRaD (Phase 2)" button
+        // The convert function will handle the redirect after conversion is complete
+        // If user doesn't want to convert, they can manually navigate to admin page
     } else {
         throw new Error(data.error || 'Unknown error occurred');
     }
