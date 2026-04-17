@@ -1454,19 +1454,6 @@ function convertToIMRaD() {
     
     // Start the conversion
     attemptConversion();
-            setTimeout(() => {
-                window.location.href = '../admin.php';
-            }, 3000);
-        } else {
-            throw new Error(data.error || 'Conversion failed');
-        }
-    })
-    .catch(error => {
-        console.error('❌ Conversion error:', error);
-        convertBtn.disabled = false;
-        convertBtn.innerHTML = originalBtnHTML;
-        showAlert('❌ Conversion error: ' + error.message, 'danger');
-    });
 }
 
 function submitForm() {
