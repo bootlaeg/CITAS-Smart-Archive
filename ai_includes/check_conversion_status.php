@@ -42,6 +42,21 @@ try {
     $result = $stmt->get_result();
     $thesis = $result->fetch_assoc();
     $stmt->close();
+    
+    // Check if there are queued items and trigger processing
+    $queue_result = $conn->query("SELECT COUNT(*) as count FROM thesis WHERE journal_conversion_status = 'queued'");
+    $queue_row = $queue_result->fetch_assoc();
+    $queued_count = (int)$queue_row['count'];
+    
+    if ($queued_count > 0) {
+        // Trigger queue processor asynchronously
+        error_log("[check_conversion_status] Found $queued_count queued items, triggering processor");
+        
+        $processor_url = 'http://localhost/ai_includes/process_queue.php';
+        $ctx = stream_context_create(['http' => ['method' => 'GET', 'timeout' => 2]]);
+        @file_get_contents($processor_url, false, $ctx);
+    }
+    
     $conn->close();
     
     if (!$thesis) {

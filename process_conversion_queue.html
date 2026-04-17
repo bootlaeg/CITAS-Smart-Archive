@@ -81,6 +81,14 @@
                 
                 if (data.queued > 0) {
                     showStatus(`⏳ ${data.queued} items waiting to be processed`, 'info');
+                    
+                    // AUTO-PROCESS: If there are queued items and nothing is processing, start processing
+                    if ((data.processing || 0) < 1) {
+                        log('ℹ️  Auto-starting queue processor (no items currently processing)...');
+                        setTimeout(() => {
+                            processQueue();
+                        }, 1000);
+                    }
                 } else if (data.processing > 0) {
                     showStatus(`⚙️ ${data.processing} items currently processing`, 'info');
                 } else if (data.failed > 0) {
@@ -97,6 +105,9 @@
     
     // Check status on load
     window.addEventListener('load', checkStatus);
+    
+    // Auto-check status every 10 seconds
+    setInterval(checkStatus, 10000);
     </script>
 </body>
 </html>
