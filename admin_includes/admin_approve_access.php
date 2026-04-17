@@ -21,7 +21,10 @@ $request_id = intval($_POST['request_id'] ?? 0);
 $user_id = intval($_POST['user_id'] ?? 0);
 $thesis_id = intval($_POST['thesis_id'] ?? 0);
 
+error_log("admin_approve_access.php received: request_id=$request_id, user_id=$user_id, thesis_id=$thesis_id, POST data: " . json_encode($_POST));
+
 if (empty($request_id) || empty($user_id) || empty($thesis_id)) {
+    error_log("admin_approve_access.php: Missing parameters - request_id=$request_id, user_id=$user_id, thesis_id=$thesis_id");
     echo json_encode(['success' => false, 'message' => 'Missing required parameters']);
     exit;
 }
