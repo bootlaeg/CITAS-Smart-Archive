@@ -138,9 +138,8 @@ class JournalConverter {
      */
     private function summarizeWithOllama($text, $target_words, $prompt_hint) {
         try {
-            // Try localhost first (server-side), then fallback to Cloudflare tunnel (client-side may need it)
-            // SERVER-SIDE: Use localhost directly since Ollama is running locally
-            $ollama_url = 'http://localhost:11434/api/generate';
+            // For Hostinger-hosted system: Use Cloudflare tunnel to access local Ollama
+            $ollama_url = 'https://ollama.CITAS-smart-archive.com/api/generate';
             
             // Prepare the text (limit to reasonable size for context)
             $context_text = substr($text, 0, 6000);
@@ -148,7 +147,7 @@ class JournalConverter {
             // Create a focused prompt for summarization
             $prompt = "Summarize the following section in approximately $target_words words. Focus on: $prompt_hint\n\nText:\n$context_text\n\nSummary:";
             
-            error_log("[JournalConverter] Calling Ollama at: $ollama_url");
+            error_log("[JournalConverter] Calling Ollama via Cloudflare tunnel at: $ollama_url");
             error_log("[JournalConverter] Using model: mistral");
             error_log("[JournalConverter] Prompt length: " . strlen($prompt));
             
@@ -167,16 +166,17 @@ class JournalConverter {
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 120);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10); // Quick fail if Ollama not running locally
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For tunnel self-signed certs
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             
-            error_log("[JournalConverter] Sending request to Ollama at localhost:11434...");
+            error_log("[JournalConverter] Sending request to Ollama via Cloudflare tunnel...");
             $response = curl_exec($ch);
             $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curl_error = curl_error($ch);
             curl_close($ch);
             
             if ($curl_error) {
-                error_log("[JournalConverter] Connection failed: $curl_error");
+                error_log("[JournalConverter] Connection failed: $curl_error (Tunnel may be offline)");
                 throw new Exception("Curl error: $curl_error");
             }
             
