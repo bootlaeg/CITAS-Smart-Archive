@@ -49,12 +49,12 @@ if (!isset($conn) || $conn === null) {
     exit();
 }
 
-// Check if user has approved thesis access (which gives chatbot access too)
+// Check if user has approved chatbot access
 $user_id = $_SESSION['user_id'];
 error_log("Checking access - user_id=$user_id, thesis_id=$thesis_id");
 
 $access_check = $conn->prepare("
-    SELECT id, status FROM thesis_access 
+    SELECT id, status FROM chatbot_access_requests 
     WHERE user_id = ? AND thesis_id = ?
 ");
 
