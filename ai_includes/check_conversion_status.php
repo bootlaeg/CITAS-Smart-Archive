@@ -2,7 +2,11 @@
 /**
  * Check Journal Conversion Status
  * Polls the database to check if conversion is complete
+ * Also processes queued conversions synchronously
  */
+
+set_time_limit(120);  // Allow up to 2 minutes for Ollama processing
+ini_set('default_socket_timeout', 120);
 
 header('Content-Type: application/json');
 
@@ -43,18 +47,80 @@ try {
     $thesis = $result->fetch_assoc();
     $stmt->close();
     
-    // Check if there are queued items and trigger processing
+    // Check if there are queued items and process ONE synchronously
     $queue_result = $conn->query("SELECT COUNT(*) as count FROM thesis WHERE journal_conversion_status = 'queued'");
     $queue_row = $queue_result->fetch_assoc();
     $queued_count = (int)$queue_row['count'];
     
     if ($queued_count > 0) {
-        // Trigger queue processor asynchronously
-        error_log("[check_conversion_status] Found $queued_count queued items, triggering processor");
+        error_log("[check_conversion_status] Found $queued_count queued items, processing one now");
         
-        $processor_url = 'http://localhost/ai_includes/process_queue.php';
-        $ctx = stream_context_create(['http' => ['method' => 'GET', 'timeout' => 2]]);
-        @file_get_contents($processor_url, false, $ctx);
+        // Get first queued item
+        $item_result = $conn->query("SELECT id, title, author, abstract, year, file_path FROM thesis WHERE journal_conversion_status = 'queued' LIMIT 1");
+        if ($item_result && $item = $item_result->fetch_assoc()) {
+            $item_thesis_id = $item['id'];
+            error_log("[check_conversion_status] Processing thesis $item_thesis_id: " . $item['title']);
+            
+            try {
+                // Mark as processing
+                $conn->query("UPDATE thesis SET journal_conversion_status = 'processing' WHERE id = $item_thesis_id");
+                
+                // Load converter
+                require_once __DIR__ . '/document_parser.php';
+                require_once __DIR__ . '/journal_converter.php';
+                
+                // Resolve file path
+                $file_path = $item['file_path'];
+                if (!file_exists($file_path)) {
+                    $file_path = __DIR__ . '/../' . $file_path;
+                }
+                
+                if (!file_exists($file_path)) {
+                    throw new Exception("File not found: $file_path");
+                }
+                
+                // Extract text from file
+                $document_text = null;
+                $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
+                
+                if ($ext === 'pdf') {
+                    $parse_result = DocumentParser::extractText($file_path);
+                    if (!$parse_result['success']) {
+                        throw new Exception("PDF parsing failed");
+                    }
+                    $document_text = $parse_result['text'];
+                } else {
+                    $document_text = file_get_contents($file_path);
+                }
+                
+                if (!$document_text) {
+                    throw new Exception("Could not extract text");
+                }
+                
+                // Build metadata
+                $metadata = [
+                    'title' => $item['title'],
+                    'author' => $item['author'],
+                    'abstract' => $item['abstract'],
+                    'year' => $item['year']
+                ];
+                
+                // Convert
+                error_log("[check_conversion_status] Starting Ollama conversion for thesis $item_thesis_id");
+                $converter = new JournalConverter($item_thesis_id, $document_text, $metadata, $conn);
+                $conv_result = $converter->convert();
+                
+                if ($conv_result['success']) {
+                    error_log("[check_conversion_status] ✅ Conversion successful for thesis $item_thesis_id");
+                } else {
+                    throw new Exception("Conversion returned false");
+                }
+                
+            } catch (Throwable $e) {
+                error_log("[check_conversion_status] ❌ ERROR processing thesis $item_thesis_id: " . $e->getMessage());
+                $conn->query("UPDATE thesis SET journal_conversion_status = 'failed' WHERE id = $item_thesis_id");
+            }
+        }
     }
     
     $conn->close();
