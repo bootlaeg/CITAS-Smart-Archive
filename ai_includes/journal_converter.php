@@ -400,12 +400,10 @@ class JournalConverter {
             is_journal_converted = ?,
             journal_conversion_status = ?,
             journal_page_count = ?,
-            journal_converted_at = NOW(),
-            journal_imrad_sections = ?
+            journal_converted_at = NOW()
             WHERE id = ?";
         
         $is_converted = ($status === 'completed') ? 1 : 0;
-        $imrad_json = json_encode($this->imrad_sections);
         
         // Prepare the statement with the FRESH connection
         error_log("[JournalConverter] Preparing UPDATE statement...");
@@ -418,7 +416,7 @@ class JournalConverter {
         
         error_log("[JournalConverter] Binding parameters for thesis_id=$this->thesis_id, status=$status...");
         
-        $stmt->bind_param("sisisi", $pdf_path, $is_converted, $status, $page_count, $imrad_json, $this->thesis_id);
+        $stmt->bind_param("sisii", $pdf_path, $is_converted, $status, $page_count, $this->thesis_id);
         
         error_log("[JournalConverter] Executing UPDATE query...");
         if (!$stmt->execute()) {
