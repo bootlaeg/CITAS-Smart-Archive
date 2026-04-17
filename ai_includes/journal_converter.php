@@ -29,19 +29,29 @@ class JournalConverter {
         
         try {
             // Step 1: Analyze IMRaD structure
+            error_log("[JournalConverter] STEP 1: Analyzing document structure...");
             $this->analyzeStructure();
+            error_log("[JournalConverter] STEP 1: ✅ Structure analysis complete");
             
             // Step 2: Extract and condense sections
+            error_log("[JournalConverter] STEP 2: Condensing to journal format...");
             $condensed = $this->condenseToJournal();
+            error_log("[JournalConverter] STEP 2: ✅ Condensing complete");
             
             // Step 3: Reconstruct in IMRaD format
+            error_log("[JournalConverter] STEP 3: Reconstructing as IMRaD...");
             $journal_content = $this->reconstructAsIMRaD($condensed);
+            error_log("[JournalConverter] STEP 3: ✅ Reconstruction complete");
             
             // Step 4: Generate PDF
+            error_log("[JournalConverter] STEP 4: Generating journal PDF...");
             $pdf_path = $this->generateJournalPDF($journal_content);
+            error_log("[JournalConverter] STEP 4: ✅ PDF generation complete");
             
             // Step 5: Update database
+            error_log("[JournalConverter] STEP 5: Updating database with fresh connection...");
             $this->updateDatabase($pdf_path, $journal_content);
+            error_log("[JournalConverter] STEP 5: ✅ Database update complete");
             
             error_log("[JournalConverter] Conversion completed successfully for thesis $this->thesis_id");
             
@@ -55,8 +65,17 @@ class JournalConverter {
             ];
             
         } catch (Exception $e) {
-            error_log("[JournalConverter] ERROR: " . $e->getMessage());
-            $this->updateDatabase(null, null, 'failed');
+            error_log("[JournalConverter] ❌ CONVERSION ERROR at step: " . $e->getMessage());
+            error_log("[JournalConverter] Error code: " . $e->getCode());
+            error_log("[JournalConverter] File: " . $e->getFile());
+            error_log("[JournalConverter] Line: " . $e->getLine());
+            error_log("[JournalConverter] Trace: " . $e->getTraceAsString());
+            
+            try {
+                $this->updateDatabase(null, null, 'failed');
+            } catch (Exception $updateError) {
+                error_log("[JournalConverter] Failed to log conversion failure to database: " . $updateError->getMessage());
+            }
             
             return [
                 'success' => false,
@@ -328,9 +347,41 @@ class JournalConverter {
             return;
         }
         
-        if (!$this->conn) {
-            error_log("[JournalConverter] No database connection - skipping database update");
-            return;
+        // CRITICAL FIX: Create a FRESH database connection instead of using the stale one from constructor
+        // The original connection has been idle for 60-90 seconds while Ollama was processing
+        // Hostinger closes idle connections, so we need a new one
+        error_log("[JournalConverter] Creating fresh database connection for update...");
+        
+        $db_config = [
+            'host' => 'localhost',
+            'user' => 'u965322812_CITAS_Smart',
+            'pass' => 'ErLv@g1e*',
+            'name' => 'u965322812_thesis_db'
+        ];
+        
+        // Retry connection up to 3 times with small delays
+        $conn = null;
+        $max_retries = 3;
+        for ($attempt = 1; $attempt <= $max_retries; $attempt++) {
+            error_log("[JournalConverter] Connection attempt $attempt/$max_retries...");
+            
+            $conn = new mysqli($db_config['host'], $db_config['user'], $db_config['pass'], $db_config['name']);
+            
+            if (!$conn->connect_error) {
+                error_log("[JournalConverter] ✅ Fresh database connection established on attempt $attempt");
+                break;
+            }
+            
+            error_log("[JournalConverter] Connection attempt $attempt failed: " . $conn->connect_error);
+            
+            if ($attempt < $max_retries) {
+                error_log("[JournalConverter] Waiting 2 seconds before retry...");
+                sleep(2);
+            }
+        }
+        
+        if ($conn->connect_error) {
+            throw new Exception("Database connection failed after $max_retries attempts: " . $conn->connect_error);
         }
         
         $page_count = null;
@@ -356,75 +407,33 @@ class JournalConverter {
         $is_converted = ($status === 'completed') ? 1 : 0;
         $imrad_json = json_encode($this->imrad_sections);
         
-        // TRY UPDATE - WITH AUTOMATIC RECONNECT ON FAILURE
-        try {
-            $stmt = $this->conn->prepare($update_sql);
-            
-            if (!$stmt) {
-                // Connection might be lost - try to reconnect
-                error_log("[JournalConverter] Prepare failed: " . $this->conn->error . " - attempting reconnect");
-                $this->reconnectDatabase();
-                
-                $stmt = $this->conn->prepare($update_sql);
-                if (!$stmt) {
-                    throw new Exception("Prepare failed after reconnect: " . $this->conn->error);
-                }
-            }
-            
-            $stmt->bind_param("sisisi", $pdf_path, $is_converted, $status, $page_count, $imrad_json, $this->thesis_id);
-            
-            if (!$stmt->execute()) {
-                error_log("[JournalConverter] Execute failed: " . $stmt->error . " - attempting reconnect and retry");
-                $stmt->close();
-                
-                // Reconnect and retry
-                $this->reconnectDatabase();
-                
-                $stmt = $this->conn->prepare($update_sql);
-                if (!$stmt) {
-                    throw new Exception("Prepare failed on retry: " . $this->conn->error);
-                }
-                
-                $stmt->bind_param("sisisi", $pdf_path, $is_converted, $status, $page_count, $imrad_json, $this->thesis_id);
-                
-                if (!$stmt->execute()) {
-                    throw new Exception("Execute failed on retry: " . $stmt->error);
-                }
-            }
-            
+        // Prepare the statement with the FRESH connection
+        error_log("[JournalConverter] Preparing UPDATE statement...");
+        $stmt = $conn->prepare($update_sql);
+        
+        if (!$stmt) {
+            $conn->close();
+            throw new Exception("Prepare failed: " . $conn->error);
+        }
+        
+        error_log("[JournalConverter] Binding parameters for thesis_id=$this->thesis_id, status=$status...");
+        
+        $stmt->bind_param("sisisi", $pdf_path, $is_converted, $status, $page_count, $imrad_json, $this->thesis_id);
+        
+        error_log("[JournalConverter] Executing UPDATE query...");
+        if (!$stmt->execute()) {
+            $error = $stmt->error;
             $stmt->close();
-            error_log("[JournalConverter] Database updated successfully");
-            
-        } catch (Exception $e) {
-            error_log("[JournalConverter] Database update error: " . $e->getMessage());
-            throw $e;
-        }
-    }
-    
-    /**
-     * Reconnect to database
-     */
-    private function reconnectDatabase() {
-        error_log("[JournalConverter] Reconnecting to database...");
-        
-        if ($this->conn) {
-            @$this->conn->close();
+            $conn->close();
+            throw new Exception("Execute failed: $error");
         }
         
-        $db_config = [
-            'host' => 'localhost',
-            'user' => 'u965322812_CITAS_Smart',
-            'pass' => 'ErLv@g1e*',
-            'name' => 'u965322812_thesis_db'
-        ];
+        error_log("[JournalConverter] UPDATE successful! Affected rows: " . $stmt->affected_rows);
         
-        $this->conn = new mysqli($db_config['host'], $db_config['user'], $db_config['pass'], $db_config['name']);
+        $stmt->close();
+        $conn->close();
         
-        if ($this->conn->connect_error) {
-            throw new Exception("Reconnection failed: " . $this->conn->connect_error);
-        }
-        
-        error_log("[JournalConverter] Reconnected to database successfully");
+        error_log("[JournalConverter] Database updated successfully with fresh connection");
     }
 }
 
