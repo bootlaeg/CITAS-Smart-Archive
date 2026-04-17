@@ -1329,6 +1329,25 @@ if (is_logged_in()) {
             color: var(--text-dark);
         }
 
+        .btn-request-access {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            margin-left: 0.5rem;
+        }
+
+        .btn-request-access:hover {
+            background: #e55a24;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        }
+
         /* Access Status Messages */
         .access-status-message {
             padding: 1rem;
@@ -2091,6 +2110,9 @@ if (hamburgerMenu) {
             <button class="btn-close-access-overlay" id="closeAccessOverlayBtn">
                 Close
             </button>
+            <button class="btn-request-access" id="requestAccessBtn" onclick="requestChatbotAccess()">
+                <i class="fas fa-envelope me-2"></i>Request Access
+            </button>
         </div>
     </div>
 
@@ -2323,6 +2345,14 @@ closeAccessOverlayBtn.addEventListener('click', () => {
     closeChatbotPanel();
 });
 
+// Request access button
+const requestAccessBtn = document.getElementById('requestAccessBtn');
+if (requestAccessBtn) {
+    requestAccessBtn.addEventListener('click', () => {
+        requestChatbotAccess();
+    });
+}
+
 // New chat button
 newChatBtn.addEventListener('click', () => {
     createNewSession();
@@ -2337,6 +2367,55 @@ backToSessionsBtn.addEventListener('click', () => {
 function closeChatbotPanel() {
     chatbotPanel.classList.remove('open');
     chatbotBubble.classList.remove('active');
+}
+
+// Request chatbot access
+function requestChatbotAccess() {
+    // Show loading state
+    const requestBtn = document.getElementById('requestAccessBtn');
+    const originalText = requestBtn.innerHTML;
+    requestBtn.disabled = true;
+    requestBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending request...';
+    
+    fetch('client_includes/submit_access_request.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            thesis_id: thesisId,
+            request_type: 'chatbot'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            requestBtn.innerHTML = '<i class="fas fa-check me-2"></i>Request sent!';
+            requestBtn.style.background = '#10b981';
+            
+            // Reset after 3 seconds
+            setTimeout(() => {
+                requestBtn.innerHTML = originalText;
+                requestBtn.disabled = false;
+                requestBtn.style.background = '#ff6b35';
+                
+                // Show alert
+                alert('✅ Your access request has been sent to the admin. You will be notified once it is approved.');
+                closeChatbotPanel();
+            }, 2000);
+        } else {
+            alert('❌ Error: ' + (data.error || 'Failed to send request'));
+            requestBtn.innerHTML = originalText;
+            requestBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error sending request. Please try again.');
+        requestBtn.innerHTML = originalText;
+        requestBtn.disabled = false;
+    });
 }
 
 // Send message when button clicked
