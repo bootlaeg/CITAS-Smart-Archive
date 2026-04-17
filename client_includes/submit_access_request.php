@@ -82,6 +82,9 @@ try {
         throw new Exception("Failed to submit request: " . $stmt->error);
     }
     
+    $inserted_id = $conn->insert_id;
+    error_log("Inserted access request with ID: $inserted_id for user $user_id on thesis $thesis_id");
+    
     $stmt->close();
     
     error_log("[access_request] User $user_id requested access to thesis $thesis_id");
