@@ -1388,36 +1388,72 @@ function convertToIMRaD() {
     
     console.log('📦 Sending conversion data:', conversionData);
     
-    fetch('../ai_includes/journal_converter.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(conversionData)
-    })
-    .then(response => {
-        console.log('📨 Conversion response status:', response.status);
-        if (!response.ok) {
-            return response.text().then(text => {
-                console.log('❌ Error response body:', text);
-                throw new Error(`HTTP ${response.status}: ${text}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('📨 Conversion result:', data);
+    // Retry logic for failed conversions (e.g., 503 Service Unavailable)
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    function attemptConversion() {
+        retryCount++;
+        console.log(`📤 Attempt ${retryCount}/${maxRetries + 1}: Sending conversion request to journal_converter.php`);
         
-        if (data.success) {
-            console.log('✅ Journal conversion successful!');
-            console.log('   Pages:', data.journal_page_count);
-            console.log('   File:', data.journal_file_path);
+        fetch('../ai_includes/journal_converter.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(conversionData)
+        })
+        .then(response => {
+            console.log('📨 Conversion response status:', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.log('❌ Error response body (first 200 chars):', text.substring(0, 200));
+                    
+                    // If 503 error and retries available, retry after delay
+                    if (response.status === 503 && retryCount <= maxRetries) {
+                        console.log(`⚠️ Got 503 Service Unavailable. Retrying in 10 seconds...`);
+                        showAlert('⚠️ Server temporarily busy. Retrying conversion...', 'warning');
+                        setTimeout(attemptConversion, 10000); // Wait 10 seconds before retry
+                        return;
+                    }
+                    
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data) return; // Retry already triggered
             
-            showAlert('✅ Journal Format Generated Successfully! ✔️ ' + (data.journal_page_count || '10-20') + ' pages' , 'success');
-            convertBtn.disabled = true;
-            convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>IMRaD Conversion Complete';
+            console.log('📨 Conversion result:', data);
             
-            // Redirect to admin after 3 seconds
+            if (data.success) {
+                console.log('✅ Journal conversion successful!');
+                console.log('   Pages:', data.journal_page_count);
+                console.log('   File:', data.journal_file_path);
+                
+                showAlert('✅ Journal Format Generated Successfully! ✔️ ' + (data.journal_page_count || '10-20') + ' pages' , 'success');
+                convertBtn.disabled = true;
+                convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>IMRaD Conversion Complete';
+                
+                // Redirect to admin after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '../admin.php';
+                }, 3000);
+            } else {
+                throw new Error(data.error || 'Conversion failed');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Conversion error:', error);
+            convertBtn.disabled = false;
+            convertBtn.innerHTML = originalBtnHTML;
+            showAlert('❌ Conversion error: ' + error.message, 'danger');
+        });
+    }
+    
+    // Start the conversion
+    attemptConversion();
             setTimeout(() => {
                 window.location.href = '../admin.php';
             }, 3000);
