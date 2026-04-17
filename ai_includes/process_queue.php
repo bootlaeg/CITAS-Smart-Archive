@@ -1,9 +1,8 @@
 <?php
-/**
- * Process Journal Conversion Queue
- * This script processes all queued conversions
- * Should be run periodically via cron: */5 * * * * /usr/bin/php /home/u965322812/domains/citas-smart-archive.com/public_html/ai_includes/process_queue.php
- */
+// Process Journal Conversion Queue
+// This script processes all queued conversions
+// Should be run periodically via cron every 5 minutes
+// Cron: 0,5,10,15,20,25,30,35,40,45,50,55 * * * * /usr/bin/php /home/u965322812/domains/citas-smart-archive.com/public_html/ai_includes/process_queue.php
 
 set_time_limit(300);  // Allow up to 5 minutes per queue run
 ini_set('default_socket_timeout', 300);
