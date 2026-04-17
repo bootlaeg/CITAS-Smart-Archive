@@ -4,31 +4,49 @@ set_time_limit(0);
 ini_set('default_socket_timeout', 300);
 ini_set('max_execution_time', 300);
 
+// Start output buffering to prevent accidental output
+ob_start();
+
 // Function to close HTTP connection and continue processing in background
 function closeConnectionAndContinue($response) {
-    // Send JSON response
+    // Prepare JSON response
+    $json_response = json_encode($response);
+    
+    // Clear any buffered output
+    ob_end_clean();
+    
+    // Send proper HTTP headers
+    http_response_code(200);
     header('Content-Type: application/json');
-    header('Content-Length: ' . strlen(json_encode($response)));
+    header('Content-Length: ' . strlen($json_response));
     header('Connection: close');
+    header('Cache-Control: no-cache, no-store, must-revalidate');
     
-    ob_start();
-    echo json_encode($response);
-    $size = ob_get_clean();
-    echo $size;
+    // Send the response
+    echo $json_response;
     
-    // Close connection but keep processing
-    if (session_id()) {
+    // Flush output immediately
+    flush();
+    ob_flush();
+    
+    // Close session if active
+    if (function_exists('session_write_close')) {
         session_write_close();
     }
+    
+    // Try to close connection using available methods
     if (function_exists('fastcgi_finish_request')) {
         fastcgi_finish_request();
-    } else {
-        flush();
-        ob_flush();
     }
     
-    // Give socket a moment to close
-    usleep(100000);
+    // Give browser time to process response
+    sleep(1);
+    
+    // Log that we're continuing
+    error_log("[journal_converter] Connection closed, continuing with background processing");
+    
+    // Start new output buffer to suppress any further output
+    ob_start();
 }
 
 /**
@@ -802,19 +820,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             closeConnectionAndContinue($immediate_response);
             
             // Continue conversion in background (connection already closed)
+            // Any errors here will be logged but not sent to client
             error_log("[journal_converter.php] Starting background conversion process");
-            $result = $converter->convert();
+            try {
+                $result = $converter->convert();
+                error_log("[journal_converter.php] Conversion completed: " . json_encode($result));
+            } catch (Throwable $bgError) {
+                error_log("[journal_converter.php] Background conversion error: " . $bgError->getMessage());
+                error_log("[journal_converter.php] Trace: " . $bgError->getTraceAsString());
+            }
             
-            error_log("[journal_converter.php] Conversion completed: " . json_encode($result));
+            // Exit without sending further output
+            exit;
             
         } catch (Throwable $convertError) {
-            error_log("[journal_converter.php] CONVERSION ERROR: " . $convertError->getMessage());
-            error_log("[journal_converter.php] Error code: " . $convertError->getCode());
-            error_log("[journal_converter.php] Trace: " . $convertError->getTraceAsString());
+            error_log("[journal_converter.php] ERROR during setup: " . $convertError->getMessage());
             
-            throw new Exception("Conversion failed: " . $convertError->getMessage());
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error' => $convertError->getMessage()
+            ]);
+            exit;
         }
     } catch (Exception $e) {
+        // Clear any buffered output
+        ob_end_clean();
+        
         error_log("[journal_converter.php] ERROR: " . $e->getMessage());
         
         http_response_code(400);
