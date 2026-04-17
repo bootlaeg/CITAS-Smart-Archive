@@ -1244,6 +1244,8 @@ function deleteThesis(thesisId, title) {
 function approveAccess(requestId, userId, thesisId, userName) {
     if (!confirm(`Approve access for "${userName}"?`)) return;
     
+    console.log('Approving:', { requestId, userId, thesisId });
+    
     fetch('admin_includes/admin_approve_access.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -1251,17 +1253,25 @@ function approveAccess(requestId, userId, thesisId, userName) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Approve response:', data);
         if (data.success) {
             alert(data.message);
             location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
         }
     })
-    .catch(error => alert('Error approving access'));
+    .catch(error => {
+        console.error('Approve error:', error);
+        alert('Error approving access: ' + error.message);
+    });
 }
 
 // Reject Access Request
 function rejectAccess(requestId, userName) {
     if (!confirm(`Reject access for "${userName}"?`)) return;
+    
+    console.log('Rejecting:', { requestId });
     
     fetch('admin_includes/admin_deny_access.php', {
         method: 'POST',
@@ -1270,12 +1280,18 @@ function rejectAccess(requestId, userName) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Reject response:', data);
         if (data.success) {
             alert(data.message);
             location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
         }
     })
-    .catch(error => alert('Error rejecting access'));
+    .catch(error => {
+        console.error('Reject error:', error);
+        alert('Error rejecting access: ' + error.message);
+    });
 }
 
 // Edit User Modal

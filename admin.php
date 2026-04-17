@@ -2086,6 +2086,8 @@ window.deleteThesis = function(thesisId, title) {
 window.approveAccess = function(requestId, userId, thesisId, userName) {
     if (!confirm(`Approve access for "${userName}"?`)) return;
     
+    console.log('Approving:', { requestId, userId, thesisId });
+    
     fetch('admin_includes/admin_approve_access.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -2093,30 +2095,34 @@ window.approveAccess = function(requestId, userId, thesisId, userName) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Approve response:', data);
         if (data.success) {
             alert(data.message);
             location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Unknown error'));
         }
     })
-    .catch(error => alert('Error approving access'));
+    .catch(error => {
+        console.error('Approve error:', error);
+        alert('Error approving access: ' + error.message);
+    });
 }
 
 // Reject Access Request
 window.rejectAccess = function(requestId, userName) {
     if (!confirm(`Reject access for "${userName}"?`)) return;
     
+    console.log('Rejecting:', { requestId });
+    
     fetch('admin_includes/admin_deny_access.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'request_id=' + requestId
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok: ' + response.statusText);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
+        console.log('Reject response:', data);
         if (data.success) {
             alert(data.message);
             location.reload();

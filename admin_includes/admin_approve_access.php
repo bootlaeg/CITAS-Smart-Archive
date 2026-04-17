@@ -45,14 +45,15 @@ if ($result->num_rows === 0) {
 $stmt->close();
 
 // Update the access request status to 'approved'
-$stmt = $conn->prepare("UPDATE chatbot_access_requests SET status = 'approved', approved_at = NOW() WHERE id = ?");
+$stmt = $conn->prepare("UPDATE chatbot_access_requests SET status = 'approved', approved_at = NOW(), approved_by = ? WHERE id = ?");
 
 if (!$stmt) {
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
     exit;
 }
 
-$stmt->bind_param("i", $request_id);
+$admin_id = $_SESSION['user_id'];
+$stmt->bind_param("ii", $admin_id, $request_id);
 
 if ($stmt->execute()) {
     $stmt->close();
