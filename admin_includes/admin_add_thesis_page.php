@@ -1415,11 +1415,15 @@ function convertToIMRaD() {
         }
         
         if (data.status === 'queued' || data.status === 'processing') {
-            console.log('⏳ Conversion queued. Polling for completion...');
-            showAlert('⏳ Conversion queued and will process soon. Monitoring progress...', 'info');
+            console.log('⏳ Conversion queued. Will process automatically...');
+            showAlert('⏳ Conversion queued successfully! It will be processed automatically. You can close this page.', 'success');
+            convertBtn.disabled = true;
+            convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Conversion Queued';
             
-            // Start polling for completion (status checks database)
-            pollConversionStatus(thesisId, convertBtn, originalBtnHTML, 0);
+            // Redirect to admin after 3 seconds
+            setTimeout(() => {
+                window.location.href = '../admin.php';
+            }, 3000);
         } else {
             throw new Error(data.error || 'Unexpected response from server');
         }
@@ -1430,54 +1434,6 @@ function convertToIMRaD() {
         convertBtn.innerHTML = originalBtnHTML;
         showAlert('❌ Failed to queue conversion: ' + error.message, 'danger');
     });
-}
-
-// Poll for conversion status every 5 seconds
-function pollConversionStatus(thesisId, convertBtn, originalBtnHTML, pollCount) {
-    const maxPolls = 60;  // Max 5 minutes of polling (60 × 5 seconds)
-    
-    if (pollCount >= maxPolls) {
-        console.error('❌ Conversion timeout after 5 minutes');
-        convertBtn.disabled = false;
-        convertBtn.innerHTML = originalBtnHTML;
-        showAlert('❌ Conversion timed out. Please try again.', 'danger');
-        return;
-    }
-    
-    // Wait 5 seconds before checking status
-    setTimeout(() => {
-        console.log(`📊 Status check ${pollCount + 1}/${maxPolls}`);
-        
-        fetch(`../ai_includes/check_conversion_status.php?thesis_id=${thesisId}`)
-            .then(response => response.json())
-            .then(data => {
-                console.log('Status response:', data);
-                
-                if (data.is_converted) {
-                    console.log('✅ Journal conversion successful!');
-                    console.log('   Pages:', data.page_count);
-                    console.log('   File:', data.journal_file_path);
-                    
-                    showAlert('✅ Journal Format Generated Successfully! ' + (data.page_count || '10-20') + ' pages', 'success');
-                    convertBtn.disabled = true;
-                    convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>IMRaD Conversion Complete';
-                    
-                    // Redirect to admin after 3 seconds
-                    setTimeout(() => {
-                        window.location.href = '../admin.php';
-                    }, 3000);
-                } else {
-                    // Still converting, poll again in 5 seconds
-                    console.log('⏳ Still converting, will check again in 5 seconds...');
-                    pollConversionStatus(thesisId, convertBtn, originalBtnHTML, pollCount + 1);
-                }
-            })
-            .catch(error => {
-                console.error('Error checking conversion status:', error);
-                // Retry on error
-                pollConversionStatus(thesisId, convertBtn, originalBtnHTML, pollCount + 1);
-            });
-    }, 5000);
 }
 
 function submitForm() {
