@@ -1399,13 +1399,22 @@ function convertToIMRaD() {
     })
     .then(response => {
         console.log('📨 Initial response status:', response.status);
+        console.log('📨 Response headers:', response.headers);
+        
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            return response.text().then(text => {
+                console.error('❌ Error response (first 500 chars):', text.substring(0, 500));
+                throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
+            });
         }
         return response.json();
     })
     .then(data => {
-        console.log('📨 Server response:', data);
+        console.log('📨 Parsed server response:', JSON.stringify(data, null, 2));
+        
+        if (!data) {
+            throw new Error('No response data received');
+        }
         
         if (data.status === 'processing') {
             console.log('⏳ Conversion started. Polling for completion...');
