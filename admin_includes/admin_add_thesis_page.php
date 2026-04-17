@@ -1370,9 +1370,9 @@ function convertToIMRaD() {
     
     // Disable button and show loading state
     convertBtn.disabled = true;
-    convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Converting to IMRaD (30-60 seconds)...';
+    convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Converting to IMRaD (60-90 seconds)...';
     
-    showAlert('🔄 Converting document to IMRaD journal format... This may take 30-60 seconds.', 'info');
+    showAlert('🔄 Converting document to IMRaD journal format... This may take 60-90 seconds. Processing in background.', 'info');
     
     console.log('📤 Sending conversion request to journal_converter.php');
     
@@ -1388,72 +1388,89 @@ function convertToIMRaD() {
     
     console.log('📦 Sending conversion data:', conversionData);
     
-    // Retry logic for failed conversions (e.g., 503 Service Unavailable)
-    let retryCount = 0;
-    const maxRetries = 2;
-    
-    function attemptConversion() {
-        retryCount++;
-        console.log(`📤 Attempt ${retryCount}/${maxRetries + 1}: Sending conversion request to journal_converter.php`);
+    // Submit conversion request
+    fetch('../ai_includes/journal_converter.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(conversionData),
+        timeout: 5000  // Only wait 5 seconds for initial response
+    })
+    .then(response => {
+        console.log('📨 Initial response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('📨 Server response:', data);
         
-        fetch('../ai_includes/journal_converter.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(conversionData)
-        })
-        .then(response => {
-            console.log('📨 Conversion response status:', response.status);
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.log('❌ Error response body (first 200 chars):', text.substring(0, 200));
-                    
-                    // If 503 error and retries available, retry after delay
-                    if (response.status === 503 && retryCount <= maxRetries) {
-                        console.log(`⚠️ Got 503 Service Unavailable. Retrying in 10 seconds...`);
-                        showAlert('⚠️ Server temporarily busy. Retrying conversion...', 'warning');
-                        setTimeout(attemptConversion, 10000); // Wait 10 seconds before retry
-                        return;
-                    }
-                    
-                    throw new Error(`HTTP ${response.status}: ${text}`);
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (!data) return; // Retry already triggered
+        if (data.status === 'processing') {
+            console.log('⏳ Conversion started. Polling for completion...');
+            showAlert('⏳ Conversion started in background. Monitoring progress...', 'info');
             
-            console.log('📨 Conversion result:', data);
-            
-            if (data.success) {
-                console.log('✅ Journal conversion successful!');
-                console.log('   Pages:', data.journal_page_count);
-                console.log('   File:', data.journal_file_path);
-                
-                showAlert('✅ Journal Format Generated Successfully! ✔️ ' + (data.journal_page_count || '10-20') + ' pages' , 'success');
-                convertBtn.disabled = true;
-                convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>IMRaD Conversion Complete';
-                
-                // Redirect to admin after 3 seconds
-                setTimeout(() => {
-                    window.location.href = '../admin.php';
-                }, 3000);
-            } else {
-                throw new Error(data.error || 'Conversion failed');
-            }
-        })
-        .catch(error => {
-            console.error('❌ Conversion error:', error);
-            convertBtn.disabled = false;
-            convertBtn.innerHTML = originalBtnHTML;
-            showAlert('❌ Conversion error: ' + error.message, 'danger');
-        });
+            // Start polling for completion
+            pollConversionStatus(thesisId, convertBtn, originalBtnHTML, 0);
+        } else {
+            throw new Error(data.error || 'Unexpected response from server');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Conversion error:', error);
+        convertBtn.disabled = false;
+        convertBtn.innerHTML = originalBtnHTML;
+        showAlert('❌ Conversion failed: ' + error.message, 'danger');
+    });
+}
+
+// Poll for conversion status every 5 seconds
+function pollConversionStatus(thesisId, convertBtn, originalBtnHTML, pollCount) {
+    const maxPolls = 60;  // Max 5 minutes of polling (60 × 5 seconds)
+    
+    if (pollCount >= maxPolls) {
+        console.error('❌ Conversion timeout after 5 minutes');
+        convertBtn.disabled = false;
+        convertBtn.innerHTML = originalBtnHTML;
+        showAlert('❌ Conversion timed out. Please try again.', 'danger');
+        return;
     }
     
-    // Start the conversion
-    attemptConversion();
+    // Wait 5 seconds before checking status
+    setTimeout(() => {
+        console.log(`📊 Status check ${pollCount + 1}/${maxPolls}`);
+        
+        fetch(`../ai_includes/check_conversion_status.php?thesis_id=${thesisId}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Status response:', data);
+                
+                if (data.is_converted) {
+                    console.log('✅ Journal conversion successful!');
+                    console.log('   Pages:', data.page_count);
+                    console.log('   File:', data.journal_file_path);
+                    
+                    showAlert('✅ Journal Format Generated Successfully! ' + (data.page_count || '10-20') + ' pages', 'success');
+                    convertBtn.disabled = true;
+                    convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>IMRaD Conversion Complete';
+                    
+                    // Redirect to admin after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = '../admin.php';
+                    }, 3000);
+                } else {
+                    // Still converting, poll again in 5 seconds
+                    console.log('⏳ Still converting, will check again in 5 seconds...');
+                    pollConversionStatus(thesisId, convertBtn, originalBtnHTML, pollCount + 1);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking conversion status:', error);
+                // Retry on error
+                pollConversionStatus(thesisId, convertBtn, originalBtnHTML, pollCount + 1);
+            });
+    }, 5000);
 }
 
 function submitForm() {

@@ -4,6 +4,33 @@ set_time_limit(0);
 ini_set('default_socket_timeout', 300);
 ini_set('max_execution_time', 300);
 
+// Function to close HTTP connection and continue processing in background
+function closeConnectionAndContinue($response) {
+    // Send JSON response
+    header('Content-Type: application/json');
+    header('Content-Length: ' . strlen(json_encode($response)));
+    header('Connection: close');
+    
+    ob_start();
+    echo json_encode($response);
+    $size = ob_get_clean();
+    echo $size;
+    
+    // Close connection but keep processing
+    if (session_id()) {
+        session_write_close();
+    }
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } else {
+        flush();
+        ob_flush();
+    }
+    
+    // Give socket a moment to close
+    usleep(100000);
+}
+
 /**
  * Journal Converter
  * Converts raw documents to journal format (10-20 pages, IMRaD structure)
@@ -763,13 +790,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $converter = new JournalConverter($thesis_id ?: 'unsaved', $document_text, $metadata, $conn);
             
-            error_log("[journal_converter.php] Calling convert()...");
+            // Send immediate response to close HTTP connection
+            $immediate_response = [
+                'success' => true,
+                'status' => 'processing',
+                'thesis_id' => $thesis_id,
+                'message' => 'Conversion started in background. Please wait...'
+            ];
+            
+            error_log("[journal_converter.php] Sending immediate response and closing connection");
+            closeConnectionAndContinue($immediate_response);
+            
+            // Continue conversion in background (connection already closed)
+            error_log("[journal_converter.php] Starting background conversion process");
             $result = $converter->convert();
             
-            error_log("[journal_converter.php] Conversion completed, returning result");
+            error_log("[journal_converter.php] Conversion completed: " . json_encode($result));
             
-            // Return JSON response
-            echo json_encode($result);
         } catch (Throwable $convertError) {
             error_log("[journal_converter.php] CONVERSION ERROR: " . $convertError->getMessage());
             error_log("[journal_converter.php] Error code: " . $convertError->getCode());
