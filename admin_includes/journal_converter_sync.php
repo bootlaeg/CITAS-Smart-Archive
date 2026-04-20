@@ -98,7 +98,8 @@ try {
     // Create converter WITHOUT database connection (we're just generating the file)
     // Pass null as $thesis_id since we don't have a thesis ID yet
     error_log("[journal_converter_sync] Instantiating JournalConverter");
-    $converter = new JournalConverter(null, $document_text, $metadata, null);
+    // Pass 'unsaved' as thesis_id so updateDatabase() will skip (database write done in save_thesis_classification.php)
+    $converter = new JournalConverter('unsaved', $document_text, $metadata, null);
     
     error_log("[journal_converter_sync] Starting conversion process");
     
@@ -140,13 +141,21 @@ try {
         throw new Exception("Journal file not found at expected location: " . $journal_file);
     }
     
+    // Prepare response data
+    $page_count = isset($result['journal_page_count']) ? intval($result['journal_page_count']) : 0;
+    error_log("[journal_converter_sync] About to return response with:");
+    error_log("[journal_converter_sync]   - success: true");
+    error_log("[journal_converter_sync]   - temp_path: $temp_path");
+    error_log("[journal_converter_sync]   - page_count: $page_count");
+    
     // Return success with temp path
     echo json_encode([
         'success' => true,
         'temp_path' => $temp_path,
-        'page_count' => $result['journal_page_count'],
+        'page_count' => $page_count,
         'message' => 'Conversion successful! Ready to save.'
     ]);
+    error_log("[journal_converter_sync] Response sent successfully");
     
 } catch (Exception $e) {
     error_log("[journal_converter_sync] ❌ ERROR: " . $e->getMessage());

@@ -556,9 +556,21 @@ HTML;
      * Update database with conversion results
      */
     private function updateDatabase($pdf_path, $journal_content, $status = 'completed') {
+        // ALWAYS calculate page count from journal content
+        // This is needed even for synchronous conversion without database update
+        $page_count = null;
+        if ($journal_content) {
+            // Estimate page count (250 words per page)
+            $word_count = str_word_count(strip_tags($journal_content));
+            $page_count = ceil($word_count / 250);
+            $this->journal_page_count = $page_count;
+            error_log("[JournalConverter] Page count calculated: $page_count pages");
+        }
+        
         // Skip database update if thesis_id is not set or is 'unsaved' placeholder
         if (!$this->thesis_id || $this->thesis_id === 'unsaved') {
             error_log("[JournalConverter] Skipping database update - thesis not yet saved");
+            error_log("[JournalConverter] Page count available for return: $page_count");
             return;
         }
         
@@ -597,17 +609,6 @@ HTML;
         
         if ($conn->connect_error) {
             throw new Exception("Database connection failed after $max_retries attempts: " . $conn->connect_error);
-        }
-        
-        $page_count = null;
-        
-        if ($journal_content) {
-            // Estimate page count (250 words per page)
-            $word_count = str_word_count(strip_tags($journal_content));
-            $page_count = ceil($word_count / 250);
-            
-            // Store for return value
-            $this->journal_page_count = $page_count;
         }
         
         $update_sql = "UPDATE thesis SET 

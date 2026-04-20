@@ -1418,9 +1418,17 @@ function convertToIMRaD() {
     })
     .then(data => {
         console.log('📨 Parsed conversion response:', data);
+        console.log('📨 Full response keys:', Object.keys(data));
+        console.log('📨 Temp path value:', data.temp_path);
+        console.log('📨 Page count value:', data.page_count);
         
         if (!data.success) {
             throw new Error(data.error || 'Conversion failed');
+        }
+        
+        // Validate required fields
+        if (!data.temp_path) {
+            throw new Error('No temp_path in response - conversion incomplete');
         }
         
         console.log('✅ CONVERSION SUCCESSFUL!');
@@ -1484,6 +1492,10 @@ function submitForm() {
         
         // ✅ NEW: Check if conversion to IMRaD was successful
         if (!journalConversionComplete || !tempJournalPath) {
+            console.error('❌ Save validation failed:');
+            console.error('   journalConversionComplete:', journalConversionComplete);
+            console.error('   tempJournalPath:', tempJournalPath);
+            console.error('   Type of tempJournalPath:', typeof tempJournalPath);
             showAlert('❌ Please click "Convert to IMRaD" to convert document to journal format first', 'danger');
             return;
         }
