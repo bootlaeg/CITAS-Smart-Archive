@@ -658,6 +658,12 @@ HTML;
 // REQUEST HANDLER (Endpoint for POST requests)
 // ============================================
 
+// GUARD: If this file is included from another script (like journal_converter_sync.php),
+// skip the REQUEST HANDLER and just load the class definition
+if (basename(__FILE__) !== basename($_SERVER['SCRIPT_FILENAME'] ?? '')) {
+    return; // File is being included, not called directly
+}
+
 // Set up error handler to catch all errors
 set_error_handler(function($errno, $errstr, $errfile, $errline) {
     error_log("[journal_converter.php] PHP ERROR ($errno): $errstr in $errfile:$errline");

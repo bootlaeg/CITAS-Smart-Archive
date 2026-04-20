@@ -26,6 +26,11 @@ header('Content-Type: application/json; charset=utf-8');
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
+// Log that this endpoint was called
+error_log("[journal_converter_sync.php] ENDPOINT CALLED");
+error_log("[journal_converter_sync.php] Request method: " . $_SERVER['REQUEST_METHOD']);
+error_log("[journal_converter_sync.php] Content-Type: " . ($_SERVER['CONTENT_TYPE'] ?? 'not set'));
+
 try {
     // Parse JSON input
     $input = json_decode(file_get_contents('php://input'), true);
