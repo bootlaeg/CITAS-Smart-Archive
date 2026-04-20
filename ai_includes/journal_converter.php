@@ -278,6 +278,15 @@ class JournalConverter {
      */
     private function summarizeWithOllama($text, $target_words, $prompt_hint) {
         try {
+            // Try HuggingFace first (faster than Ollama)
+            $hf_summary = $this->summarizeWithHuggingFace($text, $target_words, $prompt_hint);
+            if ($hf_summary !== null) {
+                return $hf_summary;
+            }
+            
+            // Fallback to Ollama if HF fails
+            error_log("[JournalConverter] HF failed, falling back to Ollama");
+            
             // For Hostinger-hosted system: Use Cloudflare tunnel to access local Ollama
             $ollama_url = 'https://ollama.CITAS-smart-archive.com/api/generate';
             
@@ -347,10 +356,74 @@ class JournalConverter {
                 error_log("[JournalConverter] Ollama returned empty summary");
             }
         } catch (Exception $e) {
-            error_log("[JournalConverter] Ollama service error: " . $e->getMessage());
+            error_log("[JournalConverter] AI service error: " . $e->getMessage());
         }
         
         return null;
+    }
+    
+    /**
+     * Summarize using HuggingFace Free API (faster than Ollama)
+     */
+    private function summarizeWithHuggingFace($text, $target_words, $prompt_hint) {
+        try {
+            error_log("[JournalConverter] Attempting HuggingFace summarization");
+            error_log("[JournalConverter] Text length: " . strlen($text) . " chars, target: $target_words words");
+            
+            // Load environment variables from .env file
+            if (file_exists(__DIR__ . '/../.env')) {
+                $env_file = __DIR__ . '/../.env';
+                $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+                        list($key, $value) = explode('=', $line, 2);
+                        $key = trim($key);
+                        $value = trim($value);
+                        if (empty($_ENV[$key])) {
+                            putenv("$key=$value");
+                        }
+                    }
+                }
+            }
+            
+            // Load HuggingFace service with config
+            require_once 'huggingface_config.php';
+            require_once 'huggingface_service.php';
+            
+            // Verify API key is set
+            $api_key = getenv('HUGGING_FACE_API_KEY');
+            if (empty($api_key)) {
+                throw new Exception("HuggingFace API key not configured in .env");
+            }
+            
+            error_log("[JournalConverter] HF API key loaded: " . substr($api_key, 0, 10) . "...");
+            
+            // Create service
+            $hf_service = new HuggingFaceService();
+            
+            error_log("[JournalConverter] Calling HuggingFace API for summarization");
+            
+            // Call summarize directly
+            $result = $hf_service->summarize($text, $target_words);
+            
+            if (!isset($result['success'])) {
+                error_log("[JournalConverter] Invalid HF response format: " . json_encode($result));
+                throw new Exception("Invalid HF response");
+            }
+            
+            if ($result['success'] && !empty($result['summary'])) {
+                error_log("[JournalConverter] HuggingFace summarization successful (" . str_word_count($result['summary']) . " words)");
+                return trim($result['summary']);
+            } else {
+                $error = $result['error'] ?? 'Unknown error';
+                error_log("[JournalConverter] HuggingFace summarization failed: $error");
+                throw new Exception("HF summarization failed: $error");
+            }
+            
+        } catch (Exception $e) {
+            error_log("[JournalConverter] HuggingFace error: " . $e->getMessage());
+            return null; // Return null to trigger fallback to Ollama
+        }
     }
     
     /**
