@@ -422,6 +422,7 @@ require_admin();
         </div>
         <div class="nav-right">
             <a href="../admin.php"><i class="fas fa-arrow-left me-2"></i>Back to Admin</a>
+            <a href="#"><i class="fas fa-arrow-left me-2"></i>Go to Scanner</a>
             <a href="#" onclick="handleLogout(event)"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
         </div>
     </div>
