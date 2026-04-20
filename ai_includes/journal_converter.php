@@ -370,20 +370,57 @@ class JournalConverter {
             error_log("[JournalConverter] Attempting HuggingFace summarization");
             error_log("[JournalConverter] Text length: " . strlen($text) . " chars, target: $target_words words");
             
-            // Load environment variables from .env file
-            if (file_exists(__DIR__ . '/../.env')) {
-                $env_file = __DIR__ . '/../.env';
+            // Load environment variables from .env file - robust path detection
+            $env_file = null;
+            
+            // Try multiple possible locations
+            $possible_paths = [
+                __DIR__ . '/../.env',
+                __DIR__ . '/../../.env',
+                __DIR__ . '/../../../.env',
+                $_SERVER['DOCUMENT_ROOT'] . '/.env',
+                dirname($_SERVER['DOCUMENT_ROOT']) . '/.env',
+            ];
+            
+            // Search for .env file
+            foreach ($possible_paths as $path) {
+                if (file_exists($path)) {
+                    $env_file = $path;
+                    break;
+                }
+            }
+            
+            // Try searching up directory tree
+            if (empty($env_file)) {
+                $current = __DIR__;
+                for ($i = 0; $i < 5; $i++) {
+                    $test_path = $current . '/.env';
+                    if (file_exists($test_path)) {
+                        $env_file = $test_path;
+                        break;
+                    }
+                    $current = dirname($current);
+                }
+            }
+            
+            if ($env_file && file_exists($env_file)) {
+                error_log("[JournalConverter] Found .env at: $env_file");
                 $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
                 foreach ($lines as $line) {
-                    if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+                    if (strpos(trim($line), '#') === 0) continue;
+                    if (empty(trim($line))) continue;
+                    if (strpos($line, '=') !== false) {
                         list($key, $value) = explode('=', $line, 2);
                         $key = trim($key);
                         $value = trim($value);
                         if (empty($_ENV[$key])) {
                             putenv("$key=$value");
+                            $_ENV[$key] = $value;
                         }
                     }
                 }
+            } else {
+                error_log("[JournalConverter] Warning: .env file not found");
             }
             
             // Load HuggingFace service with config
@@ -393,17 +430,21 @@ class JournalConverter {
             // Verify API key is set
             $api_key = getenv('HUGGING_FACE_API_KEY');
             if (empty($api_key)) {
+                $api_key = $_ENV['HUGGING_FACE_API_KEY'] ?? '';
+            }
+            
+            if (empty($api_key)) {
                 throw new Exception("HuggingFace API key not configured in .env");
             }
             
             error_log("[JournalConverter] HF API key loaded: " . substr($api_key, 0, 10) . "...");
             
-            // Create service
+            // Create service and summarize
             $hf_service = new HuggingFaceService();
             
             error_log("[JournalConverter] Calling HuggingFace API for summarization");
             
-            // Call summarize directly
+            // Call summarize
             $result = $hf_service->summarize($text, $target_words);
             
             if (!isset($result['success'])) {

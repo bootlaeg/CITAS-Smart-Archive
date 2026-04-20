@@ -7,17 +7,46 @@
 header('Content-Type: application/json');
 
 try {
-    // Load .env file - use absolute path to be sure
-    $env_file = __DIR__ . '/.env';
+    // Load .env file - try multiple paths for compatibility
+    $env_file = null;
     
-    // If not found there, try parent directory
-    if (!file_exists($env_file)) {
-        $env_file = dirname(__DIR__) . '/.env';
+    // List of possible .env locations
+    $possible_paths = [
+        // Standard locations
+        __DIR__ . '/.env',
+        dirname(__DIR__) . '/.env',
+        dirname(dirname(__DIR__)) . '/.env',
+        
+        // Hostinger specific
+        $_SERVER['DOCUMENT_ROOT'] . '/.env',
+        dirname($_SERVER['DOCUMENT_ROOT']) . '/.env',
+        
+        // Environment variable if set
+        getenv('ENV_FILE') ?: null,
+    ];
+    
+    foreach ($possible_paths as $path) {
+        if (!empty($path) && file_exists($path)) {
+            $env_file = $path;
+            break;
+        }
     }
     
-    // Debug: check if file exists
-    if (!file_exists($env_file)) {
-        throw new Exception("Cannot find .env file at: $env_file");
+    // If still not found, try searching up the directory tree
+    if (empty($env_file)) {
+        $current = __DIR__;
+        for ($i = 0; $i < 5; $i++) {
+            $test_path = $current . '/.env';
+            if (file_exists($test_path)) {
+                $env_file = $test_path;
+                break;
+            }
+            $current = dirname($current);
+        }
+    }
+    
+    if (empty($env_file) || !file_exists($env_file)) {
+        throw new Exception("Cannot find .env file. Searched: " . implode(", ", array_filter($possible_paths)));
     }
     
     // Load .env into environment
@@ -49,7 +78,7 @@ try {
     $ai_dir = dirname(__DIR__) . '/ai_includes';
     
     if (!file_exists($ai_dir . '/huggingface_config.php')) {
-        throw new Exception("huggingface_config.php not found");
+        throw new Exception("huggingface_config.php not found at: $ai_dir");
     }
     
     require_once $ai_dir . '/huggingface_config.php';
@@ -64,7 +93,7 @@ try {
     }
     
     if (empty($hf_key)) {
-        throw new Exception("HuggingFace API key not found in .env file");
+        throw new Exception("HuggingFace API key not found in environment. Check .env file at: $env_file");
     }
     
     // Test 1: Check API connectivity

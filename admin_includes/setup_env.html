@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>.env File Setup Helper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .error { color: #d9534f; }
+        .success { color: #5cb85c; }
+        .warning { color: #f0ad4e; }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            font-family: monospace;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        .file-list {
+            background: #f9f9f9;
+            padding: 10px;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 .env File Setup Helper</h1>
+    
+    <div class="card">
+        <h2>Step 1: Check Current Status</h2>
+        <p>Click the button below to check if your .env file exists and is properly configured.</p>
+        <button onclick="checkStatus()">Check .env Status</button>
+        <div id="status-result" style="margin-top: 15px;"></div>
+    </div>
+    
+    <div class="card">
+        <h2>Step 2: Create/Update .env File</h2>
+        <p>If the file doesn't exist, you can create it here. Paste your HuggingFace API key below:</p>
+        
+        <label for="api-key">HuggingFace API Key:</label><br>
+        <input type="password" id="api-key" placeholder="hf_..." style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px;">
+        
+        <p style="font-size: 0.9em; color: #666;">
+            Don't have a token? <a href="https://huggingface.co/settings/tokens" target="_blank">Create one here</a>
+        </p>
+        
+        <button onclick="createEnvFile()">Create/Update .env File</button>
+        <div id="create-result" style="margin-top: 15px;"></div>
+    </div>
+    
+    <div class="card">
+        <h2>Step 3: Manual Option</h2>
+        <p>If automated creation fails, create the file manually using FTP/File Manager:</p>
+        
+        <ol>
+            <li>Log in to Hostinger File Manager (or use FTP)</li>
+            <li>Navigate to your root directory (public_html or similar)</li>
+            <li>Create a new file named <code>.env</code></li>
+            <li>Paste this content (replace YOUR_TOKEN):</li>
+        </ol>
+        
+        <textarea readonly># Hugging Face API Configuration
+# IMPORTANT: This file contains sensitive credentials
+# NEVER commit this file to git or push it to GitHub
+# It's listed in .gitignore for protection
+
+HUGGING_FACE_API_KEY=YOUR_TOKEN_HERE</textarea>
+        
+        <p style="margin-top: 15px;">
+            <strong>Note:</strong> Replace <code>YOUR_TOKEN_HERE</code> with your actual HuggingFace token.
+        </p>
+    </div>
+    
+    <div class="card">
+        <h2>Step 4: Verify Setup</h2>
+        <p>Once you've created the .env file, test that everything works:</p>
+        <button onclick="testSetup()">Test HuggingFace Integration</button>
+        <div id="test-result" style="margin-top: 15px;"></div>
+    </div>
+    
+    <script>
+        function checkStatus() {
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.innerHTML = 'Checking...';
+            
+            fetch('check_hf_status.php')
+                .then(r => r.json())
+                .then(data => {
+                    let html = '<div style="padding: 10px; border-radius: 4px; ';
+                    
+                    if (data.status === 'success') {
+                        html += 'background: #d4edda; color: #155724;">';
+                        html += '<strong>✓ SUCCESS</strong> - .env file is properly configured!<br>';
+                        html += 'API Key: ' + data.api_key;
+                    } else if (data.status === 'error') {
+                        html += 'background: #f8d7da; color: #721c24;">';
+                        html += '<strong>✗ ERROR</strong> - ' + data.message;
+                    } else {
+                        html += 'background: #fff3cd; color: #856404;">';
+                        html += '<strong>⚠ WARNING</strong> - ' + data.message;
+                    }
+                    
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                })
+                .catch(e => {
+                    resultDiv.innerHTML = '<div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px;">Error: ' + e.message + '</div>';
+                });
+        }
+        
+        function createEnvFile() {
+            const apiKey = document.getElementById('api-key').value.trim();
+            const resultDiv = document.getElementById('create-result');
+            
+            if (!apiKey) {
+                resultDiv.innerHTML = '<div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px;">Error: Please enter your HuggingFace API key</div>';
+                return;
+            }
+            
+            if (!apiKey.startsWith('hf_')) {
+                resultDiv.innerHTML = '<div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px;">Warning: Token should start with "hf_". Did you copy it correctly?</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = 'Creating .env file...';
+            
+            fetch('create_env_file.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'api_key=' + encodeURIComponent(apiKey)
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        resultDiv.innerHTML = '<div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 4px;">✓ SUCCESS - .env file created!<br>Location: ' + data.path + '</div>';
+                        document.getElementById('api-key').value = '';
+                    } else {
+                        resultDiv.innerHTML = '<div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px;">Error: ' + data.message + '</div>';
+                    }
+                })
+                .catch(e => {
+                    resultDiv.innerHTML = '<div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px;">Error: ' + e.message + '</div>';
+                });
+        }
+        
+        function testSetup() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            fetch('../test_hf_quick.php')
+                .then(r => r.text())
+                .then(html => {
+                    resultDiv.innerHTML = '<pre style="background: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto;">' + escapeHtml(html) + '</pre>';
+                })
+                .catch(e => {
+                    resultDiv.innerHTML = '<div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px;">Note: Test requires running via terminal.<br>Go to admin panel and try converting a thesis instead.</div>';
+                });
+        }
+        
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;'
+            };
+            return text.replace(/[&<>]/g, m => map[m]);
+        }
+        
+        // Check status on page load
+        window.addEventListener('load', checkStatus);
+    </script>
+</body>
+</html>
