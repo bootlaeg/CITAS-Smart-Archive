@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HuggingFace API Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-limited {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .info-value {
+            color: #333;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+        
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 10px;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+        
+        .button:hover {
+            background: #764ba2;
+        }
+        
+        .button.secondary {
+            background: #6c757d;
+        }
+        
+        .button.secondary:hover {
+            background: #5a6268;
+        }
+        
+        .recommendation {
+            background: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            color: #333;
+        }
+        
+        .recommendation strong {
+            color: #0066cc;
+        }
+        
+        .logs {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+        
+        .log-line {
+            margin: 5px 0;
+        }
+        
+        .log-info {
+            color: #4db8ff;
+        }
+        
+        .log-error {
+            color: #f48771;
+        }
+        
+        .log-success {
+            color: #89d185;
+        }
+        
+        .quick-links {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+        
+        .quick-link:hover {
+            background: #764ba2;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 HuggingFace API Monitor</h1>
+            <p>Real-time status and usage tracking</p>
+        </div>
+        
+        <div id="status-loading" class="card">
+            <p>Loading HuggingFace status...</p>
+        </div>
+        
+        <div id="status-content"></div>
+    </div>
+    
+    <script>
+        async function loadStatus() {
+            try {
+                const response = await fetch('check_hf_status.php');
+                const data = await response.json();
+                
+                const container = document.getElementById('status-content');
+                let html = '';
+                
+                // Status card
+                html += '<div class="card">';
+                html += '<h2>API Status</h2>';
+                html += `<div class="status-badge status-${data.status}">${data.status.toUpperCase()}</div>`;
+                html += `<p style="margin-top: 10px; font-size: 1.1em;">${data.message}</p>`;
+                
+                // Info rows
+                html += '<div style="margin-top: 20px;">';
+                html += `<div class="info-row">
+                    <span class="info-label">API Key (masked):</span>
+                    <span class="info-value">${data.api_key}</span>
+                </div>`;
+                html += `<div class="info-row">
+                    <span class="info-label">Model:</span>
+                    <span class="info-value">${data.model}</span>
+                </div>`;
+                html += `<div class="info-row">
+                    <span class="info-label">HTTP Code:</span>
+                    <span class="info-value">${data.http_code}</span>
+                </div>`;
+                html += `<div class="info-row">
+                    <span class="info-label">Last Check:</span>
+                    <span class="info-value">${data.timestamp}</span>
+                </div>`;
+                html += '</div>';
+                html += '</div>';
+                
+                // Recommendations
+                if (data.recommendations && data.recommendations.length > 0) {
+                    html += '<div class="card">';
+                    html += '<h2>📋 Recommendations</h2>';
+                    data.recommendations.forEach(rec => {
+                        html += `<div class="recommendation">• ${rec}</div>`;
+                    });
+                    html += '</div>';
+                }
+                
+                // Quick Links
+                html += '<div class="card">';
+                html += '<h2>🔗 Quick Links</h2>';
+                html += '<div class="quick-links">';
+                html += '<a href="https://huggingface.co/settings/tokens" class="quick-link" target="_blank">View API Tokens</a>';
+                html += '<a href="https://huggingface.co/" class="quick-link" target="_blank">HuggingFace.co</a>';
+                html += '<a href="https://huggingface.co/models" class="quick-link" target="_blank">Model Hub</a>';
+                html += '<a href="https://huggingface.co/pricing" class="quick-link" target="_blank">Pricing</a>';
+                html += '</div>';
+                html += '</div>';
+                
+                // Usage Info
+                html += '<div class="card">';
+                html += '<h2>📊 HuggingFace Free Tier Limits</h2>';
+                html += '<div class="stats-grid">';
+                html += '<div class="stat-box">';
+                html += '<div class="stat-label">API Calls/Month</div>';
+                html += '<div class="stat-value">Unlimited*</div>';
+                html += '</div>';
+                html += '<div class="stat-box">';
+                html += '<div class="stat-label">Speed</div>';
+                html += '<div class="stat-value">5-15 sec</div>';
+                html += '</div>';
+                html += '<div class="stat-box">';
+                html += '<div class="stat-label">Concurrent Requests</div>';
+                html += '<div class="stat-value">1-5</div>';
+                html += '</div>';
+                html += '<div class="stat-box">';
+                html += '<div class="stat-label">Cost</div>';
+                html += '<div class="stat-value">FREE</div>';
+                html += '</div>';
+                html += '</div>';
+                html += '<p style="margin-top: 15px; font-size: 0.9em; color: #666;">*Rate limited if too many simultaneous requests</p>';
+                html += '</div>';
+                
+                // How to Check Quota
+                html += '<div class="card">';
+                html += '<h2>✅ How to Check Your Quota</h2>';
+                html += '<div style="line-height: 1.8;">';
+                html += '<ol style="margin-left: 20px;">';
+                html += '<li>Go to <strong>huggingface.co</strong></li>';
+                html += '<li>Log in to your account</li>';
+                html += '<li>Click your <strong>profile icon</strong> → <strong>Settings</strong></li>';
+                html += '<li>Click <strong>Access Tokens</strong> in the left menu</li>';
+                html += '<li>Your token status shows if it\'s active</li>';
+                html += '<li>You can also check API usage on your <strong>Account Page</strong></li>';
+                html += '</ol>';
+                html += '</div>';
+                html += '</div>';
+                
+                // Recent Logs
+                if (data.recent_logs && Object.keys(data.recent_logs).length > 0) {
+                    html += '<div class="card">';
+                    html += '<h2>📝 Recent Logs</h2>';
+                    for (const [name, logs] of Object.entries(data.recent_logs)) {
+                        if (logs && logs.length > 0) {
+                            html += `<h3 style="color: #667eea; margin: 15px 0 10px 0; font-size: 1em;">${name}</h3>`;
+                            html += '<div class="logs">';
+                            logs.forEach(log => {
+                                if (log.includes('[error]')) {
+                                    html += `<div class="log-line log-error">${escapeHtml(log)}</div>`;
+                                } else if (log.includes('[success]')) {
+                                    html += `<div class="log-line log-success">${escapeHtml(log)}</div>`;
+                                } else {
+                                    html += `<div class="log-line log-info">${escapeHtml(log)}</div>`;
+                                }
+                            });
+                            html += '</div>';
+                        }
+                    }
+                    html += '</div>';
+                }
+                
+                // Testing
+                html += '<div class="card">';
+                html += '<h2>🧪 Test HuggingFace</h2>';
+                html += '<p>Try converting a thesis in the admin panel to test the API in action.</p>';
+                html += '<button class="button" onclick="window.location.href=\'../admin.php\'">Go to Admin Panel</button>';
+                html += '</div>';
+                
+                container.innerHTML = html;
+                document.getElementById('status-loading').style.display = 'none';
+                
+            } catch (error) {
+                document.getElementById('status-content').innerHTML = `
+                    <div class="card">
+                        <h2 style="color: #d9534f;">Error</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                document.getElementById('status-loading').style.display = 'none';
+            }
+        }
+        
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        // Load on page load
+        loadStatus();
+        
+        // Refresh every 30 seconds
+        setInterval(loadStatus, 30000);
+    </script>
+</body>
+</html>
