@@ -121,8 +121,11 @@ class JournalConverter {
             error_log("[JournalConverter] Line: " . $e->getLine());
             error_log("[JournalConverter] Trace: " . $e->getTraceAsString());
             
+            // Still try to log conversion failure if we have thesis_id
             try {
-                $this->updateDatabase(null, null, 'failed');
+                if ($this->thesis_id && $this->thesis_id !== 'unsaved') {
+                    $this->updateDatabase(null, null, 'failed');
+                }
             } catch (Exception $updateError) {
                 error_log("[JournalConverter] Failed to log conversion failure to database: " . $updateError->getMessage());
             }

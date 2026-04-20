@@ -1394,7 +1394,13 @@ function convertToIMRaD() {
         year: parseInt(thesisYear) || new Date().getFullYear()
     };
     
-    console.log('📦 Conversion data:', conversionData);
+    console.log('📦 Conversion data:');
+    console.log('   File path:', filePath);
+    console.log('   Title:', thesisTitle);
+    console.log('   Author:', thesisAuthor);
+    console.log('   Abstract length:', thesisAbstract.length);
+    console.log('   Year:', conversionData.year);
+    console.log('   Full data object:', JSON.stringify(conversionData, null, 2));
     
     // Submit conversion request SYNCHRONOUSLY (wait for completion)
     // Use longer timeout for Ollama processing (180 seconds)
@@ -1418,16 +1424,28 @@ function convertToIMRaD() {
     })
     .then(data => {
         console.log('📨 Parsed conversion response:', data);
-        console.log('📨 Full response keys:', Object.keys(data));
-        console.log('📨 Temp path value:', data.temp_path);
-        console.log('📨 Page count value:', data.page_count);
+        console.log('📨 Response type:', typeof data);
+        console.log('📨 Full response keys:', Object.keys(data || {}));
+        console.log('📨 Temp path value:', data?.temp_path);
+        console.log('📨 Temp path type:', typeof data?.temp_path);
+        console.log('📨 Page count value:', data?.page_count);
+        console.log('📨 Success flag:', data?.success);
         
-        if (!data.success) {
-            throw new Error(data.error || 'Conversion failed');
+        // Check if response indicates failure
+        if (data?.error) {
+            console.error('❌ Conversion endpoint returned error:', data.error);
+            throw new Error(data.error);
+        }
+        
+        if (!data?.success) {
+            console.error('❌ Success flag is false or missing');
+            throw new Error(data?.error || 'Conversion failed - no success flag');
         }
         
         // Validate required fields
-        if (!data.temp_path) {
+        if (!data?.temp_path) {
+            console.error('❌ Response missing temp_path:');
+            console.error('   Full response:', JSON.stringify(data, null, 2));
             throw new Error('No temp_path in response - conversion incomplete');
         }
         
@@ -1462,6 +1480,7 @@ function convertToIMRaD() {
     })
     .catch(error => {
         console.error('❌ Conversion error:', error.message);
+        console.error('Error type:', error.name);
         console.error('Stack:', error.stack);
         
         convertBtn.disabled = false;

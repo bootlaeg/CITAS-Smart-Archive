@@ -49,6 +49,14 @@ try {
     // Extract file content
     $file_path = $input['file_path'];
     
+    // Validate file exists
+    $full_path = __DIR__ . '/../' . $file_path;
+    error_log("[journal_converter_sync] Full file path: $full_path");
+    if (!file_exists($full_path)) {
+        throw new Exception("File not found: $full_path");
+    }
+    error_log("[journal_converter_sync] ✓ File exists");
+    
     // Resolve relative path
     if (!file_exists($file_path)) {
         $file_path = __DIR__ . '/../' . $file_path;
