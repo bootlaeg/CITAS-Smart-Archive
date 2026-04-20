@@ -597,11 +597,14 @@ require_admin();
             <button type="button" class="btn btn-success" id="convertToIMRaDBtn" onclick="convertToIMRaD()" disabled title="Upload file and generate classification first">
                 <i class="fas fa-wand-magic-sparkles me-2"></i>Convert to IMRaD (Phase 2)
             </button>
-            <button type="button" class="btn btn-primary" onclick="submitForm()">
+            <button type="button" class="btn btn-primary" onclick="submitForm()" disabled title="Complete conversion first">
                 <i class="fas fa-save me-2"></i>Save Thesis & Classification
             </button>
         </div>
     </div>
+    
+    <!-- Hidden field to store temp journal path -->
+    <input type="hidden" id="tempJournalPath" value="">
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -616,6 +619,9 @@ let currentUploadedFile = null;
 let currentUploadedFileData = null; // Store uploaded file info from server
 let classificationGenerated = false;  // Track if Generate Classification was clicked
 let fileUploadedSuccessfully = false; // Track if file was uploaded to server
+let journalConversionComplete = false; // Track if conversion to IMRaD was successful
+let tempJournalPath = null; // Store the temporary journal file path after conversion
+let journalPageCount = 0; // Store the page count from conversion
 let classificationData = {
     keywords: [],
     citations: []
@@ -1336,60 +1342,63 @@ function populateClassificationForm(classification) {
 }
 
 // ============================================
-// PHASE 2: Convert to IMRaD Journal Format
+// PHASE 2: Convert to IMRaD Journal Format (SYNCHRONOUS - waits for completion)
 // ============================================
 function convertToIMRaD() {
-    console.log('=== CONVERT TO IMRaD JOURNAL FORMAT ===');
+    console.log('=== CONVERT TO IMRaD JOURNAL FORMAT (SYNCHRONOUS) ===');
     
-    // Clear auto-redirect timeout if still pending
-    if (window.redirectTimeout) {
-        clearTimeout(window.redirectTimeout);
-    }
-    
-    const convertBtn = document.getElementById('convertToIMRaDBtn');
-    const originalBtnHTML = convertBtn.innerHTML;
-    
-    // Check if we have a thesis_id from a recent save
-    const thesisId = window.currentThesisId;
-    const filePath = window.currentThesisFilePath;
-    
-    if (!thesisId) {
-        showAlert('❌ Please save the thesis first before converting', 'danger');
+    // Validate prerequisites
+    if (!fileUploadedSuccessfully || !currentUploadedFileData) {
+        showAlert('❌ Please upload a file first', 'danger');
         return;
     }
     
-    if (!filePath) {
-        showAlert('❌ File path not found. Please upload and save again.', 'danger');
+    if (!classificationGenerated) {
+        showAlert('❌ Please generate classification first', 'danger');
         return;
     }
     
     const thesisTitle = document.getElementById('thesisTitle').value;
+    const thesisAuthor = document.getElementById('thesisAuthor').value;
+    const thesisAbstract = document.getElementById('thesisAbstract').value;
+    const thesisYear = document.getElementById('thesisYear').value;
+    const filePath = currentUploadedFileData.file_path;
+    
+    if (!thesisTitle || !thesisAbstract) {
+        showAlert('❌ Please fill in Title and Abstract', 'danger');
+        return;
+    }
+    
     console.log('📄 File:', filePath);
     console.log('📝 Title:', thesisTitle);
-    console.log('📌 Thesis ID:', thesisId);
+    console.log('📝 Author:', thesisAuthor);
+    
+    const convertBtn = document.getElementById('convertToIMRaDBtn');
+    const saveBtn = document.querySelector('button[onclick="submitForm()"]');
+    const originalBtnHTML = convertBtn.innerHTML;
     
     // Disable button and show loading state
     convertBtn.disabled = true;
-    convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Converting to IMRaD (60-90 seconds)...';
+    convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Converting (60-120 seconds)...';
     
-    showAlert('🔄 Converting document to IMRaD journal format... This may take 60-90 seconds. Processing in background.', 'info');
+    showAlert('🔄 Converting document to IMRaD journal format... This may take 60-120 seconds. Please wait.', 'info');
     
-    console.log('📤 Sending conversion request to queue_converter.php');
+    console.log('📤 Sending SYNCHRONOUS conversion request to journal_converter_sync.php');
     
-    // Send JSON request with thesis_id and file path
+    // Prepare conversion data
     const conversionData = {
-        thesis_id: thesisId,
         file_path: filePath,
         title: thesisTitle,
-        author: document.getElementById('thesisAuthor').value || '',
-        abstract: document.getElementById('thesisAbstract').value || '',
-        year: parseInt(document.getElementById('thesisYear').value) || new Date().getFullYear()
+        author: thesisAuthor,
+        abstract: thesisAbstract,
+        year: parseInt(thesisYear) || new Date().getFullYear()
     };
     
-    console.log('📦 Sending conversion data:', conversionData);
+    console.log('📦 Conversion data:', conversionData);
     
-    // Submit conversion request to QUEUE (returns immediately)
-    fetch('../ai_includes/queue_converter.php', {
+    // Submit conversion request SYNCHRONOUSLY (wait for completion)
+    // Use longer timeout for Ollama processing (180 seconds)
+    fetch('./journal_converter_sync.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1397,68 +1406,93 @@ function convertToIMRaD() {
         body: JSON.stringify(conversionData)
     })
     .then(response => {
-        console.log('📨 Queue response status:', response.status);
+        console.log('📨 Conversion response received, status:', response.status);
         
         if (!response.ok) {
             return response.text().then(text => {
-                console.error('❌ Error response (first 500 chars):', text.substring(0, 500));
-                throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
+                console.error('❌ Error response:', text.substring(0, 500));
+                throw new Error(`HTTP ${response.status}`);
             });
         }
         return response.json();
     })
     .then(data => {
-        console.log('📨 Parsed queue response:', JSON.stringify(data, null, 2));
+        console.log('📨 Parsed conversion response:', data);
         
-        if (!data) {
-            throw new Error('No response data received');
+        if (!data.success) {
+            throw new Error(data.error || 'Conversion failed');
         }
         
-        if (data.status === 'queued' || data.status === 'processing') {
-            console.log('⏳ Conversion queued. Will process automatically...');
-            showAlert('⏳ Conversion queued successfully! It will be processed automatically. You can close this page.', 'success');
-            convertBtn.disabled = true;
-            convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Conversion Queued';
-            
-            // Redirect to admin after 3 seconds
-            setTimeout(() => {
-                window.location.href = '../admin.php';
-            }, 3000);
-        } else {
-            throw new Error(data.error || 'Unexpected response from server');
+        console.log('✅ CONVERSION SUCCESSFUL!');
+        console.log('   Temp path:', data.temp_path);
+        console.log('   Page count:', data.page_count);
+        
+        // Store temp path globally for save step
+        tempJournalPath = data.temp_path;
+        journalPageCount = data.page_count || 0; // ✅ Store page count
+        journalConversionComplete = true;
+        
+        // Store in hidden field as backup
+        const tempPathField = document.getElementById('tempJournalPath');
+        if (tempPathField) {
+            tempPathField.value = tempJournalPath;
+            console.log('✓ Temp path stored in hidden field');
         }
+        
+        // Update button state
+        convertBtn.disabled = true;
+        convertBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Conversion Complete';
+        
+        // ENABLE SAVE BUTTON
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.title = 'Click to save thesis with converted journal';
+            console.log('✓ Save button ENABLED');
+        }
+        
+        showAlert('✅ Conversion successful! (' + data.page_count + ' pages). Now click "Save Thesis & Classification" to finalize.', 'success');
     })
     .catch(error => {
-        console.error('❌ Queue error:', error);
+        console.error('❌ Conversion error:', error.message);
+        console.error('Stack:', error.stack);
+        
         convertBtn.disabled = false;
         convertBtn.innerHTML = originalBtnHTML;
-        showAlert('❌ Failed to queue conversion: ' + error.message, 'danger');
+        
+        journalConversionComplete = false;
+        tempJournalPath = null;
+        
+        showAlert('❌ Conversion failed: ' + error.message + '. Please try again or check the logs.', 'danger');
     });
 }
 
 function submitForm() {
     try {
+        console.log('=== SUBMIT FORM (SAVE THESIS + CLASSIFICATION + JOURNAL) ===');
+        
         // Check if classification has been generated
         if (!classificationGenerated) {
-            showAlert('⚠️ Please click "Generate Classification" first before saving', 'warning');
+            showAlert('⚠️ Please click "Generate Classification" first', 'warning');
             return;
         }
 
-        // Check if a file was uploaded
-        const file = currentUploadedFile;
-        if (!file) {
+        // Check if file was uploaded
+        if (!fileUploadedSuccessfully || !currentUploadedFileData) {
             showAlert('❌ Please upload a thesis file first', 'danger');
             return;
         }
         
-        // Check if file was successfully uploaded to server
-        if (!fileUploadedSuccessfully || !currentUploadedFileData) {
-            showAlert('❌ File was not successfully uploaded to server. Please reload and try again.', 'danger');
+        // ✅ NEW: Check if conversion to IMRaD was successful
+        if (!journalConversionComplete || !tempJournalPath) {
+            showAlert('❌ Please click "Convert to IMRaD" to convert document to journal format first', 'danger');
             return;
         }
-
-        console.log('=== SAVING THESIS & CLASSIFICATION (File already uploaded) ===');
-        console.log('Using pre-uploaded file data:', currentUploadedFileData.file_path);
+        
+        console.log('✓ All prerequisites met');
+        console.log('  - File uploaded: YES');
+        console.log('  - Classification generated: YES');
+        console.log('  - Journal conversion complete: YES');
+        console.log('  - Temp journal path:', tempJournalPath);
 
         // Helper function to safely get element value
         const getElementValue = (id, defaultValue = '') => {
@@ -1470,11 +1504,19 @@ function submitForm() {
             return element.value || defaultValue;
         };
 
-        showAlert('💾 Saving thesis and classification to database...', 'info');
-        console.log('🚀 Building thesis data from already-uploaded file...');
+        showAlert('💾 Saving thesis, classification, and journal conversion...', 'info');
+        console.log('🚀 Building thesis data with journal conversion...');
         
-        // ✅ USE STORED UPLOADED FILE DATA (skip re-upload)
+        // Build thesis data INCLUDING temp journal path
         const thesisData = buildThesisData(getElementValue, currentUploadedFileData);
+        
+        // ✅ ADD TEMP JOURNAL PATH to save request
+        thesisData.temp_journal_path = tempJournalPath;
+        thesisData.journal_page_count = journalPageCount; // ✅ Include page count
+        console.log('✓ Temp journal path added to save data:', tempJournalPath);
+        console.log('✓ Journal page count added:', journalPageCount);
+        
+        // Send to database with everything together
         saveThesisToDatabase(thesisData);
         
     } catch (error) {

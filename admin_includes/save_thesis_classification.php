@@ -41,6 +41,7 @@ try {
     $fileSize = $input['file_size'] ?? null;
     $documentType = $input['document_type'] ?? 'thesis';
     $pageCount = $input['page_count'] ?? null;
+    $tempJournalPath = $input['temp_journal_path'] ?? null; // ✅ NEW: Get temp journal path
     if ($pageCount !== null) {
         $pageCount = intval($pageCount);
     }
@@ -49,6 +50,21 @@ try {
     error_log("📄 File info: path=" . ($filePath ? 'YES' : 'NULL') . ", type=$fileType, size=$fileSize");
     if (empty($filePath)) {
         error_log("⚠️ WARNING: No file_path received! File upload may have failed");
+    }
+    
+    // ✅ NEW: Validate temp journal path
+    $journalFilePath = null;
+    $journalPageCount = 0;
+    if ($tempJournalPath) {
+        error_log("📄 Temp journal path provided: $tempJournalPath");
+        // Validate the temp file exists
+        $tempFileFullPath = __DIR__ . '/../' . $tempJournalPath;
+        if (!file_exists($tempFileFullPath)) {
+            throw new Exception("Temporary journal file not found at: $tempJournalPath");
+        }
+        error_log("✓ Temp journal file validated: $tempFileFullPath");
+    } else {
+        error_log("⚠️ WARNING: No temp_journal_path provided! Journal conversion may have been skipped");
     }
 
     // Extract classification data
@@ -170,20 +186,79 @@ try {
         $classStmt->close();
     }
 
+    // ✅ NEW: Handle journal file if conversion was successful
+    if ($tempJournalPath) {
+        error_log("Processing journal conversion file...");
+        
+        $tempFileFullPath = __DIR__ . '/../' . $tempJournalPath;
+        
+        // Generate permanent filename
+        $journalFileName = 'thesis_' . $thesisId . '_journal_' . uniqid() . '.html';
+        $journalDirPath = __DIR__ . '/../uploads/thesis_files/';
+        $permanentJournalPath = $journalDirPath . $journalFileName;
+        
+        // Ensure directory exists
+        if (!is_dir($journalDirPath)) {
+            if (!mkdir($journalDirPath, 0755, true)) {
+                throw new Exception("Failed to create journal directory");
+            }
+            error_log("✓ Created journal directory: $journalDirPath");
+        }
+        
+        // Move temp file to permanent location
+        if (!rename($tempFileFullPath, $permanentJournalPath)) {
+            throw new Exception("Failed to move journal file from $tempFileFullPath to $permanentJournalPath");
+        }
+        
+        error_log("✓ Journal file moved to: $permanentJournalPath");
+        
+        // Store relative path for database
+        $journalFilePath = 'uploads/thesis_files/' . $journalFileName;
+        $journalPageCount = intval($input['journal_page_count'] ?? 0);
+        
+        // Update thesis record with journal file path and conversion status
+        $updateJournalStmt = $conn->prepare("
+            UPDATE thesis 
+            SET journal_file_path = ?, is_journal_converted = 1, 
+                journal_conversion_status = 'completed', journal_page_count = ?,
+                journal_converted_at = NOW()
+            WHERE id = ?
+        ");
+        
+        $updateJournalStmt->bind_param("sii", $journalFilePath, $journalPageCount, $thesisId);
+        
+        if (!$updateJournalStmt->execute()) {
+            throw new Exception("Failed to update journal file path: " . $updateJournalStmt->error);
+        }
+        
+        $updateJournalStmt->close();
+        
+        error_log("✓ Updated thesis record with journal file path");
+        error_log("  - Journal path: $journalFilePath");
+        error_log("  - Is converted: 1");
+        error_log("  - Page count: $journalPageCount");
+    }
+
     // Commit transaction
     $conn->commit();
     
     error_log("✅ Thesis and classification saved successfully. ID: $thesisId");
+    if ($journalFilePath) {
+        error_log("✅ Journal conversion file finalized and stored");
+    }
     
-    // NOTE: Journal conversion is now triggered asynchronously from the frontend
-    // (see admin_add_thesis_page.php convertThesisToImradAfterSave function)
-    // This ensures we have the correct thesis_id before attempting conversion
+    // NOTE: Journal conversion is now triggered BEFORE database save
+    // (see admin_add_thesis_page.php convertToIMRaD function)
+    // The workflow is: Upload → Classify → Convert → Save
+    // This ensures conversion validation before committing to database
     
     echo json_encode([
         'success' => true,
         'thesis_id' => $thesisId,
-        'message' => 'Thesis and classification saved successfully. Journal conversion will be triggered by frontend.',
-        'file_path' => $filePath
+        'message' => 'Thesis and classification saved successfully. ' . ($journalFilePath ? 'Journal conversion completed.' : 'No journal file provided.'),
+        'file_path' => $filePath,
+        'journal_file_path' => $journalFilePath,
+        'journal_converted' => !empty($journalFilePath)
     ]);
     
 } catch (Exception $e) {
