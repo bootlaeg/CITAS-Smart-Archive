@@ -533,11 +533,11 @@ require_admin();
     <div class="form-container scanner-section">
         <!-- Tabs -->
         <div class="tabs-container">
-            <button class="tab-btn active" onclick="switchTab('camera')">
-                <i class="fas fa-camera me-2"></i>Camera Capture
-            </button>
             <button class="tab-btn" onclick="switchTab('upload')">
                 <i class="fas fa-cloud-upload-alt me-2"></i>Upload Images
+            </button>
+            <button class="tab-btn active" onclick="switchTab('camera')">
+                <i class="fas fa-camera me-2"></i>Camera Capture
             </button>
             <button class="tab-btn" onclick="switchTab('gallery')">
                 <i class="fas fa-images me-2"></i>Captured Images
