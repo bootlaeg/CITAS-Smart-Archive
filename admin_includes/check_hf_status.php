@@ -4,29 +4,67 @@
  * Monitor conversion performance and API quotas
  */
 
-// Load environment
-if (file_exists(__DIR__ . '/../.env')) {
-    $env_file = __DIR__ . '/../.env';
-    $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
-            list($key, $value) = explode('=', $line, 2);
-            putenv(trim($key) . '=' . trim($value));
-        }
-    }
-}
-
 header('Content-Type: application/json');
 
 try {
-    // Load HuggingFace config and service
-    require_once __DIR__ . '/../ai_includes/huggingface_config.php';
-    require_once __DIR__ . '/../ai_includes/huggingface_service.php';
+    // Load .env file - use absolute path to be sure
+    $env_file = __DIR__ . '/.env';
     
+    // If not found there, try parent directory
+    if (!file_exists($env_file)) {
+        $env_file = dirname(__DIR__) . '/.env';
+    }
+    
+    // Debug: check if file exists
+    if (!file_exists($env_file)) {
+        throw new Exception("Cannot find .env file at: $env_file");
+    }
+    
+    // Load .env into environment
+    $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Skip comments
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+        
+        // Skip empty lines
+        if (empty(trim($line))) {
+            continue;
+        }
+        
+        // Parse key=value
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            
+            // Set environment variable
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
+        }
+    }
+    
+    // Load HuggingFace config and service
+    $ai_dir = dirname(__DIR__) . '/ai_includes';
+    
+    if (!file_exists($ai_dir . '/huggingface_config.php')) {
+        throw new Exception("huggingface_config.php not found");
+    }
+    
+    require_once $ai_dir . '/huggingface_config.php';
+    require_once $ai_dir . '/huggingface_service.php';
+    
+    // Verify API key is set
     $hf_key = getenv('HUGGING_FACE_API_KEY');
     
     if (empty($hf_key)) {
-        throw new Exception("HuggingFace API key not configured");
+        // Try from $_ENV as backup
+        $hf_key = $_ENV['HUGGING_FACE_API_KEY'] ?? '';
+    }
+    
+    if (empty($hf_key)) {
+        throw new Exception("HuggingFace API key not found in .env file");
     }
     
     // Test 1: Check API connectivity
@@ -51,8 +89,8 @@ try {
     
     // Test 2: Check recent conversion logs
     $log_files = [
-        'HF API' => __DIR__ . '/../logs/huggingface_api.log',
-        'Journal Converter' => __DIR__ . '/../logs/journal_converter.log',
+        'HF API' => dirname(__DIR__) . '/logs/huggingface_api.log',
+        'Journal Converter' => dirname(__DIR__) . '/logs/journal_converter.log',
     ];
     
     $log_summary = [];
