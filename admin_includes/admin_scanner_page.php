@@ -765,25 +765,43 @@ function captureImage() {
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0);
     
-    // Convert canvas to blob and store
-    canvas.toBlob(blob => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const imageData = {
-                id: Date.now(),
-                src: e.target.result,
-                blob: blob,
-                timestamp: new Date().toLocaleString()
+    // Convert canvas to blob and compress
+    canvas.toBlob(async (blob) => {
+        showAlert('🔄 Compressing to 40-70 KB range...', 'info');
+        
+        try {
+            // Compress the image - STRICT 40-70 KB only
+            const result = await compressImage(blob);
+            
+            if (!result.valid) {
+                showAlert(result.message, 'danger');
+                return;
+            }
+            
+            const sizeKB = result.size.toFixed(2);
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imageData = {
+                    id: Date.now(),
+                    src: e.target.result,
+                    blob: result.blob,
+                    timestamp: new Date().toLocaleString(),
+                    size: sizeKB
+                };
+                
+                capturedImages.push(imageData);
+                showAlert(`✅ Image captured & compressed to ${sizeKB} KB (40-70 range) - (${capturedImages.length} total)`, 'success');
+                
+                // Update button visibility
+                updateButtonVisibility();
             };
+            reader.readAsDataURL(result.blob);
             
-            capturedImages.push(imageData);
-            showAlert(`✅ Image captured! (${capturedImages.length} total)`, 'success');
-            
-            // Update button visibility
-            updateButtonVisibility();
-        };
-        reader.readAsDataURL(blob);
-    });
+        } catch (error) {
+            showAlert(`❌ ${error.error}: ${error.currentSize} KB`, 'danger');
+        }
+    }, 'image/jpeg', 0.95);
 }
 
 // ============================================
@@ -826,20 +844,45 @@ function handleFiles(files) {
         }
         
         const reader = new FileReader();
-        reader.onload = (e) => {
-            const imageData = {
-                id: Date.now() + Math.random(),
-                src: e.target.result,
-                blob: file,
-                timestamp: new Date().toLocaleString(),
-                fileName: file.name
-            };
+        reader.onload = async (e) => {
+            showAlert(`🔄 Compressing ${file.name} to 40-70 KB...`, 'info');
             
-            capturedImages.push(imageData);
-            updateButtonVisibility();
-            showAlert(`✅ ${file.name} added (${capturedImages.length} total)`, 'success');
+            try {
+                // Create blob from the file
+                const blob = new Blob([e.target.result], { type: file.type });
+                
+                // Compress the image - STRICT 40-70 KB only
+                const result = await compressImage(blob);
+                
+                if (!result.valid) {
+                    showAlert(`⚠️ ${file.name}: ${result.message}`, 'danger');
+                    return;
+                }
+                
+                const sizeKB = result.size.toFixed(2);
+                
+                const compressedReader = new FileReader();
+                compressedReader.onload = (compEvent) => {
+                    const imageData = {
+                        id: Date.now() + Math.random(),
+                        src: compEvent.target.result,
+                        blob: result.blob,
+                        timestamp: new Date().toLocaleString(),
+                        fileName: file.name,
+                        size: sizeKB
+                    };
+                    
+                    capturedImages.push(imageData);
+                    updateButtonVisibility();
+                    showAlert(`✅ ${file.name} compressed to ${sizeKB} KB (40-70 range) - (${capturedImages.length} total)`, 'success');
+                };
+                compressedReader.readAsDataURL(result.blob);
+                
+            } catch (error) {
+                showAlert(`❌ ${file.name}: ${error.error}`, 'danger');
+            }
         };
-        reader.readAsDataURL(file);
+        reader.readAsArrayBuffer(file);
     });
 }
 
@@ -864,8 +907,9 @@ function updateGallery() {
     
     capturedImages.forEach(image => {
         html += `
-            <div class="preview-item">
+            <div class="preview-item" title="Size: ${image.size} KB">
                 <img src="${image.src}" alt="Captured image">
+                <small style="position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.7); color: white; padding: 2px 5px; border-radius: 3px; font-size: 0.75rem;">${image.size} KB</small>
                 <button type="button" class="delete-btn" onclick="deleteImage(${image.id})" title="Delete image">
                     <i class="fas fa-trash-alt"></i>
                 </button>
@@ -882,6 +926,99 @@ function deleteImage(imageId) {
     showAlert('🗑️ Image deleted', 'info');
     updateGallery();
     updateButtonVisibility();
+}
+
+// ============================================
+// IMAGE COMPRESSION FUNCTION (STRICT 40-70KB ONLY)
+// ============================================
+async function compressImage(blob) {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const img = new Image();
+        
+        img.onload = () => {
+            let quality = 0.95;
+            let bestBlob = null;
+            let bestDiff = Infinity;
+            
+            const compressStep = async () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                return new Promise((resolveStep) => {
+                    canvas.toBlob((compressedBlob) => {
+                        const sizeKB = compressedBlob.size / 1024;
+                        
+                        // Check if in range 40-70 KB
+                        if (sizeKB >= 40 && sizeKB <= 70) {
+                            // Found valid size
+                            resolve({
+                                blob: compressedBlob,
+                                size: sizeKB,
+                                valid: true
+                            });
+                            resolveStep(true);
+                            return;
+                        }
+                        
+                        // Track closest to range
+                        if (sizeKB >= 35 && sizeKB <= 75) {
+                            const diff = sizeKB < 40 ? (40 - sizeKB) : (sizeKB - 70);
+                            if (diff < bestDiff) {
+                                bestDiff = diff;
+                                bestBlob = compressedBlob;
+                            }
+                        }
+                        
+                        // Adjust quality
+                        if (sizeKB > 70) {
+                            quality -= 0.08;
+                        } else {
+                            quality -= 0.02;
+                        }
+                        
+                        if (quality > 0.05) {
+                            resolveStep(false);
+                        } else {
+                            // Compression failed - reject or return best attempt
+                            if (bestBlob) {
+                                resolve({
+                                    blob: bestBlob,
+                                    size: bestBlob.size / 1024,
+                                    valid: false,
+                                    message: `⚠️ Could not compress to 40-70 KB. Got ${(bestBlob.size / 1024).toFixed(2)} KB instead.`
+                                });
+                            } else {
+                                reject({
+                                    error: 'Cannot compress image to 40-70 KB range',
+                                    currentSize: (blob.size / 1024).toFixed(2)
+                                });
+                            }
+                            resolveStep(true);
+                        }
+                    }, 'image/jpeg', quality);
+                });
+            };
+            
+            // Keep compressing until valid
+            const attemptCompress = async () => {
+                const result = await compressStep();
+                if (result === false) {
+                    attemptCompress();
+                }
+            };
+            
+            attemptCompress();
+        };
+        
+        img.onerror = () => {
+            reject({ error: 'Failed to load image' });
+        };
+        
+        img.src = URL.createObjectURL(blob);
+    });
 }
 
 // ============================================
@@ -930,17 +1067,20 @@ function processAndReturn() {
         return;
     }
     
-    // Store images in sessionStorage for next page
+    // Store ONLY compressed image data URLs in sessionStorage (in-memory, not saved to database/files)
+    // Data URLs will be automatically cleared when the session ends
     sessionStorage.setItem('scannedImages', JSON.stringify(
         capturedImages.map(img => ({
             id: img.id,
-            src: img.src,
+            src: img.src,  // Compressed data URL - no file saved
             fileName: img.fileName || `image_${img.id}.png`,
-            timestamp: img.timestamp
+            timestamp: img.timestamp,
+            size: img.size,
+            compressed: true  // Flag indicating this is already compressed
         }))
     ));
     
-    showAlert('✅ Images saved! Redirecting...', 'success');
+    showAlert('✅ Compressed images ready! (Not saved to disk) Redirecting...', 'success');
     
     // Redirect back to add thesis page
     setTimeout(() => {
