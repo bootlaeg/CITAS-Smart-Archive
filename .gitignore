@@ -1,0 +1,28 @@
+# --- System Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDEs and Editors ---
+.visualstudio/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Dependencies (Uncomment based on your language) ---
+# node_modules/     # JavaScript/Node
+# venv/             # Python
+# .venv/            # Python
+# vendor/           # PHP/Composer
+# target/           # Java/Maven
+
+# --- Environment Variables & Secrets ---
+.env
+*.pem
+*.key
+secrets.json
+
+# --- Logs and Databases ---
+*.log
+*.sqlite

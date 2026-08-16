@@ -1,0 +1,2798 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CITAS Smart Archive — Admin Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --orange-900: #7C2400;
+      --orange-800: #A83000;
+      --orange-700: #C94010;
+      --orange-600: #E05520;
+      --orange: #F06820;
+      --orange-400: #F58040;
+      --orange-300: #F9A070;
+      --orange-100: #FDE8D8;
+      --orange-50: #FFF5EE;
+      --dark: #1A0F08;
+      --dark-2: #2C1A0E;
+      --dark-3: #3D2614;
+      --gray-700: #6B5B52;
+      --gray-500: #9C897E;
+      --gray-300: #C8B9B0;
+      --gray-100: #F0EAE6;
+      --white: #FFFCFA;
+      --green: #22C55E;
+      --yellow: #FACC15;
+      --red: #EF4444;
+      --blue: #3B82F6;
+      --sidebar-w: 260px;
+      --header-h: 64px;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 2px 12px rgba(200, 90, 20, .10);
+      --shadow-md: 0 6px 24px rgba(200, 90, 20, .15);
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--gray-100);
+      color: var(--dark);
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: linear-gradient(180deg, #FFA000 0%, #FF6600 50%, #E63E00 100%);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1001;
+      overflow: hidden;
+      transition: transform 0.3s ease, left 0.3s ease;
+    }
+
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255, 200, 80, .18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .sidebar-brand {
+      padding: 20px 24px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, .25);
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, .95);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      color: #E63E00;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+      flex-shrink: 0;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: .2px;
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      color: rgba(255, 255, 255, .7);
+      font-weight: 500;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .sidebar-admin {
+      margin: 16px 16px 0;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, .18);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255, 255, 255, .3);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-avatar {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, .9);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      color: #E63E00;
+      font-weight: 800;
+    }
+
+    .admin-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .admin-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .admin-role {
+      font-size: 10px;
+      color: rgba(255, 255, 255, .8);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .nav-section-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, .65);
+      padding: 20px 24px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 16px;
+      margin: 1px 8px;
+      border-radius: var(--radius-sm);
+      color: rgba(255, 255, 255, .85);
+      cursor: pointer;
+      transition: all .2s;
+      font-size: 13.5px;
+      font-weight: 500;
+      text-decoration: none;
+      position: relative;
+    }
+
+    .nav-item i {
+      width: 18px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, .2);
+      color: #fff;
+    }
+
+    .nav-item.active {
+      background: rgba(255, 255, 255, .28);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: #fff;
+      border-radius: 0 3px 3px 0;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: rgba(255, 255, 255, .95);
+      color: #E63E00;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 20px;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .nav-badge.green {
+      background: var(--green);
+      color: white;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px;
+      border-top: 1px solid rgba(255, 255, 255, .25);
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: rgba(0, 0, 0, .15);
+      border: 1px solid rgba(255, 255, 255, .25);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      width: 100%;
+    }
+
+    .logout-btn:hover {
+      background: rgba(0, 0, 0, .28);
+    }
+
+    /* ── MAIN LAYOUT ─────────────────────────── */
+    .main-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* ── TOP BAR ─────────────────────────────── */
+    .topbar {
+      height: var(--header-h);
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow);
+      z-index: 100;
+    }
+
+    .topbar-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--dark);
+      flex: 1;
+    }
+
+    .topbar-title span {
+      color: var(--orange);
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gray-100);
+      border-radius: 40px;
+      padding: 7px 16px;
+      border: 1.5px solid transparent;
+      transition: all .2s;
+    }
+
+    .search-bar:focus-within {
+      background: white;
+      border-color: var(--orange-300);
+      box-shadow: 0 0 0 3px rgba(240, 104, 32, .1);
+    }
+
+    .search-bar i {
+      color: var(--gray-500);
+      font-size: 13px;
+    }
+
+    .search-bar input {
+      border: none;
+      background: none;
+      outline: none;
+      font-size: 13.5px;
+      font-family: inherit;
+      color: var(--dark);
+      width: 200px;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--gray-500);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      background: var(--gray-100);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: var(--gray-700);
+      font-size: 15px;
+      transition: all .2s;
+      position: relative;
+    }
+
+    .icon-btn:hover {
+      background: var(--orange-100);
+      color: var(--orange);
+    }
+
+    .notif-dot {
+      position: absolute;
+      top: 6px;
+      right: 7px;
+      width: 8px;
+      height: 8px;
+      background: var(--red);
+      border-radius: 50%;
+      border: 2px solid var(--white);
+    }
+
+    /* NEW: Mobile Toggle Button */
+    .mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: var(--dark);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    /* ── CONTENT AREA ────────────────────────── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 3px;
+    }
+
+    /* ── STATS GRID ──────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      border: 1px solid rgba(0, 0, 0, .05);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all .25s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .04;
+      transform: translate(20px, -20px);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-card.orange {
+      color: var(--orange);
+      border-top: 3px solid var(--orange);
+    }
+
+    .stat-card.green {
+      color: var(--green);
+      border-top: 3px solid var(--green);
+    }
+
+    .stat-card.blue {
+      color: var(--blue);
+      border-top: 3px solid var(--blue);
+    }
+
+    .stat-card.yellow {
+      color: var(--yellow);
+      border-top: 3px solid var(--yellow);
+    }
+
+    .stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+    }
+
+    .stat-card.orange .stat-icon {
+      background: var(--orange-100);
+      color: var(--orange);
+    }
+
+    .stat-card.green .stat-icon {
+      background: rgba(34, 197, 94, .12);
+      color: var(--green);
+    }
+
+    .stat-card.blue .stat-icon {
+      background: rgba(59, 130, 246, .12);
+      color: var(--blue);
+    }
+
+    .stat-card.yellow .stat-icon {
+      background: rgba(250, 204, 21, .12);
+      color: #D97706;
+    }
+
+    .stat-trend {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .trend-up {
+      background: rgba(34, 197, 94, .12);
+      color: var(--green);
+    }
+
+    .trend-down {
+      background: rgba(239, 68, 68, .12);
+      color: var(--red);
+    }
+
+    .trend-warn {
+      background: rgba(250, 204, 21, .12);
+      color: #D97706;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--dark);
+      line-height: 1;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .stat-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* ── LAYOUTS ──────────────────────── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 320px;
+      gap: 20px;
+    }
+
+    /* ── PANEL ───────────────────────────────── */
+    .panel {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid rgba(0, 0, 0, .05);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 18px 22px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--gray-100);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title i {
+      color: var(--orange);
+    }
+
+    .panel-action {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--orange);
+      cursor: pointer;
+      border: 1.5px solid var(--orange-100);
+      background: var(--orange-50);
+      padding: 5px 12px;
+      border-radius: 6px;
+      transition: all .2s;
+    }
+
+    .panel-action:hover {
+      background: var(--orange);
+      color: white;
+    }
+
+    /* NEW: Table Wrapper for Mobile */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── TABLE ───────────────────────────────── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    .data-table th {
+      padding: 11px 16px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--gray-500);
+      background: var(--gray-100);
+      text-align: left;
+    }
+
+    .data-table td {
+      padding: 13px 16px;
+      font-size: 13px;
+      color: var(--dark-2);
+      border-bottom: 1px solid var(--gray-100);
+      vertical-align: middle;
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr {
+      transition: background .15s;
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--orange-50);
+    }
+
+    .thesis-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--dark);
+      max-width: 240px;
+    }
+
+    .thesis-author {
+      font-size: 11.5px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .badge-approved {
+      background: rgba(34, 197, 94, .12);
+      color: #16A34A;
+    }
+
+    .badge-pending {
+      background: rgba(250, 204, 21, .15);
+      color: #A16207;
+    }
+
+    .badge-archived {
+      background: rgba(239, 68, 68, .10);
+      color: #B91C1C;
+    }
+
+    .tbl-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .tbl-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      border: 1.5px solid;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .tbl-btn-view {
+      border-color: var(--orange-100);
+      color: var(--orange);
+      background: var(--orange-50);
+    }
+
+    .tbl-btn-edit {
+      border-color: rgba(59, 130, 246, .2);
+      color: var(--blue);
+      background: rgba(59, 130, 246, .06);
+    }
+
+    .tbl-btn-del {
+      border-color: rgba(239, 68, 68, .2);
+      color: var(--red);
+      background: rgba(239, 68, 68, .06);
+    }
+
+    .tbl-btn:hover {
+      opacity: .7;
+      transform: scale(1.08);
+    }
+
+    /* ── REQUESTS FEED ───────────────────────── */
+    .request-list {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .request-item {
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--gray-100);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all .2s;
+    }
+
+    .request-item:hover {
+      border-color: var(--orange-300);
+      background: var(--orange-50);
+    }
+
+    .req-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .req-avatar {
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .req-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .req-thesis {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 1px;
+    }
+
+    .req-time {
+      font-size: 10.5px;
+      color: var(--gray-500);
+      margin-left: auto;
+      white-space: nowrap;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .req-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .req-btn {
+      flex: 1;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all .2s;
+    }
+
+    .req-btn-approve {
+      background: rgba(34, 197, 94, .12);
+      color: #16A34A;
+    }
+
+    .req-btn-approve:hover {
+      background: var(--green);
+      color: white;
+    }
+
+    .req-btn-reject {
+      background: rgba(239, 68, 68, .10);
+      color: var(--red);
+    }
+
+    .req-btn-reject:hover {
+      background: var(--red);
+      color: white;
+    }
+
+    /* ── USERS ────────────────────── */
+    .user-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 22px;
+      border-bottom: 1px solid var(--gray-100);
+      transition: background .15s;
+    }
+
+    .user-row:last-child {
+      border-bottom: none;
+    }
+
+    .user-row:hover {
+      background: var(--orange-50);
+    }
+
+    .user-av {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .user-course {
+      font-size: 11px;
+      color: var(--gray-500);
+    }
+
+    .user-status {
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+
+    .status-active {
+      color: var(--green);
+    }
+
+    .status-pending {
+      color: #D97706;
+    }
+
+    .status-suspended {
+      color: var(--red);
+    }
+
+    /* ── CHART BARS ──────────────────────────── */
+    .chart-wrap {
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chart-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+    }
+
+    .chart-bar-label {
+      width: 80px;
+      color: var(--gray-500);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chart-bar-track {
+      flex: 1;
+      height: 8px;
+      background: var(--gray-100);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .chart-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--orange-400), var(--orange-700));
+      transition: width .8s ease;
+    }
+
+    .chart-bar-val {
+      width: 28px;
+      text-align: right;
+      font-weight: 700;
+      font-family: 'DM Mono', monospace;
+      color: var(--dark-2);
+      font-size: 12px;
+    }
+
+    /* ── ACTIVITY LOG ────────────────────────── */
+    .activity-list {
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .act-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      transition: background .15s;
+    }
+
+    .act-item:hover {
+      background: var(--orange-50);
+    }
+
+    .act-dot {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+    }
+
+    .act-dot.orange {
+      background: var(--orange-100);
+      color: var(--orange);
+    }
+
+    .act-dot.green {
+      background: rgba(34, 197, 94, .12);
+      color: var(--green);
+    }
+
+    .act-dot.blue {
+      background: rgba(59, 130, 246, .12);
+      color: var(--blue);
+    }
+
+    .act-dot.red {
+      background: rgba(239, 68, 68, .10);
+      color: var(--red);
+    }
+
+    .act-body {
+      flex: 1;
+    }
+
+    .act-text {
+      font-size: 12.5px;
+      color: var(--dark);
+      font-weight: 500;
+    }
+
+    .act-text strong {
+      color: var(--orange);
+      font-weight: 700;
+    }
+
+    .act-time {
+      font-size: 10.5px;
+      color: var(--gray-500);
+      margin-top: 2px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── TABS & FILTERS ──────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 2px;
+      padding: 16px 22px 0;
+      border-bottom: 1px solid var(--gray-100);
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--gray-500);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      margin-bottom: -1px;
+      transition: all .2s;
+      flex-shrink: 0;
+    }
+
+    .tab-btn:hover {
+      color: var(--orange);
+    }
+
+    .tab-btn.active {
+      color: var(--orange);
+      border-bottom-color: var(--orange);
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--gray-100);
+      flex-wrap: wrap;
+    }
+
+    .filter-row input,
+    .filter-row select {
+      font-family: inherit;
+      font-size: 12.5px;
+      border: 1.5px solid var(--gray-100);
+      border-radius: 7px;
+      padding: 7px 12px;
+      outline: none;
+      color: var(--dark);
+      background: var(--white);
+      transition: border-color .2s;
+    }
+
+    .filter-row input {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .filter-row input:focus,
+    .filter-row select:focus {
+      border-color: var(--orange-300);
+    }
+
+    .btn-add {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 16px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--orange), var(--orange-700));
+      color: white;
+      font-size: 12.5px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all .2s;
+      box-shadow: 0 3px 10px rgba(240, 104, 32, .3);
+      white-space: nowrap;
+    }
+
+    .btn-add:hover {
+      opacity: .88;
+      transform: translateY(-1px);
+    }
+
+    /* ── MODAL ───────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 5, 2, .6);
+      backdrop-filter: blur(4px);
+      z-index: 1100;
+      place-items: center;
+    }
+
+    .modal-overlay.open {
+      display: grid;
+    }
+
+    .modal {
+      background: var(--white);
+      border-radius: 16px;
+      width: 500px;
+      max-width: 94vw;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+      animation: popIn .25s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(.95) translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .modal-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--white);
+      z-index: 10;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--dark);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: var(--gray-100);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      color: var(--gray-700);
+      transition: all .2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(239, 68, 68, .1);
+      color: var(--red);
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gray-700);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .form-input {
+      font-family: inherit;
+      font-size: 13.5px;
+      color: var(--dark);
+      border: 1.5px solid var(--gray-100);
+      border-radius: 8px;
+      padding: 9px 14px;
+      outline: none;
+      background: var(--white);
+      transition: border-color .2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--orange-400);
+      box-shadow: 0 0 0 3px rgba(240, 104, 32, .1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      position: sticky;
+      bottom: 0;
+      background: var(--white);
+      z-index: 10;
+    }
+
+    .btn-cancel {
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1.5px solid var(--gray-100);
+      background: white;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .btn-cancel:hover {
+      background: var(--gray-100);
+    }
+
+    .btn-save {
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--orange), var(--orange-700));
+      border: none;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(240, 104, 32, .3);
+      transition: all .2s;
+    }
+
+    .btn-save:hover {
+      opacity: .88;
+    }
+
+    /* ── NOTIFICATION PANEL ──────────────────── */
+    .notif-panel {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      width: 340px;
+      max-width: 90vw;
+      background: var(--white);
+      border-radius: 14px;
+      border: 1px solid var(--gray-100);
+      box-shadow: var(--shadow-md);
+      z-index: 200;
+      overflow: hidden;
+    }
+
+    .notif-panel.open {
+      display: block;
+      animation: popIn .2s ease;
+    }
+
+    .notif-ph {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notif-clear {
+      font-size: 11.5px;
+      color: var(--orange);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .notif-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .notif-item:last-child {
+      border-bottom: none;
+    }
+
+    .notif-item:hover {
+      background: var(--orange-50);
+    }
+
+    .notif-ic {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .notif-text {
+      font-size: 12.5px;
+      color: var(--dark);
+      font-weight: 600;
+    }
+
+    .notif-sub {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .notif-t {
+      font-size: 10px;
+      color: var(--gray-500);
+      margin-top: 4px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .notif-unread::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--orange);
+      flex-shrink: 0;
+      margin-top: 6px;
+      align-self: flex-start;
+    }
+
+    /* ── MISC STYLES ───────────────────────── */
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .av-orange {
+      background: linear-gradient(135deg, #F9A070, #E05520);
+    }
+
+    .av-teal {
+      background: linear-gradient(135deg, #34D399, #059669);
+    }
+
+    .av-blue {
+      background: linear-gradient(135deg, #60A5FA, #2563EB);
+    }
+
+    .av-purple {
+      background: linear-gradient(135deg, #C084FC, #7C3AED);
+    }
+
+    .av-pink {
+      background: linear-gradient(135deg, #F472B6, #BE185D);
+    }
+
+    .av-yellow {
+      background: linear-gradient(135deg, #FCD34D, #D97706);
+    }
+
+    .panel-scroll {
+      max-height: 380px;
+      overflow-y: auto;
+    }
+
+    .panel-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .panel-scroll::-webkit-scrollbar-thumb {
+      background: var(--gray-300);
+      border-radius: 2px;
+    }
+
+    .course-tag {
+      display: inline-block;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--orange-100);
+      color: var(--orange-700);
+      letter-spacing: .3px;
+    }
+
+    .empty-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray-500);
+    }
+
+    .empty-msg i {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: .4;
+      display: block;
+    }
+
+    .empty-msg p {
+      font-size: 13px;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .page.active>* {
+      animation: fadeUp .35s ease both;
+    }
+
+    .page.active>*:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .page.active>*:nth-child(2) {
+      animation-delay: .05s;
+    }
+
+    .page.active>*:nth-child(3) {
+      animation-delay: .10s;
+    }
+
+    /* ========================================================
+       RESPONSIVE CSS (MOBILE & TABLET)
+       ======================================================== */
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+    }
+
+    @media (max-width: 1200px) {
+
+      .two-col,
+      .three-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .mobile-toggle {
+        display: block;
+      }
+
+      .sidebar-overlay.active {
+        display: block;
+      }
+
+      .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        bottom: 0;
+      }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .topbar {
+        padding: 0 16px;
+        gap: 10px;
+      }
+
+      .topbar-title {
+        font-size: 15px;
+      }
+
+      .content {
+        padding: 16px;
+        gap: 16px;
+      }
+
+      .search-bar {
+        padding: 6px 12px;
+      }
+
+      .search-bar input {
+        width: 100px;
+        font-size: 12px;
+      }
+
+      .search-bar input:focus {
+        width: 140px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-row select {
+        width: 100%;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="fas fa-book-open"></i></div>
+      <div class="brand-text">
+        <div class="brand-name">CITAS Archive</div>
+        <div class="brand-sub">Smart Repository</div>
+      </div>
+    </div>
+
+    <div class="sidebar-admin">
+      <div class="admin-avatar">SA</div>
+      <div class="admin-info">
+        <div class="admin-name">Super Admin</div>
+        <div class="admin-role">Administrator</div>
+      </div>
+    </div>
+
+    <div class="nav-section-label">Main</div>
+    <a class="nav-item active" onclick="showPage('dashboard', this); closeSidebarMobile()">
+      <i class="fas fa-chart-pie"></i> Dashboard
+    </a>
+    <a class="nav-item" onclick="showPage('theses', this); closeSidebarMobile()">
+      <i class="fas fa-file-alt"></i> Theses
+      <span class="nav-badge">142</span>
+    </a>
+    <a class="nav-item" onclick="showPage('users', this); closeSidebarMobile()">
+      <i class="fas fa-users"></i> Users
+      <span class="nav-badge green">3</span>
+    </a>
+    <a class="nav-item" onclick="showPage('requests', this); closeSidebarMobile()">
+      <i class="fas fa-inbox"></i> Access Requests
+      <span class="nav-badge">5</span>
+    </a>
+
+    <div class="nav-section-label">System</div>
+    <a class="nav-item" onclick="showPage('categories', this); closeSidebarMobile()">
+      <i class="fas fa-tags"></i> Categories
+    </a>
+    <a class="nav-item" onclick="showPage('ailog', this); closeSidebarMobile()">
+      <i class="fas fa-robot"></i> AI Classifier Log
+    </a>
+    <a class="nav-item" onclick="closeSidebarMobile()">
+      <i class="fas fa-cog"></i> Settings
+    </a>
+
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="alert('Logged out')">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-wrap">
+
+    <header class="topbar">
+      <button class="mobile-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <div class="topbar-title">Admin <span>Dashboard</span></div>
+
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search theses, users…" id="globalSearch">
+      </div>
+
+      <div class="topbar-actions">
+        <div style="position:relative">
+          <button class="icon-btn" id="notifBtn" onclick="toggleNotif()">
+            <i class="fas fa-bell"></i>
+            <span class="notif-dot"></span>
+          </button>
+          <div class="notif-panel" id="notifPanel">
+            <div class="notif-ph">
+              Notifications
+              <span class="notif-clear" onclick="clearNotifs()">Clear all</span>
+            </div>
+            <div id="notifList">
+              <div class="notif-item notif-unread" style="display:flex">
+                <div class="notif-ic av-orange"><i class="fas fa-file-plus" style="color:#fff;font-size:13px"></i></div>
+                <div style="flex:1">
+                  <div class="notif-text">New Access Request</div>
+                  <div class="notif-sub">Alex Rivera — BSIT Thesis 2026</div>
+                  <div class="notif-t">2 mins ago</div>
+                </div>
+              </div>
+              <div class="notif-item notif-unread" style="display:flex">
+                <div class="notif-ic av-yellow"><i class="fas fa-user-clock" style="color:#fff;font-size:13px"></i>
+                </div>
+                <div style="flex:1">
+                  <div class="notif-text">Pending Verification</div>
+                  <div class="notif-sub">Carlos Santos needs approval</div>
+                  <div class="notif-t">1 hour ago</div>
+                </div>
+              </div>
+              <div class="notif-item" style="display:flex">
+                <div class="notif-ic av-teal"><i class="fas fa-check-circle" style="color:#fff;font-size:13px"></i>
+                </div>
+                <div style="flex:1">
+                  <div class="notif-text">System Update OK</div>
+                  <div class="notif-sub">AI classifier worker is online</div>
+                  <div class="notif-t">Yesterday</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="icon-btn" style="display:none;"><i class="fas fa-expand"></i></button>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card orange">
+            <div class="stat-header">
+              <div class="stat-icon"><i class="fas fa-file-alt"></i></div><span class="stat-trend trend-up">↑ 12%</span>
+            </div>
+            <div class="stat-value">142</div>
+            <div class="stat-label">Total Theses</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-header">
+              <div class="stat-icon"><i class="fas fa-user-check"></i></div><span class="stat-trend trend-up">↑
+                8%</span>
+            </div>
+            <div class="stat-value">386</div>
+            <div class="stat-label">Registered Users</div>
+          </div>
+          <div class="stat-card yellow">
+            <div class="stat-header">
+              <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div><span class="stat-trend trend-warn">5
+                new</span>
+            </div>
+            <div class="stat-value">5</div>
+            <div class="stat-label">Pending Requests</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-header">
+              <div class="stat-icon"><i class="fas fa-robot"></i></div><span class="stat-trend trend-up">↑ 24%</span>
+            </div>
+            <div class="stat-value">1,204</div>
+            <div class="stat-label">AI Queries Today</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-file-alt"></i> Recent Theses</div>
+              <span class="panel-action"
+                onclick="showPage('theses', document.querySelector('.nav-item:nth-child(5)'))">View All</span>
+            </div>
+            <div class="panel-scroll table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Thesis</th>
+                    <th>Course</th>
+                    <th>Year</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="thesis-title">AI-Based Smart Parking System Using YOLO</div>
+                      <div class="thesis-author">Maria Santos, Liza Cruz</div>
+                    </td>
+                    <td><span class="course-tag">BSIT</span></td>
+                    <td><span style="font-family:'DM Mono',monospace;font-size:12px">2025</span></td>
+                    <td><span class="badge badge-approved">Approved</span></td>
+                    <td>
+                      <div class="tbl-actions">
+                        <button class="tbl-btn tbl-btn-view" title="View"><i class="fas fa-eye"></i></button>
+                        <button class="tbl-btn tbl-btn-edit" title="Edit"
+                          onclick="openEditModal('AI-Based Smart Parking System Using YOLO','Maria Santos','BSIT','2025','approved')"><i
+                            class="fas fa-pen"></i></button>
+                        <button class="tbl-btn tbl-btn-del" title="Delete" onclick="deleteRow(this)"><i
+                            class="fas fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="thesis-title">Blockchain-Based Academic Records Verification</div>
+                      <div class="thesis-author">Juan Dela Cruz</div>
+                    </td>
+                    <td><span class="course-tag">BSCS</span></td>
+                    <td><span style="font-family:'DM Mono',monospace;font-size:12px">2025</span></td>
+                    <td><span class="badge badge-pending">Pending</span></td>
+                    <td>
+                      <div class="tbl-actions">
+                        <button class="tbl-btn tbl-btn-view"><i class="fas fa-eye"></i></button>
+                        <button class="tbl-btn tbl-btn-edit"
+                          onclick="openEditModal('Blockchain-Based Academic Records Verification','Juan Dela Cruz','BSCS','2025','pending')"><i
+                            class="fas fa-pen"></i></button>
+                        <button class="tbl-btn tbl-btn-del" onclick="deleteRow(this)"><i
+                            class="fas fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="thesis-title">IoT-Based Flood Early Warning System</div>
+                      <div class="thesis-author">Rosa Reyes, Mark Bautista</div>
+                    </td>
+                    <td><span class="course-tag">BSCE</span></td>
+                    <td><span style="font-family:'DM Mono',monospace;font-size:12px">2024</span></td>
+                    <td><span class="badge badge-approved">Approved</span></td>
+                    <td>
+                      <div class="tbl-actions">
+                        <button class="tbl-btn tbl-btn-view"><i class="fas fa-eye"></i></button>
+                        <button class="tbl-btn tbl-btn-edit"><i class="fas fa-pen"></i></button>
+                        <button class="tbl-btn tbl-btn-del" onclick="deleteRow(this)"><i
+                            class="fas fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="thesis-title">Machine Learning for Rice Disease Detection</div>
+                      <div class="thesis-author">Ana Gomez</div>
+                    </td>
+                    <td><span class="course-tag">BSABE</span></td>
+                    <td><span style="font-family:'DM Mono',monospace;font-size:12px">2024</span></td>
+                    <td><span class="badge badge-archived">Archived</span></td>
+                    <td>
+                      <div class="tbl-actions">
+                        <button class="tbl-btn tbl-btn-view"><i class="fas fa-eye"></i></button>
+                        <button class="tbl-btn tbl-btn-edit"><i class="fas fa-pen"></i></button>
+                        <button class="tbl-btn tbl-btn-del" onclick="deleteRow(this)"><i
+                            class="fas fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="thesis-title">Smart Home Automation with Voice Control</div>
+                      <div class="thesis-author">Carlo Mendoza, Pia Lim</div>
+                    </td>
+                    <td><span class="course-tag">BSIT</span></td>
+                    <td><span style="font-family:'DM Mono',monospace;font-size:12px">2026</span></td>
+                    <td><span class="badge badge-pending">Pending</span></td>
+                    <td>
+                      <div class="tbl-actions">
+                        <button class="tbl-btn tbl-btn-view"><i class="fas fa-eye"></i></button>
+                        <button class="tbl-btn tbl-btn-edit"><i class="fas fa-pen"></i></button>
+                        <button class="tbl-btn tbl-btn-del" onclick="deleteRow(this)"><i
+                            class="fas fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-inbox"></i> Access Requests</div>
+              <span class="panel-action" onclick="showPage('requests', null)">View All</span>
+            </div>
+            <div class="request-list panel-scroll" id="reqList">
+              <div class="request-item">
+                <div class="req-top">
+                  <div class="req-avatar av-orange">A</div>
+                  <div>
+                    <div class="req-name">Alex Rivera</div>
+                    <div class="req-thesis">BSIT Thesis 2026 — Smart Parking</div>
+                  </div>
+                  <div class="req-time">2m ago</div>
+                </div>
+                <div class="req-actions">
+                  <button class="req-btn req-btn-approve" onclick="approveReq(this)"><i class="fas fa-check"></i>
+                    Approve</button>
+                  <button class="req-btn req-btn-reject" onclick="rejectReq(this)"><i class="fas fa-times"></i>
+                    Reject</button>
+                </div>
+              </div>
+              <div class="request-item">
+                <div class="req-top">
+                  <div class="req-avatar av-blue">M</div>
+                  <div>
+                    <div class="req-name">Maya Tan</div>
+                    <div class="req-thesis">BSCS Thesis 2025 — Blockchain</div>
+                  </div>
+                  <div class="req-time">15m ago</div>
+                </div>
+                <div class="req-actions">
+                  <button class="req-btn req-btn-approve" onclick="approveReq(this)"><i class="fas fa-check"></i>
+                    Approve</button>
+                  <button class="req-btn req-btn-reject" onclick="rejectReq(this)"><i class="fas fa-times"></i>
+                    Reject</button>
+                </div>
+              </div>
+              <div class="request-item">
+                <div class="req-top">
+                  <div class="req-avatar av-teal">J</div>
+                  <div>
+                    <div class="req-name">Jose Morales</div>
+                    <div class="req-thesis">BSCE Thesis 2024 — IoT Flood</div>
+                  </div>
+                  <div class="req-time">1h ago</div>
+                </div>
+                <div class="req-actions">
+                  <button class="req-btn req-btn-approve" onclick="approveReq(this)"><i class="fas fa-check"></i>
+                    Approve</button>
+                  <button class="req-btn req-btn-reject" onclick="rejectReq(this)"><i class="fas fa-times"></i>
+                    Reject</button>
+                </div>
+              </div>
+              <div class="request-item">
+                <div class="req-top">
+                  <div class="req-avatar av-purple">S</div>
+                  <div>
+                    <div class="req-name">Sofia Aquino</div>
+                    <div class="req-thesis">BSABE Thesis 2024 — Rice ML</div>
+                  </div>
+                  <div class="req-time">3h ago</div>
+                </div>
+                <div class="req-actions">
+                  <button class="req-btn req-btn-approve" onclick="approveReq(this)"><i class="fas fa-check"></i>
+                    Approve</button>
+                  <button class="req-btn req-btn-reject" onclick="rejectReq(this)"><i class="fas fa-times"></i>
+                    Reject</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="three-col">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-chart-bar"></i> Theses by Course</div>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-bar-row"><span class="chart-bar-label">BSIT</span>
+                <div class="chart-bar-track">
+                  <div class="chart-bar-fill" style="width:75%"></div>
+                </div><span class="chart-bar-val">54</span>
+              </div>
+              <div class="chart-bar-row"><span class="chart-bar-label">BSCS</span>
+                <div class="chart-bar-track">
+                  <div class="chart-bar-fill" style="width:55%"></div>
+                </div><span class="chart-bar-val">40</span>
+              </div>
+              <div class="chart-bar-row"><span class="chart-bar-label">BSCE</span>
+                <div class="chart-bar-track">
+                  <div class="chart-bar-fill" style="width:30%"></div>
+                </div><span class="chart-bar-val">22</span>
+              </div>
+              <div class="chart-bar-row"><span class="chart-bar-label">BSABE</span>
+                <div class="chart-bar-track">
+                  <div class="chart-bar-fill" style="width:22%"></div>
+                </div><span class="chart-bar-val">16</span>
+              </div>
+              <div class="chart-bar-row"><span class="chart-bar-label">BSA</span>
+                <div class="chart-bar-track">
+                  <div class="chart-bar-fill" style="width:14%"></div>
+                </div><span class="chart-bar-val">10</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-history"></i> Activity Log</div>
+            </div>
+            <div class="activity-list panel-scroll">
+              <div class="act-item">
+                <div class="act-dot orange"><i class="fas fa-file-plus"></i></div>
+                <div class="act-body">
+                  <div class="act-text"><strong>New thesis</strong> uploaded — Smart Parking</div>
+                  <div class="act-time">Today 08:42 AM</div>
+                </div>
+              </div>
+              <div class="act-item">
+                <div class="act-dot green"><i class="fas fa-user-check"></i></div>
+                <div class="act-body">
+                  <div class="act-text"><strong>User verified</strong> — Carlos Santos</div>
+                  <div class="act-time">Today 08:15 AM</div>
+                </div>
+              </div>
+              <div class="act-item">
+                <div class="act-dot blue"><i class="fas fa-robot"></i></div>
+                <div class="act-body">
+                  <div class="act-text"><strong>AI tagged</strong> 8 new theses automatically</div>
+                  <div class="act-time">Yesterday 11:00 PM</div>
+                </div>
+              </div>
+              <div class="act-item">
+                <div class="act-dot red"><i class="fas fa-ban"></i></div>
+                <div class="act-body">
+                  <div class="act-text"><strong>Request rejected</strong> — unauthorized access</div>
+                  <div class="act-time">Yesterday 09:30 AM</div>
+                </div>
+              </div>
+              <div class="act-item">
+                <div class="act-dot orange"><i class="fas fa-edit"></i></div>
+                <div class="act-body">
+                  <div class="act-text"><strong>Thesis edited</strong> — Blockchain Records</div>
+                  <div class="act-time">May 17, 2:00 PM</div>
+                </div>
+              </div>
+              <div class="act-item">
+                <div class="act-dot green"><i class="fas fa-check-circle"></i></div>
+                <div class="act-body">
+                  <div class="act-text"><strong>Thesis approved</strong> — Rice ML Detection</div>
+                  <div class="act-time">May 17, 10:00 AM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fas fa-users"></i> Recent Users</div>
+              <span class="panel-action" onclick="showPage('users', null)">View All</span>
+            </div>
+            <div class="panel-scroll">
+              <div class="user-row">
+                <div class="user-av av-orange">M</div>
+                <div class="user-info">
+                  <div class="user-name">Maria Santos</div>
+                  <div class="user-course">BSIT · 4th Year</div>
+                </div><span class="user-status status-active">● Active</span>
+              </div>
+              <div class="user-row">
+                <div class="user-av av-blue">J</div>
+                <div class="user-info">
+                  <div class="user-name">Juan Dela Cruz</div>
+                  <div class="user-course">BSCS · 3rd Year</div>
+                </div><span class="user-status status-active">● Active</span>
+              </div>
+              <div class="user-row">
+                <div class="user-av av-yellow">C</div>
+                <div class="user-info">
+                  <div class="user-name">Carlos Santos</div>
+                  <div class="user-course">BSIT · 4th Year</div>
+                </div><span class="user-status status-pending">● Pending</span>
+              </div>
+              <div class="user-row">
+                <div class="user-av av-pink">R</div>
+                <div class="user-info">
+                  <div class="user-name">Rosa Reyes</div>
+                  <div class="user-course">BSCE · 4th Year</div>
+                </div><span class="user-status status-active">● Active</span>
+              </div>
+              <div class="user-row">
+                <div class="user-av av-teal">A</div>
+                <div class="user-info">
+                  <div class="user-name">Ana Gomez</div>
+                  <div class="user-course">BSABE · 3rd Year</div>
+                </div><span class="user-status status-suspended">● Suspended</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-theses">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-file-alt"></i> All Theses</div>
+            <button class="btn-add" onclick="openAddThesisModal()"><i class="fas fa-plus"></i> Add Thesis</button>
+          </div>
+          <div class="filter-row">
+            <input type="text" placeholder="Search by title or author…">
+            <select>
+              <option>All Courses</option>
+              <option>BSIT</option>
+              <option>BSCS</option>
+              <option>BSCE</option>
+              <option>BSABE</option>
+            </select>
+            <select>
+              <option>All Status</option>
+              <option>Approved</option>
+              <option>Pending</option>
+              <option>Archived</option>
+            </select>
+            <select>
+              <option>All Years</option>
+              <option>2026</option>
+              <option>2025</option>
+              <option>2024</option>
+              <option>2023</option>
+            </select>
+          </div>
+          <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab(this,'tab-all')">All <span
+                style="opacity:.5">(142)</span></button>
+            <button class="tab-btn" onclick="switchTab(this,'tab-approved')">Approved <span
+                style="opacity:.5">(98)</span></button>
+            <button class="tab-btn" onclick="switchTab(this,'tab-pending')">Pending <span
+                style="opacity:.5">(26)</span></button>
+            <button class="tab-btn" onclick="switchTab(this,'tab-archived')">Archived <span
+                style="opacity:.5">(18)</span></button>
+          </div>
+
+          <div class="tab-pane active" id="tab-all">
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Thesis</th>
+                    <th>Course</th>
+                    <th>Year</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-500)">001</td>
+                    <td>
+                      <div class="thesis-title">AI-Based Smart Parking System Using YOLO</div>
+                      <div class="thesis-author">Maria Santos, Liza Cruz</div>
+                    </td>
+                    <td><span class="course-tag">BSIT</span></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:12px">2025</td>
+                    <td><span class="badge badge-approved">Approved</span></td>
+                    <td>
+                      <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                            class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"
+                          onclick="openEditModal('AI-Based Smart Parking System Using YOLO','Maria Santos','BSIT','2025','approved')"><i
+                            class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                          onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-500)">002</td>
+                    <td>
+                      <div class="thesis-title">Blockchain-Based Academic Records Verification</div>
+                      <div class="thesis-author">Juan Dela Cruz</div>
+                    </td>
+                    <td><span class="course-tag">BSCS</span></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:12px">2025</td>
+                    <td><span class="badge badge-pending">Pending</span></td>
+                    <td>
+                      <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                            class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                            class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                          onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-500)">003</td>
+                    <td>
+                      <div class="thesis-title">IoT-Based Flood Early Warning System</div>
+                      <div class="thesis-author">Rosa Reyes, Mark Bautista</div>
+                    </td>
+                    <td><span class="course-tag">BSCE</span></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:12px">2024</td>
+                    <td><span class="badge badge-approved">Approved</span></td>
+                    <td>
+                      <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                            class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                            class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                          onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-500)">004</td>
+                    <td>
+                      <div class="thesis-title">Machine Learning for Rice Disease Detection</div>
+                      <div class="thesis-author">Ana Gomez</div>
+                    </td>
+                    <td><span class="course-tag">BSABE</span></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:12px">2024</td>
+                    <td><span class="badge badge-archived">Archived</span></td>
+                    <td>
+                      <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                            class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                            class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                          onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-500)">005</td>
+                    <td>
+                      <div class="thesis-title">Smart Home Automation with Voice Control</div>
+                      <div class="thesis-author">Carlo Mendoza, Pia Lim</div>
+                    </td>
+                    <td><span class="course-tag">BSIT</span></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:12px">2026</td>
+                    <td><span class="badge badge-pending">Pending</span></td>
+                    <td>
+                      <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                            class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                            class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                          onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--gray-500)">006</td>
+                    <td>
+                      <div class="thesis-title">NLP-Based Student Feedback Analyzer</div>
+                      <div class="thesis-author">Dante Villanueva</div>
+                    </td>
+                    <td><span class="course-tag">BSCS</span></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:12px">2026</td>
+                    <td><span class="badge badge-approved">Approved</span></td>
+                    <td>
+                      <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                            class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                            class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                          onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="tab-pane" id="tab-approved">
+            <div class="empty-msg"><i class="fas fa-filter"></i>
+              <p>Filtered view — Approved theses only</p>
+            </div>
+          </div>
+          <div class="tab-pane" id="tab-pending">
+            <div class="empty-msg"><i class="fas fa-hourglass-half"></i>
+              <p>Filtered view — Pending theses only</p>
+            </div>
+          </div>
+          <div class="tab-pane" id="tab-archived">
+            <div class="empty-msg"><i class="fas fa-archive"></i>
+              <p>Filtered view — Archived theses only</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-users">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-users"></i> All Users</div>
+            <button class="btn-add"><i class="fas fa-user-plus"></i> Add User</button>
+          </div>
+          <div class="filter-row">
+            <input type="text" placeholder="Search by name or student ID…">
+            <select>
+              <option>All Courses</option>
+              <option>BSIT</option>
+              <option>BSCS</option>
+              <option>BSCE</option>
+            </select>
+            <select>
+              <option>All Status</option>
+              <option>Active</option>
+              <option>Pending</option>
+              <option>Suspended</option>
+            </select>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Student ID</th>
+                  <th>Course</th>
+                  <th>Year</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div class="user-av av-orange" style="width:32px;height:32px;font-size:12px">M</div>
+                      <div>
+                        <div style="font-weight:700;font-size:13px">Maria Santos</div>
+                        <div style="font-size:11px;color:var(--gray-500)">maria.santos@citas.edu</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="font-family:'DM Mono',monospace;font-size:12px">2021-00342</td>
+                  <td><span class="course-tag">BSIT</span></td>
+                  <td style="font-size:12px">4th</td>
+                  <td><span class="badge badge-approved" style="color:#16A34A">Active</span></td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                          class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div class="user-av av-blue" style="width:32px;height:32px;font-size:12px">J</div>
+                      <div>
+                        <div style="font-weight:700;font-size:13px">Juan Dela Cruz</div>
+                        <div style="font-size:11px;color:var(--gray-500)">juan.delacruz@citas.edu</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="font-family:'DM Mono',monospace;font-size:12px">2022-00198</td>
+                  <td><span class="course-tag">BSCS</span></td>
+                  <td style="font-size:12px">3rd</td>
+                  <td><span class="badge badge-approved" style="color:#16A34A">Active</span></td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                          class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div class="user-av av-yellow" style="width:32px;height:32px;font-size:12px">C</div>
+                      <div>
+                        <div style="font-weight:700;font-size:13px">Carlos Santos</div>
+                        <div style="font-size:11px;color:var(--gray-500)">carlos.santos@citas.edu</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="font-family:'DM Mono',monospace;font-size:12px">2023-00541</td>
+                  <td><span class="course-tag">BSIT</span></td>
+                  <td style="font-size:12px">4th</td>
+                  <td><span class="badge badge-pending">Pending</span></td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                          class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div class="user-av av-pink" style="width:32px;height:32px;font-size:12px">R</div>
+                      <div>
+                        <div style="font-weight:700;font-size:13px">Rosa Reyes</div>
+                        <div style="font-size:11px;color:var(--gray-500)">rosa.reyes@citas.edu</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="font-family:'DM Mono',monospace;font-size:12px">2021-00289</td>
+                  <td><span class="course-tag">BSCE</span></td>
+                  <td style="font-size:12px">4th</td>
+                  <td><span class="badge badge-approved" style="color:#16A34A">Active</span></td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                          class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <div class="user-av av-teal" style="width:32px;height:32px;font-size:12px">A</div>
+                      <div>
+                        <div style="font-weight:700;font-size:13px">Ana Gomez</div>
+                        <div style="font-size:11px;color:var(--gray-500)">ana.gomez@citas.edu</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="font-family:'DM Mono',monospace;font-size:12px">2022-00077</td>
+                  <td><span class="course-tag">BSABE</span></td>
+                  <td style="font-size:12px">3rd</td>
+                  <td><span class="badge badge-archived" style="">Suspended</span></td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-view"><i
+                          class="fas fa-eye"></i></button><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-requests">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-inbox"></i> All Access Requests</div>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Thesis Requested</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div style="font-weight:700">Alex Rivera</div>
+                    <div style="font-size:11px;color:var(--gray-500)">BSIT · 2026-01122</div>
+                  </td>
+                  <td>AI-Based Smart Parking System Using YOLO</td>
+                  <td style="font-family:'DM Mono',monospace;font-size:11.5px">May 18, 2026 08:42</td>
+                  <td>
+                    <div class="tbl-actions"><button class="req-btn req-btn-approve" style="flex:none;padding:5px 12px"
+                        onclick="approveRow(this)"><i class="fas fa-check"></i> Approve</button><button
+                        class="req-btn req-btn-reject" style="flex:none;padding:5px 12px" onclick="rejectRow(this)"><i
+                          class="fas fa-times"></i> Reject</button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight:700">Maya Tan</div>
+                    <div style="font-size:11px;color:var(--gray-500)">BSCS · 2025-00856</div>
+                  </td>
+                  <td>Blockchain-Based Academic Records Verification</td>
+                  <td style="font-family:'DM Mono',monospace;font-size:11.5px">May 18, 2026 08:31</td>
+                  <td>
+                    <div class="tbl-actions"><button class="req-btn req-btn-approve" style="flex:none;padding:5px 12px"
+                        onclick="approveRow(this)"><i class="fas fa-check"></i> Approve</button><button
+                        class="req-btn req-btn-reject" style="flex:none;padding:5px 12px" onclick="rejectRow(this)"><i
+                          class="fas fa-times"></i> Reject</button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight:700">Jose Morales</div>
+                    <div style="font-size:11px;color:var(--gray-500)">BSCE · 2024-00441</div>
+                  </td>
+                  <td>IoT-Based Flood Early Warning System</td>
+                  <td style="font-family:'DM Mono',monospace;font-size:11.5px">May 18, 2026 07:55</td>
+                  <td>
+                    <div class="tbl-actions"><button class="req-btn req-btn-approve" style="flex:none;padding:5px 12px"
+                        onclick="approveRow(this)"><i class="fas fa-check"></i> Approve</button><button
+                        class="req-btn req-btn-reject" style="flex:none;padding:5px 12px" onclick="rejectRow(this)"><i
+                          class="fas fa-times"></i> Reject</button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight:700">Sofia Aquino</div>
+                    <div style="font-size:11px;color:var(--gray-500)">BSABE · 2024-00099</div>
+                  </td>
+                  <td>Machine Learning for Rice Disease Detection</td>
+                  <td style="font-family:'DM Mono',monospace;font-size:11.5px">May 18, 2026 05:30</td>
+                  <td>
+                    <div class="tbl-actions"><button class="req-btn req-btn-approve" style="flex:none;padding:5px 12px"
+                        onclick="approveRow(this)"><i class="fas fa-check"></i> Approve</button><button
+                        class="req-btn req-btn-reject" style="flex:none;padding:5px 12px" onclick="rejectRow(this)"><i
+                          class="fas fa-times"></i> Reject</button></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-categories">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-tags"></i> Categories & Tags</div>
+            <button class="btn-add"><i class="fas fa-plus"></i> Add Category</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Theses Count</th>
+                  <th>AI-Tagged</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="course-tag">Artificial Intelligence</span></td>
+                  <td>38</td>
+                  <td>34</td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="course-tag">Internet of Things</span></td>
+                  <td>22</td>
+                  <td>20</td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="course-tag">Blockchain</span></td>
+                  <td>14</td>
+                  <td>14</td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="course-tag">Machine Learning</span></td>
+                  <td>31</td>
+                  <td>29</td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="course-tag">Computer Vision</span></td>
+                  <td>17</td>
+                  <td>16</td>
+                  <td>
+                    <div class="tbl-actions"><button class="tbl-btn tbl-btn-edit"><i
+                          class="fas fa-pen"></i></button><button class="tbl-btn tbl-btn-del"
+                        onclick="deleteRow(this)"><i class="fas fa-trash"></i></button></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-ailog">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title"><i class="fas fa-robot"></i> AI Classifier Log</div>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Thesis</th>
+                  <th>Tags Assigned</th>
+                  <th>Confidence</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="thesis-title">AI-Based Smart Parking System Using YOLO</div>
+                  </td>
+                  <td><span class="course-tag" style="margin-right:4px">AI</span><span class="course-tag">Computer
+                      Vision</span></td>
+                  <td><span
+                      style="font-family:'DM Mono',monospace;font-size:12px;color:var(--green);font-weight:700">97.3%</span>
+                  </td>
+                  <td style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--gray-500)">2026-05-18 08:42:10
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="thesis-title">Blockchain-Based Academic Records Verification</div>
+                  </td>
+                  <td><span class="course-tag">Blockchain</span></td>
+                  <td><span
+                      style="font-family:'DM Mono',monospace;font-size:12px;color:var(--green);font-weight:700">95.1%</span>
+                  </td>
+                  <td style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--gray-500)">2026-05-18 07:30:44
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="thesis-title">IoT-Based Flood Early Warning System</div>
+                  </td>
+                  <td><span class="course-tag" style="margin-right:4px">IoT</span><span
+                      class="course-tag">Sensors</span></td>
+                  <td><span
+                      style="font-family:'DM Mono',monospace;font-size:12px;color:#D97706;font-weight:700">82.6%</span>
+                  </td>
+                  <td style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--gray-500)">2026-05-17 11:00:02
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="thesis-title">Machine Learning for Rice Disease Detection</div>
+                  </td>
+                  <td><span class="course-tag" style="margin-right:4px">ML</span><span
+                      class="course-tag">Agriculture</span></td>
+                  <td><span
+                      style="font-family:'DM Mono',monospace;font-size:12px;color:var(--green);font-weight:700">91.8%</span>
+                  </td>
+                  <td style="font-family:'DM Mono',monospace;font-size:11.5px;color:var(--gray-500)">2026-05-17 10:50:37
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Edit Thesis</div>
+        <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <div class="form-label">Thesis Title</div>
+          <input class="form-input" id="eTitle" type="text">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Author(s)</div>
+          <input class="form-input" id="eAuthor" type="text">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Course</div>
+            <select class="form-input" id="eCourse">
+              <option>BSIT</option>
+              <option>BSCS</option>
+              <option>BSCE</option>
+              <option>BSABE</option>
+              <option>BSA</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Year</div>
+            <select class="form-input" id="eYear">
+              <option>2026</option>
+              <option>2025</option>
+              <option>2024</option>
+              <option>2023</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Status</div>
+          <select class="form-input" id="eStatus">
+            <option value="approved">Approved</option>
+            <option value="pending">Pending</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Abstract</div>
+          <textarea class="form-input" rows="3" style="resize:vertical"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+        <button class="btn-save" onclick="saveEdit()"><i class="fas fa-save" style="margin-right:6px"></i>Save
+          Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Add New Thesis</div>
+        <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <div class="form-label">Thesis Title</div>
+          <input class="form-input" type="text" placeholder="Enter full thesis title">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Author(s)</div>
+          <input class="form-input" type="text" placeholder="e.g. Juan Dela Cruz, Maria Santos">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">Course</div>
+            <select class="form-input">
+              <option>BSIT</option>
+              <option>BSCS</option>
+              <option>BSCE</option>
+              <option>BSABE</option>
+              <option>BSA</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Year</div>
+            <select class="form-input">
+              <option>2026</option>
+              <option>2025</option>
+              <option>2024</option>
+              <option>2023</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Abstract</div>
+          <textarea class="form-input" rows="4" placeholder="Brief abstract…" style="resize:vertical"></textarea>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Upload PDF</div>
+          <input class="form-input" type="file" accept=".pdf">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal('addModal')">Cancel</button>
+        <button class="btn-save" onclick="closeModal('addModal');alert('Thesis submitted for AI tagging & review!')">
+          <i class="fas fa-upload" style="margin-right:6px"></i>Submit Thesis
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── MOBILE SIDEBAR TOGGLE ───────────────────
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('active');
+    }
+
+    function closeSidebarMobile() {
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('active');
+      }
+    }
+
+    // ── PAGE NAVIGATION ─────────────────────────
+    function showPage(name, navEl) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + name).classList.add('active');
+
+      if (navEl) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        navEl.classList.add('active');
+      }
+
+      const titles = {
+        dashboard: 'Admin Dashboard', theses: 'Theses', users: 'Users',
+        requests: 'Access Requests', categories: 'Categories', ailog: 'AI Classifier Log'
+      };
+      document.querySelector('.topbar-title').innerHTML =
+        name === 'dashboard'
+          ? 'Admin <span>Dashboard</span>'
+          : titles[name] || name;
+    }
+
+    // ── TABS ─────────────────────────────────────
+    function switchTab(btn, paneId) {
+      btn.closest('.panel').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      btn.closest('.panel').querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.getElementById(paneId).classList.add('active');
+    }
+
+    // ── NOTIFICATION ─────────────────────────────
+    function toggleNotif() {
+      document.getElementById('notifPanel').classList.toggle('open');
+    }
+    function clearNotifs() {
+      document.getElementById('notifList').innerHTML =
+        '<div style="padding:20px;text-align:center;color:var(--gray-500);font-size:13px"><i class="fas fa-check-circle" style="color:var(--green);display:block;font-size:24px;margin-bottom:8px"></i>All cleared</div>';
+      document.querySelector('.notif-dot').style.display = 'none';
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#notifBtn') && !e.target.closest('#notifPanel')) {
+        document.getElementById('notifPanel').classList.remove('open');
+      }
+    });
+
+    // ── MODALS ────────────────────────────────────
+    function openEditModal(title, author, course, year, status) {
+      document.getElementById('eTitle').value = title;
+      document.getElementById('eAuthor').value = author;
+      document.getElementById('eCourse').value = course;
+      document.getElementById('eYear').value = year;
+      document.getElementById('eStatus').value = status;
+      document.getElementById('editModal').classList.add('open');
+    }
+    function openAddThesisModal() {
+      document.getElementById('addModal').classList.add('open');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+    function saveEdit() {
+      closeModal('editModal');
+      const t = document.createElement('div');
+      t.style.cssText = `position:fixed;bottom:24px;right:24px;background:var(--dark);color:white;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:popIn .3s ease;display:flex;align-items:center;gap:8px`;
+      t.innerHTML = '<i class="fas fa-check-circle" style="color:var(--green)"></i> Thesis updated successfully';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2800);
+    }
+    document.querySelectorAll('.modal-overlay').forEach(o => {
+      o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+    });
+
+    // ── ROW ACTIONS ──────────────────────────────
+    function deleteRow(btn) {
+      const row = btn.closest('tr');
+      if (confirm('Delete this entry? This cannot be undone.')) {
+        row.style.opacity = '0';
+        row.style.transition = 'opacity .3s';
+        setTimeout(() => row.remove(), 300);
+      }
+    }
+    function approveReq(btn) {
+      const item = btn.closest('.request-item');
+      item.style.opacity = '0'; item.style.transition = 'opacity .3s';
+      setTimeout(() => item.remove(), 300);
+    }
+    function rejectReq(btn) {
+      const item = btn.closest('.request-item');
+      item.style.opacity = '0'; item.style.transition = 'opacity .3s';
+      setTimeout(() => item.remove(), 300);
+    }
+    function approveRow(btn) {
+      const row = btn.closest('tr');
+      row.style.opacity = '0'; row.style.transition = 'opacity .3s';
+      setTimeout(() => row.remove(), 300);
+    }
+    function rejectRow(btn) {
+      const row = btn.closest('tr');
+      row.style.opacity = '0'; row.style.transition = 'opacity .3s';
+      setTimeout(() => row.remove(), 300);
+    }
+  </script>
+</body>
+
+</html>

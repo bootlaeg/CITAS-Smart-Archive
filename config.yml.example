@@ -1,0 +1,9 @@
+tunnel: ollama
+credentials-file: C:\Users\ADMIN\.cloudflared\YOUR_TUNNEL_ID.json
+
+ingress:
+  - hostname: ollama.citas-smart-archive.com
+    service: http://localhost:11434
+    originRequest:
+      httpHostHeader: localhost:11434
+  - service: http_status:404

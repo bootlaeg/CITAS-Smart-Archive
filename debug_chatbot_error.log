@@ -1,0 +1,64 @@
+[26-May-2026 09:08:37 UTC] Checking access - user_id=49, thesis_id=51
+[26-May-2026 09:08:37 UTC] Access bypassed for role: admin
+[26-May-2026 09:08:37 UTC] Using OLLAMA response source
+[26-May-2026 09:08:37 UTC] Sending prompt to Ollama: You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user'...
+[26-May-2026 09:08:37 UTC] Executing cURL request to https://ollama.CITAS-smart-archive.com/api/generate with 30-second connection timeout
+[26-May-2026 09:08:55 UTC] cURL errno: 0, HTTP Code: 200
+[26-May-2026 09:08:55 UTC] Ollama response received: {"model":"phi","created_at":"2026-05-26T09:08:55.7320809Z","response":" Hello! Based on the given in...
+[26-May-2026 11:15:09 UTC] About to insert chatbot access request for user: 108, thesis: 51
+[26-May-2026 11:15:09 UTC] Insert successful for chatbot access request. Rows affected: 1
+[26-May-2026 11:15:09 UTC] Admin ID retrieved: 49
+[26-May-2026 11:15:09 UTC] User info retrieved: {"id":108,"full_name":"Kristoffer-son Sabarre","email":"toffersabarre12@gmail.com"}
+[26-May-2026 11:15:09 UTC] Creating notification for admin with message: Kristoffer-son Sabarre has requested access to "SentiScape : An Immersive Generative Art Installation Translating Human Emotional Data into Real-Time Multisensory Visual Experiences"
+[26-May-2026 11:15:09 UTC] Notification created successfully
+[06-Jul-2026 14:54:27 UTC] Checking access - user_id=49, thesis_id=51
+[06-Jul-2026 14:54:27 UTC] Access bypassed for role: admin
+[06-Jul-2026 14:54:27 UTC] Using OLLAMA response source
+[06-Jul-2026 14:54:27 UTC] Sending prompt to Ollama: You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user'...
+[06-Jul-2026 14:54:27 UTC] Executing cURL request to https://ollama.CITAS-smart-archive.com/api/generate with 30-second connection timeout
+[06-Jul-2026 14:54:28 UTC] cURL errno: 0, HTTP Code: 502
+[06-Jul-2026 14:54:28 UTC] Ollama response received: error code: 502
+...
+[06-Jul-2026 14:54:36 UTC] Checking access - user_id=49, thesis_id=51
+[06-Jul-2026 14:54:36 UTC] Access bypassed for role: admin
+[06-Jul-2026 14:54:36 UTC] Using OLLAMA response source
+[06-Jul-2026 14:54:36 UTC] Sending prompt to Ollama: You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user'...
+[06-Jul-2026 14:54:36 UTC] Executing cURL request to https://ollama.CITAS-smart-archive.com/api/generate with 30-second connection timeout
+[06-Jul-2026 14:54:37 UTC] cURL errno: 0, HTTP Code: 502
+[06-Jul-2026 14:54:37 UTC] Ollama response received: error code: 502
+...
+[06-Jul-2026 14:54:49 UTC] Checking access - user_id=49, thesis_id=51
+[06-Jul-2026 14:54:49 UTC] Access bypassed for role: admin
+[06-Jul-2026 14:54:49 UTC] Using OLLAMA response source
+[06-Jul-2026 14:54:49 UTC] Sending prompt to Ollama: You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user'...
+[06-Jul-2026 14:54:49 UTC] Executing cURL request to https://ollama.CITAS-smart-archive.com/api/generate with 30-second connection timeout
+[06-Jul-2026 14:54:49 UTC] cURL errno: 0, HTTP Code: 502
+[06-Jul-2026 14:54:49 UTC] Ollama response received: error code: 502
+...
+[06-Jul-2026 19:28:00 UTC] Checking access - user_id=49, thesis_id=51
+[06-Jul-2026 19:28:00 UTC] Access bypassed for role: admin
+[06-Jul-2026 19:28:00 UTC] Using TEMPLATE response source
+[06-Jul-2026 19:28:14 UTC] Checking access - user_id=49, thesis_id=51
+[06-Jul-2026 19:28:14 UTC] Access bypassed for role: admin
+[06-Jul-2026 19:28:14 UTC] Using OLLAMA response source
+[06-Jul-2026 19:28:14 UTC] Sending prompt to Ollama: You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user'...
+[06-Jul-2026 19:28:14 UTC] Executing cURL request to https://ollama.CITAS-smart-archive.com/api/generate with 30-second connection timeout
+[06-Jul-2026 19:28:14 UTC] cURL errno: 0, HTTP Code: 530
+[06-Jul-2026 19:28:14 UTC] Ollama response received: error code: 1033
+...
+[16-Aug-2026 10:19:14 UTC] Checking access - user_id=49, thesis_id=51
+[16-Aug-2026 10:19:14 UTC] Access bypassed for role: admin
+[16-Aug-2026 10:19:14 UTC] Using OLLAMA response source
+[16-Aug-2026 10:19:14 UTC] Sending prompt to Ollama: You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user'...
+[16-Aug-2026 10:19:14 UTC] Executing cURL request to https://ollama.CITAS-smart-archive.com/api/generate with 30-second connection timeout
+[16-Aug-2026 10:19:14 UTC] cURL errno: 0, HTTP Code: 502
+[16-Aug-2026 10:19:14 UTC] Ollama response received: error code: 502
+...
+[16-Aug-2026 10:19:22 UTC] Checking access - user_id=49, thesis_id=51
+[16-Aug-2026 10:19:22 UTC] Access bypassed for role: admin
+[16-Aug-2026 10:19:22 UTC] Using OLLAMA response source
+[16-Aug-2026 10:19:22 UTC] Sending prompt to Ollama: You are a helpful thesis analysis assistant. Based on the following thesis context, answer the user'...
+[16-Aug-2026 10:19:22 UTC] Executing cURL request to https://ollama.CITAS-smart-archive.com/api/generate with 30-second connection timeout
+[16-Aug-2026 10:19:22 UTC] cURL errno: 0, HTTP Code: 502
+[16-Aug-2026 10:19:22 UTC] Ollama response received: error code: 502
+...
